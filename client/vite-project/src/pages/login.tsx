@@ -42,19 +42,21 @@ export default function Login() {
 
     const payload: LoginRequest = {
       email: userData.email.trim().toLowerCase(),
-      password: userData.password
+      password: userData.password,
     };
 
     try {
-      await axios.post<LoginResponse>(`${API_BASE}/login`, payload);
+      //send login message to server
+      /*
+        { withCredentials: true } does :
+        ✔ Browser receives Set-Cookie header
+        ✔ Browser stores cookie automatically
+        ✔ Cookie is sent on every next request
+        ✔ JS cannot read it (secure)
+      */
+      await axios.post<LoginResponse>(`${API_BASE}/login`, payload, { withCredentials: true });
 
-      // 🧱 שלב 1.1 – שמירת המשתמש המחובר
-      localStorage.setItem(
-        "loggedInUser",
-        JSON.stringify({ email: payload.email })
-      );
-
-      // 🧱 שלב 1.2 – מעבר למסך בחירת פרופיל
+      //navigate — auth is now server-side
       navigate("/chooseProfile");
 
     } catch (err) {

@@ -51,7 +51,7 @@ if (!MONGO_URI) {
 }
 
 // RATE LIMITER (POST ONLY)
-const buyActionLimiter = rateLimit({
+export const buyActionLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 10,
   message: {
@@ -62,15 +62,22 @@ const buyActionLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+let profiles = require("./routes/profile.route");
+app.use("/api/profiles",profiles);
+
+let auth = require("./routes/auth.route");
+app.use("/api/me", auth);
+
+
 app.post("/api/register", buyActionLimiter, register);
 app.post("/api/login", buyActionLimiter, login)
-app.post("/api/profiles", buyActionLimiter, addProfile);
-app.post("/api/profiles/verify-pin", buyActionLimiter,verifyProfilePin);
+//app.post("/api/profiles", buyActionLimiter, addProfile);
+//app.post("/api/profiles/verify-pin", buyActionLimiter,verifyProfilePin);
 app.post("/api/sendResetPassCode", buyActionLimiter,sendResetPassCode);
 app.post("/api/verifyPassCode", buyActionLimiter,verifyPassCode);
 app.post("/api/changePassword", buyActionLimiter, changePassword)
 
-app.get("/api/profiles/:email", async (req: Request, res: Response) => {
+/*app.get("/api/profiles/:email", async (req: Request, res: Response) => {
   try {
     const email = req.params.email;
 
@@ -101,7 +108,7 @@ app.get("/api/profiles/:email", async (req: Request, res: Response) => {
       message: "Database error",
     });
   }
-});
+});*/
 
 
 app.get("/api/getAllUsers", async (req, res) => {

@@ -3,8 +3,18 @@ import Sidebar from "../components/mainPage/Sidebar";
 import Header from "../components/mainPage/Header";
 import Progrees from "../components/mainPage/Progress";
 import { MenuItem, SidebarAction } from "../Types/Section";
+import { useNavigate } from "react-router-dom";
+import { isLoggedIn } from "../utils/auth";
 
-export default function MainPage() {  
+export default function MainPage() {
+  //resirect to login page if user is not logged in
+  const navigate = useNavigate(); 
+  useEffect(() => {
+    isLoggedIn().then(ok => {
+      if (!ok) navigate("/login");
+    });
+  }, []);
+  
   const menuItems:MenuItem[]  = [
     { name: "Talking", icon: "🗣️" },
     { name: "Reading", icon: "📖" },

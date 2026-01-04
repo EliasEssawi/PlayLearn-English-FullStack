@@ -1,9 +1,11 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { User } from "../models/User";
 import bcrypt from "bcrypt";
 import { RegisterSchema, LoginSchema, ChangePassSchema } from "../utils/validators";
 import crypto from "crypto";
 import {verifyUserResetCode} from "../services/userService"
+
+import jwt from "jsonwebtoken";
 
 export function generateCode(length = 8): string {
   return crypto
@@ -13,7 +15,6 @@ export function generateCode(length = 8): string {
     .slice(0, length)
     .toUpperCase();
 }
-
 
 export const register = async (req: Request, res: Response) => {
   try {
@@ -63,7 +64,6 @@ export const register = async (req: Request, res: Response) => {
   }
 };
 
-
 export const login = async (req: Request, res: Response) => {
   try {
     const parsed = LoginSchema.safeParse(req.body);
@@ -76,26 +76,92 @@ export const login = async (req: Request, res: Response) => {
     */
     //this is like doing const const name = parsed.data.name; email = parsed.data.email; ...
     //const {email} = parsed.data;
-    const { email, password } = req.body;
+
+    if (!parsed.success) {
+      const firstError = parsed.error.issues[0];
+      return res.status(400).json({
+        success: false,
+        message: firstError?.message,
+      });
+    }
+    const { email, password } = parsed.data;
 
     // check if user already exists
     const userData = await User.findOne({ email });
     if (!userData) {
-      return  res.status(400).json({
+      return  res.status(401).json({
         success: false,
         message: "User don't exists" + email,
       });
     }
 
     const valid = await bcrypt.compare(password, userData.password);
-    if (!valid) 
-      return res.status(400).json({ message: "Invalid credentials" });
+    if (!valid) {
+      return res.status(401).json({ 
+        success: false,
+        message: "Invalid credentials" });
+    }
 
-    res.status(200).json({ message: "Login successful" });
+    //create token
+    const token = jwt.sign( 
+      {
+        userId: userData._id,
+        email: userData.email,
+      },
+      process.env.JWT_SECRET!,
+      {
+        expiresIn: "1h",
+      }
+    );
+
+    /*
+    res.cookie("authToken", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 60 * 60 * 1000,
+    });
+    */
+
+    res.cookie("authToken", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+      maxAge: 60 * 60 * 1000,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Login successful",
+    });
+    
   } catch (err) {
     res.status(500).json({success: false, message: "Database error" });
   }
 };
+
+interface JwtPayload {
+  userId: string;
+  email: string;
+}
+
+export interface AuthRequest extends Request {
+  user?: JwtPayload;
+}
+
+export const authMiddleware = (req:AuthRequest, res:Response, next:NextFunction) => {
+  const token = req.cookies.authToken;
+  if (!token) return res.sendStatus(401);
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
+    req.user = decoded;
+    next();
+  } catch {
+    return res.sendStatus(401);
+  }
+};
+
 
 export const sendResetPassCode = async (req: Request, res: Response) => {
   try {

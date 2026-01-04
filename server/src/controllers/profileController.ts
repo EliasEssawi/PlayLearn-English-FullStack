@@ -1,12 +1,16 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { User } from "../models/User";
+import { AuthRequest } from "./authController";
+
 
 /* =========================
    ADD PROFILE (קיים)
 ========================= */
-export const addProfile = async (req: Request, res: Response) => {
+//use AuthRequest for any request thats after login
+export const addProfile = async (req: AuthRequest, res: Response) => {
   try {
+    const userId = req.user!.userId; // 
     const { email, profileName, pin } = req.body;
 
     if (!email || !profileName || !pin) {

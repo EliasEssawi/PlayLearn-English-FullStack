@@ -32,6 +32,8 @@ export const LoginSchema = z.object({
     .string()
     .trim()
     .regex(emailRegex, { message: "Please enter a valid email address" }),
+
+  password: z.string()
 });
 
 export const ChangePassSchema = z.object({

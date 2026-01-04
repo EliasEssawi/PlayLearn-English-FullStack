@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import ProfileCard from "../components/profile/ProfileCard";
 import PinModal from "../components/profile/PinModal";
+import {isLoggedIn} from "../utils/auth"
+import { useNavigate } from "react-router-dom";
 
 type Profile = {
   profileName: string;
@@ -13,6 +15,15 @@ type User = {
 type Page = "addprofile";
 
 const ChooseProfile: React.FC = () => {
+  //redirect to login page if user is not logged in
+  const navigate = useNavigate(); 
+  useEffect(() => {
+    isLoggedIn().then(ok => {
+      if (!ok) navigate("/login");
+    });
+  }, []);
+
+
   const goToPage = (page: Page): void => {
     if (page === "addprofile") window.location.href = "/addprofile";
   };
