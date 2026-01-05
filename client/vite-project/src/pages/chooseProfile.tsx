@@ -54,8 +54,8 @@ const ChooseProfile: React.FC = () => {
         const payload: sendVerificationCodeRequest = {
             email: savedUser.email.trim().toLowerCase(),
         };
-
-        const res = await axios.post<getProfilesResponse>(`${API_BASE}/profiles/:email`, payload, { withCredentials: true });
+        console.log(payload.email + "*****");
+        const res = await axios.post<getProfilesResponse>(`${API_BASE}/profiles/getEmailProfiles`, payload, { withCredentials: true });
         const data = res.data;
 
         if (data.success) {

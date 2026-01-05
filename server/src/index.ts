@@ -17,6 +17,7 @@ import { User } from "./models/User";
 import { addProfile } from "./controllers/profileController";
 import { verifyProfilePin } from "./controllers/profileController";
 
+import cookieParser from "cookie-parser";
 
 dotenv.config();
 const app = express();
@@ -28,6 +29,16 @@ app.use(cors());
 app.use(express.json());
 
 
+app.use(cookieParser());
+
+// ✅ CORS middleware — must be BEFORE your routes
+
+app.use(
+  cors({
+    origin: "http://localhost:5001", // your frontend URL
+    credentials: true,               // allow cookies to be sent
+  })
+);
 
 
 
@@ -64,7 +75,7 @@ export const buyActionLimiter = rateLimit({
 
 let profiles = require("./routes/profile.route");
 app.use("/api/profiles",profiles);
-app.use("/api/profiles/:email", profiles)
+app.use("/api/profiles/getEmailProfiles", profiles);
 
 let auth = require("./routes/auth.route");
 app.use("/api/authMe", auth);

@@ -158,7 +158,6 @@ export interface AuthRequest extends Request {
 }
 
 export const authMiddleware = (req:AuthRequest, res:Response, next:NextFunction) => {
-  console.log("token problem")
   const token = req.cookies.authToken;
   
   if (!token){
@@ -170,6 +169,7 @@ export const authMiddleware = (req:AuthRequest, res:Response, next:NextFunction)
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
     req.user = decoded;
+    console.log("token decoded succefullly")
     next();
   } catch {
     console.log("decoded problem")

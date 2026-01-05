@@ -15,10 +15,12 @@ const profileRouter = express.Router();
 profileRouter.post("/", authMiddleware, buyActionLimiter, addProfile);
 profileRouter.post("/verify-pin", authMiddleware, buyActionLimiter,verifyProfilePin);
 
-profileRouter.get("/:email", authMiddleware, async (req: Request, res: Response) => {
+profileRouter.get("/profiles/getEmailProfiles", authMiddleware, async (req: Request, res: Response) => {
+  console.log("****"+req.body.email);
   try {
-    const { email } = req.body;
     console.log("email check 1")
+    const { email } = req.body;
+  
     // ✅ Type guard (חובה)
     if (!email) {
       return res.status(400).json({

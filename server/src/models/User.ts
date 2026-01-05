@@ -14,8 +14,6 @@ export interface IUser extends Document {
   resetCodeExpiresAt?: Date | undefined;
 }
 
-
-
 const UserSchema = new Schema<IUser>({
   name: { type: String, required: true, trim: true },
 
