@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
-import { Profile, ProfileSchema } from "./profile"; // 
+import { Profile, ProfileSchema } from "./Profile";  
 
 // TYPES
 export interface IUser extends Document {
