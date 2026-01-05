@@ -1,12 +1,14 @@
 import React from "react";
 import Layout from "../components/NavigationAndSwitcher/Layout";
 
-type Page = "login" | "register";
+type Page = "login" | "register"|"index";
 
 const StarterPage: React.FC = () => {
   const goToPage = (page: Page): void => {
     if (page === "login") window.location.href = "/login";
     if (page === "register") window.location.href = "/register";
+    if (page === "index") window.location.href = "/vocabulary/index";
+
   };
 
   const features = [
@@ -41,6 +43,13 @@ const StarterPage: React.FC = () => {
               className="nav-btn nav-btn-register"
             >
               Register
+            </button>
+            <button
+              type="button"
+              onClick={() => goToPage("index")}
+              className="nav-btn nav-btn-register"
+            >
+              Vocabulary
             </button>
           </nav>
         </div>

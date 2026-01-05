@@ -16,6 +16,11 @@ import ForgotPassword from './pages/forgotPass';
 import AddProfile from './pages/addprofile';
 import ParentPage from './pages/parentPage';
 import MainPage from './pages/mainPage';
+import Vocabulary from './pages/vocabulary/index';
+import TranslateGame from './pages/vocabulary/translate';
+
+
+
 
 function App() {
   return (
@@ -29,6 +34,9 @@ function App() {
         <Route path="/addprofile" element={<AddProfile />} />
         <Route path="/forgotPassword" element={<ForgotPassword />}/>
         <Route path="/parentPage" element={<ParentPage/>}/>
+        <Route path="/vocabulary/index" element={<Vocabulary/>}/>
+        <Route path="/vocabulary/translate" element={<TranslateGame />} />
+
         <Route path="/mainPage" element={<MainPage/>}/>
       </Routes> 
      
