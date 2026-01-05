@@ -1,11 +1,6 @@
 import mongoose, { Schema, Document } from "mongoose";
+import { Profile, ProfileSchema } from "./profile"; // 
 
-interface Profile {
-  profileName: string,
-	pin: string,
-	progress: Record<string, any>,
-	points : Number
-}
 // TYPES
 export interface IUser extends Document {
   name: string;
@@ -19,18 +14,7 @@ export interface IUser extends Document {
   resetCodeExpiresAt?: Date | undefined;
 }
 
-const ProfileSchema = new mongoose.Schema<Profile>({
-  profileName: String,
-  pin: String,
-  progress: {
-    type: mongoose.Schema.Types.Mixed,
-    default: {}
-  },
-  points: {
-    type: Number,
-    default: 0
-  }
-});
+
 
 const UserSchema = new Schema<IUser>({
   name: { type: String, required: true, trim: true },

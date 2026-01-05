@@ -3,16 +3,16 @@ import ProfileCard from "../components/profile/ProfileCard";
 import PinModal from "../components/profile/PinModal";
 import {isLoggedIn} from "../utils/auth"
 import { useNavigate } from "react-router-dom";
-
-type Profile = {
-  profileName: string;
-};
+import axios from "axios";
+import { sendVerificationCodeRequest, getProfilesResponse, Profile } from "../Types/Login";
 
 type User = {
   email: string;
 };
 
 type Page = "addprofile";
+
+const API_BASE = "/api";
 
 const ChooseProfile: React.FC = () => {
   //redirect to login page if user is not logged in
@@ -34,12 +34,15 @@ const ChooseProfile: React.FC = () => {
   const [pinError, setPinError] = useState<boolean>(false);
   const [profiles, setProfiles] = useState<Profile[]>([]);
 
+  
   /* ===========================
      Fetch profiles
   =========================== */
   useEffect(() => {
+    
     const fetchProfiles = async (): Promise<void> => {
       try {
+        
         const savedUserRaw = localStorage.getItem("loggedInUser");
         if (!savedUserRaw) return;
 
@@ -47,11 +50,13 @@ const ChooseProfile: React.FC = () => {
         if (!savedUser.email) return;
 
         setCurrentUser({ email: savedUser.email });
+        
+        const payload: sendVerificationCodeRequest = {
+            email: savedUser.email.trim().toLowerCase(),
+        };
 
-        const res = await fetch(
-          `http://127.0.0.1:5001/api/profiles/${savedUser.email}`
-        );
-        const data = await res.json();
+        const res = await axios.post<getProfilesResponse>(`${API_BASE}/profiles/:email`, payload, { withCredentials: true });
+        const data = res.data;
 
         if (data.success) {
           setProfiles(data.profiles || []);
@@ -69,10 +74,13 @@ const ChooseProfile: React.FC = () => {
   /* ===========================
      PIN logic
   =========================== */
-  const openPin = (profile: Profile): void => {
-    setSelectedProfile(profile);
-    setPinInputs(["", "", "", ""]);
-    setPinError(false);
+  const openPin = (profile?: Profile): void => {
+    if(profile)
+    {
+      setSelectedProfile(profile);
+      setPinInputs(["", "", "", ""]);
+      setPinError(false);
+    }
   };
 
   const closePin = (): void => {
@@ -170,7 +178,7 @@ const ChooseProfile: React.FC = () => {
         <ProfileCard
           name="Parent"
           emoji="👨‍👩‍👧"
-          onClick={() => openPin({ profileName: "Parent" })}
+          onClick={() => openPin(profiles.find(profile => profile.profileName === "Parent"))}
         />
 
         {/* Children */}

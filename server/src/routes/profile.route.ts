@@ -6,7 +6,7 @@ import { authMiddleware } from "../controllers/authController";
 
 const express = require('express');
 const profileRouter = express.Router();
-const profile = require('../models/ProfileSchema');
+//const profile = require('../models/ProfileSchema');
 
 //  IMPORTANT !!!!!!
 //  use authMiddleware, buyActionLimiter in this order for POST requests
@@ -15,10 +15,10 @@ const profile = require('../models/ProfileSchema');
 profileRouter.post("/", authMiddleware, buyActionLimiter, addProfile);
 profileRouter.post("/verify-pin", authMiddleware, buyActionLimiter,verifyProfilePin);
 
-profileRouter.get("/:email", async (req: Request, res: Response) => {
+profileRouter.get("/:email", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const email = req.params.email;
-
+    const { email } = req.body;
+    console.log("email check 1")
     // ✅ Type guard (חובה)
     if (!email) {
       return res.status(400).json({
@@ -28,14 +28,14 @@ profileRouter.get("/:email", async (req: Request, res: Response) => {
     }
 
     const user = await User.findOne({ email });
-
+    console.log("email check 2")
     if (!user) {
       return res.status(404).json({
         success: false,
         message: "User not found",
       });
     }
-
+    console.log("email check 3")
     return res.status(200).json({
       success: true,
       profiles: user.profiles || [],
@@ -48,5 +48,8 @@ profileRouter.get("/:email", async (req: Request, res: Response) => {
   }
 });
 
+profileRouter.get("/", (req:Request, res:Response) => {
+  res.send("Profiles OK");
+});
 
 module.exports = profileRouter;

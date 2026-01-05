@@ -1,3 +1,4 @@
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -9,6 +10,18 @@ export interface LoginResponse {
 
 export interface sendVerificationCodeRequest {
   email: string;
+}
+
+export interface Profile {
+  profileName: string,
+	pin: string,
+	progress: Record<string, any>,
+	points : Number
+}
+
+export interface getProfilesResponse {
+  success: boolean;
+  profiles:Profile[];
 }
 
 export interface VerifyCodeRequest{
