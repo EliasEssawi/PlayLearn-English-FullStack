@@ -4,7 +4,8 @@ import { Request, Response, NextFunction } from "express";
 const express = require('express');
 const authRouter = express.Router();
 
-authRouter.get("/me", authMiddleware, (req: AuthRequest, res: Response) => {
+authRouter.get("/authMe", authMiddleware, (req: AuthRequest, res: Response) => {
+  console.log("found me");
   res.json({
     success: true,
     user: {
@@ -13,3 +14,10 @@ authRouter.get("/me", authMiddleware, (req: AuthRequest, res: Response) => {
     },
   });
 });
+
+
+authRouter.get("/", (req:Request, res:Response) => {
+  res.send("Profiles OK");
+});
+
+module.exports = authRouter;

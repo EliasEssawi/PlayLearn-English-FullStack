@@ -86,6 +86,7 @@ export const login = async (req: Request, res: Response) => {
     }
     const { email, password } = parsed.data;
 
+    console.log("ssss 1");
     // check if user already exists
     const userData = await User.findOne({ email });
     if (!userData) {
@@ -95,6 +96,7 @@ export const login = async (req: Request, res: Response) => {
       });
     }
 
+    console.log("ssss 2");
     const valid = await bcrypt.compare(password, userData.password);
     if (!valid) {
       return res.status(401).json({ 
@@ -102,6 +104,7 @@ export const login = async (req: Request, res: Response) => {
         message: "Invalid credentials" });
     }
 
+    console.log("ssss 3");
     //create token
     const token = jwt.sign( 
       {
@@ -114,29 +117,34 @@ export const login = async (req: Request, res: Response) => {
       }
     );
 
-    /*
+    console.log("ssss 4");
     res.cookie("authToken", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
       maxAge: 60 * 60 * 1000,
     });
-    */
+    
 
+    /*
     res.cookie("authToken", token, {
       httpOnly: true,
       secure: true,
       sameSite: "strict",
       maxAge: 60 * 60 * 1000,
     });
+    */
 
+    console.log("ssss 5");
     return res.status(200).json({
       success: true,
       message: "Login successful",
     });
     
   } catch (err) {
-    res.status(500).json({success: false, message: "Database error" });
+    const message = err instanceof Error ? err.message : String(err);
+
+    res.status(500).json({success: false, message: message });
   }
 };
 
@@ -150,14 +158,21 @@ export interface AuthRequest extends Request {
 }
 
 export const authMiddleware = (req:AuthRequest, res:Response, next:NextFunction) => {
+  console.log("token problem")
   const token = req.cookies.authToken;
-  if (!token) return res.sendStatus(401);
+  
+  if (!token){
+    console.log("token problem")
+    return res.sendStatus(401);
+  } 
 
+  console.log("token sucsees")
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
     req.user = decoded;
     next();
   } catch {
+    console.log("decoded problem")
     return res.sendStatus(401);
   }
 };

@@ -64,9 +64,10 @@ export const buyActionLimiter = rateLimit({
 
 let profiles = require("./routes/profile.route");
 app.use("/api/profiles",profiles);
+app.use("/api/profiles/:email", profiles)
 
 let auth = require("./routes/auth.route");
-app.use("/api/me", auth);
+app.use("/api/authMe", auth);
 
 
 app.post("/api/register", buyActionLimiter, register);
