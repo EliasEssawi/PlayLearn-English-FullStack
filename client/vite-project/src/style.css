@@ -755,3 +755,62 @@ html, body {
   color: #15803d;
   font-weight: 800;
 }
+/* ===========================
+   Vocabulary – Translate Game
+=========================== */
+
+.translate-card {
+  background: #fff;
+  border-radius: 1.75rem;
+  box-shadow: 0 20px 45px rgba(0,0,0,0.15);
+  max-width: 520px;
+  margin: 3rem auto 0;
+  padding: 2.5rem 2rem 2.75rem;
+  text-align: center;
+}
+
+/* Score */
+.translate-score {
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--greenText);
+  margin-bottom: 1.75rem;
+}
+
+/* Translate title */
+.translate-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  margin-bottom: 2rem;
+}
+
+.translate-title span {
+  color: var(--greenText);
+}
+
+/* Options container */
+.translate-options {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+}
+
+/* Option button */
+.translate-option {
+  width: 220px;
+  padding: 0.9rem 1rem;
+  border-radius: 1rem;
+  border: none;
+  background: var(--green);
+  color: #fff;
+  font-weight: 800;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: transform 150ms ease, filter 150ms ease;
+}
+
+.translate-option:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
