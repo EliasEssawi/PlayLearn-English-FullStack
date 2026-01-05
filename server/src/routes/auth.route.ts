@@ -4,7 +4,7 @@ import { Request, Response, NextFunction } from "express";
 const express = require('express');
 const authRouter = express.Router();
 
-authRouter.get("/authMe", authMiddleware, (req: AuthRequest, res: Response) => {
+authRouter.get("/auth/authMe", authMiddleware, (req: AuthRequest, res: Response) => {
   console.log("found me");
   res.json({
     success: true,

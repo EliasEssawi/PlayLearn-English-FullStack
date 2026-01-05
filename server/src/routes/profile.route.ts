@@ -12,14 +12,14 @@ const profileRouter = express.Router();
 //  use authMiddleware, buyActionLimiter in this order for POST requests
 //  and just authMiddleware for any GET req thats after login
 //  also use AuthRequest in the function (like addProfile) for any request thats after login
-profileRouter.post("/", authMiddleware, buyActionLimiter, addProfile);
+//profileRouter.post("/", authMiddleware, buyActionLimiter, addProfile);
 profileRouter.post("/verify-pin", authMiddleware, buyActionLimiter,verifyProfilePin);
 
-profileRouter.get("/profiles/getEmailProfiles", authMiddleware, async (req: Request, res: Response) => {
-  console.log("****"+req.body.email);
+profileRouter.get("/:email", authMiddleware, async (req: Request, res: Response) => {
+  console.log("****"+req.params.email);
   try {
     console.log("email check 1")
-    const { email } = req.body;
+    const { email } = req.params;
   
     // ✅ Type guard (חובה)
     if (!email) {

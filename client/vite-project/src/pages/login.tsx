@@ -56,12 +56,15 @@ export default function Login() {
       */
       await axios.post<LoginResponse>(`${API_BASE}/login`, payload, { withCredentials: true });
 
+      localStorage.setItem("loggedInUser", payload.email);
+
       //navigate — auth is now server-side
       navigate("/chooseProfile");
+      
 
     } catch (err) {
       const error = err as AxiosError<{ message?: string }>;
-      setMessage(error.response?.data?.message || "Login failed.");
+      setMessage(error.response?.data?.message ||"Login failed.");
     }
   };
 

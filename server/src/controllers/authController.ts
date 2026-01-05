@@ -68,15 +68,6 @@ export const login = async (req: Request, res: Response) => {
   try {
     const parsed = LoginSchema.safeParse(req.body);
 
-    /*
-    if (!parsed.success) {
-      const firstError = parsed.error.issues[0];
-      return res.status(400).json({ message: firstError?.message});
-    }
-    */
-    //this is like doing const const name = parsed.data.name; email = parsed.data.email; ...
-    //const {email} = parsed.data;
-
     if (!parsed.success) {
       const firstError = parsed.error.issues[0];
       return res.status(400).json({
@@ -86,7 +77,6 @@ export const login = async (req: Request, res: Response) => {
     }
     const { email, password } = parsed.data;
 
-    console.log("ssss 1");
     // check if user already exists
     const userData = await User.findOne({ email });
     if (!userData) {
@@ -96,7 +86,6 @@ export const login = async (req: Request, res: Response) => {
       });
     }
 
-    console.log("ssss 2");
     const valid = await bcrypt.compare(password, userData.password);
     if (!valid) {
       return res.status(401).json({ 
@@ -104,7 +93,7 @@ export const login = async (req: Request, res: Response) => {
         message: "Invalid credentials" });
     }
 
-    console.log("ssss 3");
+    console.log("creating token");
     //create token
     const token = jwt.sign( 
       {
@@ -117,7 +106,6 @@ export const login = async (req: Request, res: Response) => {
       }
     );
 
-    console.log("ssss 4");
     res.cookie("authToken", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -134,8 +122,7 @@ export const login = async (req: Request, res: Response) => {
       maxAge: 60 * 60 * 1000,
     });
     */
-
-    console.log("ssss 5");
+    console.log("sending token");
     return res.status(200).json({
       success: true,
       message: "Login successful",
@@ -159,7 +146,7 @@ export interface AuthRequest extends Request {
 
 export const authMiddleware = (req:AuthRequest, res:Response, next:NextFunction) => {
   const token = req.cookies.authToken;
-  
+  console.log("token = " + token);
   if (!token){
     console.log("token problem")
     return res.sendStatus(401);

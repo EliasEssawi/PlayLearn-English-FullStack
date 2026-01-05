@@ -42,20 +42,24 @@ const ChooseProfile: React.FC = () => {
     
     const fetchProfiles = async (): Promise<void> => {
       try {
-        
+        console.log("fetching profiles");
         const savedUserRaw = localStorage.getItem("loggedInUser");
         if (!savedUserRaw) return;
 
+        /*
+        console.log("found user in local storage");
         const savedUser = JSON.parse(savedUserRaw) as { email: string };
         if (!savedUser.email) return;
+        */
 
-        setCurrentUser({ email: savedUser.email });
+        console.log("setting current user");
+        setCurrentUser({ email: savedUserRaw });
         
         const payload: sendVerificationCodeRequest = {
-            email: savedUser.email.trim().toLowerCase(),
+            email: savedUserRaw.trim().toLowerCase(),
         };
         console.log(payload.email + "*****");
-        const res = await axios.post<getProfilesResponse>(`${API_BASE}/profiles/getEmailProfiles`, payload, { withCredentials: true });
+        const res = await axios.get<getProfilesResponse>(`${API_BASE}/profiles/${payload.email}`, {withCredentials: true , params: payload});
         const data = res.data;
 
         if (data.success) {

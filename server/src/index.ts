@@ -11,7 +11,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 
-import { register, login, sendResetPassCode, verifyPassCode, changePassword } from "./controllers/authController";
+import { register, login, sendResetPassCode, verifyPassCode, changePassword, authMiddleware, AuthRequest } from "./controllers/authController";
 
 import { User } from "./models/User";
 import { addProfile } from "./controllers/profileController";
@@ -75,11 +75,10 @@ export const buyActionLimiter = rateLimit({
 
 let profiles = require("./routes/profile.route");
 app.use("/api/profiles",profiles);
-app.use("/api/profiles/getEmailProfiles", profiles);
+app.use("/api/profiles/:email", profiles);
 
 let auth = require("./routes/auth.route");
-app.use("/api/authMe", auth);
-
+app.use("/api/auth/authMe", auth);
 
 app.post("/api/register", buyActionLimiter, register);
 app.post("/api/login", buyActionLimiter, login)
@@ -88,39 +87,6 @@ app.post("/api/login", buyActionLimiter, login)
 app.post("/api/sendResetPassCode", buyActionLimiter,sendResetPassCode);
 app.post("/api/verifyPassCode", buyActionLimiter,verifyPassCode);
 app.post("/api/changePassword", buyActionLimiter, changePassword)
-
-/*app.get("/api/profiles/:email", async (req: Request, res: Response) => {
-  try {
-    const email = req.params.email;
-
-    // ✅ Type guard (חובה)
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: "Email is required",
-      });
-    }
-
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      profiles: user.profiles || [],
-    });
-  } catch (err) {
-    return res.status(500).json({
-      success: false,
-      message: "Database error",
-    });
-  }
-});*/
 
 
 app.get("/api/getAllUsers", async (req, res) => {
