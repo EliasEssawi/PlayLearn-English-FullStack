@@ -16,9 +16,4 @@ export const ProfileSchema = new Schema<Profile>(
     points: { type: Number, default: 0 },
   },
   { _id: false } //  prevents extra _id for each profile 
-<<<<<<< HEAD
 );
-=======
-);
-
->>>>>>> 827d48c6f2b49e88335f1a37e4adeab46b6a5612
