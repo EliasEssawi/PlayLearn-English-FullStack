@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import axios, { AxiosError } from "axios";
 import { RegisterRequest, RegisterResponse } from "../Types/Register";
 import LoginRightPanel from "../components/login/RightPanel";
-import { useTheme } from "../context/ThemeContext";
 
 const API_BASE = "/api";
 

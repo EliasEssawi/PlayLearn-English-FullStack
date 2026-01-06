@@ -7,7 +7,11 @@ type Msg = {
   time: string;
 };
 
-export default function ChatbotPage() {
+type ChatbotProps = {
+  darkMode: boolean;
+};
+
+export default function ChatbotPage({ darkMode }: ChatbotProps) {
   const [messages, setMessages] = useState<Msg[]>([
     {
       role: "bot",
@@ -20,7 +24,7 @@ export default function ChatbotPage() {
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
-  // auto-scroll
+  /* auto-scroll */
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
@@ -29,21 +33,22 @@ export default function ChatbotPage() {
     const text = input.trim();
     if (!text || loading) return;
 
-    const now = new Date().toLocaleTimeString();
-
-    setMessages((prev) => [...prev, { role: "user", text, time: now }]);
+    setMessages(prev => [
+      ...prev,
+      { role: "user", text, time: new Date().toLocaleTimeString() },
+    ]);
     setInput("");
     setLoading(true);
 
     try {
       const { data } = await axios.post("/api/chatbot", { message: text });
       const reply = String(data?.reply ?? "").trim() || "No reply.";
-      setMessages((prev) => [
+      setMessages(prev => [
         ...prev,
         { role: "bot", text: reply, time: new Date().toLocaleTimeString() },
       ]);
-    } catch (err) {
-      setMessages((prev) => [
+    } catch {
+      setMessages(prev => [
         ...prev,
         {
           role: "bot",
@@ -64,18 +69,26 @@ export default function ChatbotPage() {
   };
 
   return (
-    <div style={{ maxWidth: 950, margin: "0 auto", padding: 20 }}>
-      <h2 style={{ margin: 0 }}>Chatbot</h2>
-      <p style={{ marginTop: 6, color: "#666" }}>
+    <div
+      style={{
+        maxWidth: 950,
+        margin: "0 auto",
+        padding: 20,
+        color: darkMode ? "#f8fafc" : "#0f172a",
+      }}
+    >
+      <h2>Chatbot</h2>
+      <p style={{ color: darkMode ? "#d1d5db" : "#6b7280" }}>
         Talk to the Gemini assistant. Press <b>Enter</b> to send, <b>Shift+Enter</b> for new line.
       </p>
 
+      {/* CHAT BOX */}
       <div
         style={{
           marginTop: 14,
-          border: "1px solid #e5e7eb",
+          border: darkMode ? "1px solid #334155" : "1px solid #e5e7eb",
           borderRadius: 14,
-          background: "#fff",
+          background: darkMode ? "#020617" : "#ffffff",
           height: 460,
           overflowY: "auto",
           padding: 14,
@@ -97,18 +110,24 @@ export default function ChatbotPage() {
                   style={{
                     padding: "10px 12px",
                     borderRadius: 14,
-                    border: "1px solid #eee",
-                    background: isUser ? "#f3f4f6" : "#ffffff",
+                    border: darkMode ? "1px solid #334155" : "1px solid #e5e7eb",
+                    background: isUser
+                      ? darkMode
+                        ? "#1e293b"
+                        : "#f3f4f6"
+                      : darkMode
+                      ? "#020617"
+                      : "#ffffff",
                     whiteSpace: "pre-wrap",
-                    lineHeight: 1.4,
                   }}
                 >
                   {m.text}
                 </div>
+
                 <div
                   style={{
                     fontSize: 12,
-                    color: "#888",
+                    color: darkMode ? "#9ca3af" : "#888",
                     marginTop: 4,
                     textAlign: isUser ? "right" : "left",
                   }}
@@ -120,10 +139,15 @@ export default function ChatbotPage() {
           );
         })}
 
-        {loading && <div style={{ color: "#666" }}>Bot is typing…</div>}
+        {loading && (
+          <div style={{ color: darkMode ? "#d1d5db" : "#666" }}>
+            Bot is typing…
+          </div>
+        )}
         <div ref={bottomRef} />
       </div>
 
+      {/* INPUT */}
       <div style={{ marginTop: 12 }}>
         <textarea
           value={input}
@@ -135,7 +159,9 @@ export default function ChatbotPage() {
             width: "100%",
             padding: 12,
             borderRadius: 12,
-            border: "1px solid #e5e7eb",
+            border: darkMode ? "1px solid #334155" : "1px solid #e5e7eb",
+            background: darkMode ? "#020617" : "#ffffff",
+            color: darkMode ? "#f8fafc" : "#0f172a",
             resize: "none",
           }}
         />
@@ -147,7 +173,9 @@ export default function ChatbotPage() {
             style={{
               padding: "10px 16px",
               borderRadius: 12,
-              border: "1px solid #e5e7eb",
+              border: darkMode ? "1px solid #334155" : "1px solid #e5e7eb",
+              background: darkMode ? "#1e293b" : "#ffffff",
+              color: darkMode ? "#f8fafc" : "#0f172a",
               cursor: !input.trim() || loading ? "not-allowed" : "pointer",
             }}
           >
