@@ -7,7 +7,6 @@ import { useTheme } from "../context/ThemeContext";
 const API_BASE = "/api";
 
 type Captcha = { question: string; answer: string };
-const { darkMode, toggleDarkMode } = useTheme();
 
 type UserData = {
   name: string;

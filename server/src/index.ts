@@ -50,8 +50,8 @@ if (!MONGO_URI) {
 } else {
   mongoose
     .connect(MONGO_URI)
-    .then(() => console.log("DB STATUS: Connected Successfully"))
-    .catch((err: Error) => console.error("DB CONNECTION ERROR:", err.message));
+    .then(() => console.log("✅ DB STATUS: Connected Successfully"))
+    .catch((err: Error) => console.error("❌ DB CONNECTION ERROR:", err.message));
 }
 // ---------------------------
 // Rate limiter (buy actions)
@@ -78,7 +78,6 @@ app.use("/api/public", publicRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/profiles", profileRouter);
 app.use("/api/chatbot", chatbotRouter);
-
 
 // --------------------
 // Extra endpoints
