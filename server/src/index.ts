@@ -78,7 +78,9 @@ app.use("/api/profiles",profiles);
 app.use("/api/profiles/:email", profiles);
 
 let auth = require("./routes/auth.route");
+app.use("/api/auth", auth);
 app.use("/api/auth/authMe", auth);
+app.use("/api/auth/logout", auth);
 
 app.post("/api/register", buyActionLimiter, register);
 app.post("/api/login", buyActionLimiter, login)

@@ -265,3 +265,16 @@ export const changePassword = async (req: Request, res: Response) => {
     res.status(500).json({success: false, message: "Database error" });
   }
 };
+
+export const logout = (req: Request, res: Response) => {
+  res.clearCookie("authToken", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: "Logged out successfully",
+  });
+};

@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import ProfileCard from "../components/profile/ProfileCard";
 import PinModal from "../components/profile/PinModal";
-import {isLoggedIn} from "../utils/auth"
+import {isLoggedIn, logout} from "../utils/auth"
 import { useNavigate } from "react-router-dom";
 import axios, { AxiosError } from "axios";
 import { sendVerificationCodeRequest, getProfilesResponse, Profile, verifyPinRequest, verifyPinResponse } from "../Types/Login";
+import Logout from "../components/login/LogoutButton";
+import LogoutButton from "../components/login/LogoutButton";
 
 type User = {
   email: string;
@@ -171,6 +173,7 @@ const ChooseProfile: React.FC = () => {
     <div className="page">
       <header className="header">
         <h1 className="header-title">Who’s Learning Today?</h1>
+        <LogoutButton></LogoutButton>
       </header>
 
       {/* Add Profile */}
