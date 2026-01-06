@@ -143,7 +143,7 @@ const ChooseProfile: React.FC = () => {
       if (res) {
         localStorage.setItem(
           "activeProfile",
-          JSON.stringify(res.data.profile)
+          JSON.stringify({email: res.data.profile, pin: enteredPin})
         );
         console.log("role : "+res.data.profile.role);
         if(res.data.profile.role === "parent")

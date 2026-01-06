@@ -3,6 +3,10 @@ import ProfileCard from "../components/profile/ProfileCard";
 import PinModal from "../components/profile/PinModal";
 import Layout from "../components/login/Layout";
 import Card from "../components/login/Card";
+import { useNavigate } from "react-router-dom";
+import { isLoggedIn } from "../utils/auth";
+import { getProfilesResponse, sendVerificationCodeRequest } from "../Types/Login";
+import axios, { AxiosError } from "axios";
 
 type Profile = {
   profileName: string;
@@ -14,7 +18,17 @@ type LoggedInUser = {
 
 type OptionAction = "changePin" | "viewProgress" | "reportHistory";
 
+const API_BASE = "/api";
+
 const ParentPage: React.FC = () => {
+  //redirect to login page if user is not logged in
+  const navigate = useNavigate(); 
+  useEffect(() => {
+    isLoggedIn().then(ok => {
+      if (!ok) navigate("/login");
+    });
+  }, []);
+
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
 
@@ -30,13 +44,17 @@ const ParentPage: React.FC = () => {
         const savedUserRaw = localStorage.getItem("loggedInUser");
         if (!savedUserRaw) return;
 
+        /*
         const savedUser = JSON.parse(savedUserRaw) as LoggedInUser;
         if (!savedUser.email) return;
+        */
 
-        const res = await fetch(
-          `http://127.0.0.1:5001/api/profiles/${savedUser.email}`
-        );
-        const data = await res.json();
+        const payload: sendVerificationCodeRequest = {
+            email: savedUserRaw.trim().toLowerCase(),
+        };
+        console.log(payload.email + "*****");
+        const res = await axios.get<getProfilesResponse>(`${API_BASE}/profiles/${payload.email}`, {withCredentials: true , params: payload});
+        const data = res.data;
 
         if (data.success) {
           setProfiles(data.profiles || []);
