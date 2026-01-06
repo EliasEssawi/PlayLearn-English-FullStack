@@ -1,25 +1,21 @@
 
 import React, { ReactNode } from 'react';
 
-
 type GameCardProps = {
   title: string;
   description: string;
   emoji: string;
-  path: string;
+  onClick: () => void;
 };
 
 const GameCard: React.FC<GameCardProps> = ({
   title,
   description,
   emoji,
-  path,
+  onClick,
 }) => {
   return (
-    <button
-      className="profile-card"
-      onClick={() => (window.location.href = path)}
-    >
+    <button className="profile-card" onClick={onClick}>
       <div className="profile-avatar">
         <span className="profile-emoji">{emoji}</span>
       </div>

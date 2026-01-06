@@ -1,6 +1,44 @@
 import GameCard from "./GameCard";
+import TranslateGame from "./translate";
+import { useState } from "react";
+// import SentenceGame from "./SentenceGame";
 
-export default function VocabularyHome(){
+type ActiveGame = "home" | "translate" | "sentence";
+
+export default function VocabularyHome() {
+  const [activeGame, setActiveGame] = useState<ActiveGame>("home");
+
+  //SHOW TRANSLATE GAME
+  if (activeGame === "translate") {
+    return (
+      <>
+        <TranslateGame />
+        <button
+          className="btn btn-secondary"
+          onClick={() => setActiveGame("home")}
+        >
+          ← Back
+        </button>
+      </>
+    );
+  }
+
+  //SHOW SENTENCE GAME
+  if (activeGame === "sentence") {
+    return (
+      <>
+        {/* <SentenceGame /> */}
+        <button
+          className="btn btn-secondary"
+          onClick={() => setActiveGame("home")}
+        >
+          ← Back
+        </button>
+      </>
+    );
+  }
+
+  
   return (
     <div className="page">
       <header className="header">
@@ -12,14 +50,14 @@ export default function VocabularyHome(){
           title="Translate"
           description="Choose the correct translation"
           emoji="🌍"
-          path="/vocabulary/translate"
+          onClick={() => setActiveGame("translate")}
         />
 
         <GameCard
           title="Complete Sentence"
           description="Fill in the missing word"
           emoji="✏️"
-          path="/vocabulary/sentence"
+          onClick={() => setActiveGame("sentence")}
         />
       </section>
     </div>
