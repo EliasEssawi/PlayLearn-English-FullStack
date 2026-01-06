@@ -3,7 +3,7 @@ import Sidebar from "./Sidebar";
 import Header from "./Header";
 import Progrees from "./Progress";
 
-
+import VocabularyHome from "../vocabulary/vocabularyHome";
 import ChatBot from "./chatbot";
 import { MenuItem, SidebarAction } from "../../Types/Section";
 
@@ -66,10 +66,8 @@ export default function MainPage() {
         );
       case "Vocabulary":
           return (
-          <div className="text-[var(--text-muted)] text-lg italic">
-            This section is coming soon 🚧
-          </div>
-        );
+            <VocabularyHome></VocabularyHome>
+          );
       case "AI Chat":
         return (<ChatBot />);
 

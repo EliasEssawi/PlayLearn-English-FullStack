@@ -16,7 +16,7 @@ import ForgotPassword from './components/authintication/forgotPass';
 import AddProfile from './components/profile/addprofile';
 import ParentPage from './components/mainPage/parentPage';
 import MainPage from './components/mainPage/mainPage';
-import Vocabulary from './components/vocabulary';
+import Vocabulary from './components/vocabulary/vocabularyHome';
 import TranslateGame from './components/vocabulary/translate';
 import ChatBot from './components/mainPage/chatbot';
 

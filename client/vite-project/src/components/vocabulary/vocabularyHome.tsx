@@ -1,6 +1,6 @@
 import GameCard from "./GameCard";
 
-const VocabularyHome = () => {
+export default function VocabularyHome(){
   return (
     <div className="page">
       <header className="header">
@@ -16,13 +16,6 @@ const VocabularyHome = () => {
         />
 
         <GameCard
-          title="Choose Picture"
-          description="Pick the correct image"
-          emoji="🖼️"
-          path="/vocabulary/picture"
-        />
-
-        <GameCard
           title="Complete Sentence"
           description="Fill in the missing word"
           emoji="✏️"
@@ -31,6 +24,4 @@ const VocabularyHome = () => {
       </section>
     </div>
   );
-};
-
-export default VocabularyHome;
+}
