@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from "react";
-import Sidebar from "../components/mainPage/Sidebar";
-import Header from "../components/mainPage/Header";
-import Progrees from "../components/mainPage/Progress";
+import Sidebar from "./Sidebar";
+import Header from "./Header";
+import Progrees from "./Progress";
 
 
-import ChatBot from "../pages/chatbot";
-import { MenuItem, SidebarAction } from "../Types/Section";
+import ChatBot from "./chatbot";
+import { MenuItem, SidebarAction } from "../../Types/Section";
 
 import { useNavigate } from "react-router-dom";
-import { isLoggedIn } from "../utils/auth";
-import { useTheme } from "../context/ThemeContext";
+import { isLoggedIn } from "../../utils/auth";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function MainPage() {
   const navigate = useNavigate();

@@ -1,13 +1,13 @@
 import React, { useState } from "react";
-import LeftPanel from "../components/login/LeftPanel";
-import RightPanel from "../components/login/RightPanel";
-import Input from "../components/login/Input";
-import Button from "../components/login/Button";
-import Actions from "../components/login/Actions";
-import Card from "../components/login/Card";
-import Layout from "../components/login/Layout";
+import LeftPanel from "./LeftPanel";
+import RightPanel from "./RightPanel";
+import Input from "./Input";
+import Button from "./Button";
+import Actions from "./Actions";
+import Card from "./Card";
+import Layout from "./Layout";
 import axios, { AxiosError } from "axios";
-import {sendVerificationCodeRequest, LoginResponse, VerifyCodeRequest, ChangePassRequest} from "../Types/Login"
+import {sendVerificationCodeRequest, LoginResponse, VerifyCodeRequest, ChangePassRequest} from "../../Types/Login"
 
 const API_BASE = "/api";
 

@@ -1,11 +1,7 @@
 import React, { useEffect, useState } from "react";
-import ProfileCard from "../components/profile/ProfileCard";
-import PinModal from "../components/profile/PinModal";
-import Layout from "../components/login/Layout";
-import Card from "../components/login/Card";
 import { useNavigate } from "react-router-dom";
-import { isLoggedIn } from "../utils/auth";
-import { getProfilesResponse, sendVerificationCodeRequest } from "../Types/Login";
+import { isLoggedIn } from "../../utils/auth";
+import { getProfilesResponse, sendVerificationCodeRequest } from "../../Types/Login";
 import axios, { AxiosError } from "axios";
 
 type Profile = {

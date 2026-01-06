@@ -1,4 +1,4 @@
-import GameCard from "../../components/vocabulary/GameCard";
+import GameCard from "./GameCard";
 
 const VocabularyHome = () => {
   return (
