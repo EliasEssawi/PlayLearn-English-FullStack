@@ -2,10 +2,12 @@ import React, { useEffect, useState } from "react";
 import axios, { AxiosError } from "axios";
 import { RegisterRequest, RegisterResponse } from "../Types/Register";
 import LoginRightPanel from "../components/login/RightPanel";
+import { useTheme } from "../context/ThemeContext";
 
 const API_BASE = "/api";
 
 type Captcha = { question: string; answer: string };
+const { darkMode, toggleDarkMode } = useTheme();
 
 type UserData = {
   name: string;
@@ -82,7 +84,7 @@ const Register: React.FC = () => {
     };
 
     try {
-      const res = await axios.post<RegisterResponse>(`${API_BASE}/register`, payload);
+      const res = await axios.post<RegisterResponse>(`${API_BASE}/public/register`, payload);
       setMessage(res.data.message || "Registered successfully!");
       //Reset form
       setUserData(initialUserData);

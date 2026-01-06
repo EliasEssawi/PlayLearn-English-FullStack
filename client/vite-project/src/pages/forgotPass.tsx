@@ -29,7 +29,7 @@ export default function ForgotPassword() {
 
         //req to send code via email to server
         try {
-            const res = await axios.post<LoginResponse>(`${API_BASE}/sendResetPassCode`, payload);
+            const res = await axios.post<LoginResponse>(`${API_BASE}/public/sendResetPassCode`, payload);
             setMessage(res.data.message || "code successfully sended !");
             setStep("code"); // show second card 
         } catch (err) {
@@ -50,7 +50,7 @@ export default function ForgotPassword() {
 
         //req to verify code to server
         try {
-            const res = await axios.post<LoginResponse>(`${API_BASE}/verifyPassCode`, payload);
+            const res = await axios.post<LoginResponse>(`${API_BASE}/public/verifyPassCode`, payload);
             setMessage(res.data.message || "code Verified !");
             setStep("newPass"); // show third card 
         } catch (err) {
@@ -72,7 +72,7 @@ export default function ForgotPassword() {
 
         //req to change password to server
         try {
-            const res = await axios.post<LoginResponse>(`${API_BASE}/changePassword`, payload);
+            const res = await axios.post<LoginResponse>(`${API_BASE}/public/changePassword`, payload);
             setMessage(res.data.message || " Password changed successfully !");
             setStep("newPass"); // show third card 
             setEmail("");

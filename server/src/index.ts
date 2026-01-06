@@ -3,65 +3,59 @@
  * Developer: Ilya ZeldnerBahaaElias
  */
 
-import express, { Request, Response, NextFunction } from "express";
-import mongoose, { Document, Schema } from "mongoose";
-import cors from "cors";
 import dotenv from "dotenv";
+dotenv.config();
+
+import express, { Request, Response, NextFunction } from "express";
+import mongoose from "mongoose";
+import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
 
-import { register, login, sendResetPassCode, verifyPassCode, changePassword, authMiddleware, AuthRequest } from "./controllers/authController";
-
 import { User } from "./models/User";
-import { addProfile } from "./controllers/profileController";
-import { verifyProfilePin } from "./controllers/profileController";
 
-import cookieParser from "cookie-parser";
-
-dotenv.config();
+// ✅ Create app FIRST
 const app = express();
 
-// MIDDLEWARE
+// --------------------
+// Middleware
+// --------------------
 app.use(helmet());
 app.use(morgan("dev"));
-app.use(cors());
-app.use(express.json());
-
-
-app.use(cookieParser());
-
-// ✅ CORS middleware — must be BEFORE your routes
 
 app.use(
   cors({
-    origin: "http://localhost:5001", // your frontend URL
-    credentials: true,               // allow cookies to be sent
+    origin: "http://localhost:5173", // ✅ Frontend (Vite default). Change if yours is different.
+    credentials: true,
   })
 );
 
-
+app.use(express.json());
+app.use(cookieParser());
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   res.set("Cache-Control", "no-store");
   next();
 });
 
-// DATABASE
+// --------------------
+// Database
+// --------------------
 const MONGO_URI = process.env.MONGO_URI || "";
 
 if (!MONGO_URI) {
-  console.error("❌ CRITICAL: MONGO_URI is missing from .env!");
+  console.error("CRITICAL: MONGO_URI is missing from .env!");
 } else {
   mongoose
     .connect(MONGO_URI)
-    .then(() => console.log("✅ DB STATUS: Connected Successfully"))
-    .catch((err: Error) =>
-      console.error("❌ DB CONNECTION ERROR:", err.message)
-    );
+    .then(() => console.log("DB STATUS: Connected Successfully"))
+    .catch((err: Error) => console.error("DB CONNECTION ERROR:", err.message));
 }
-
-// RATE LIMITER (POST ONLY)
+// ---------------------------
+// Rate limiter (buy actions)
+// ---------------------------
 export const buyActionLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 10,
@@ -72,38 +66,43 @@ export const buyActionLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+// --------------------
+// Routes (CommonJS style)
+// --------------------
+const publicRouter = require("./routes/public.route");
+const authRouter = require("./routes/auth.route");
+const profileRouter = require("./routes/profile.route");
+const chatbotRouter = require("./routes/chatbot.route");
 
-let profiles = require("./routes/profile.route");
-app.use("/api/profiles",profiles);
-app.use("/api/profiles/:email", profiles);
-
-let auth = require("./routes/auth.route");
-app.use("/api/auth", auth);
-app.use("/api/auth/authMe", auth);
-app.use("/api/auth/logout", auth);
-
-app.post("/api/register", buyActionLimiter, register);
-app.post("/api/login", buyActionLimiter, login)
-//app.post("/api/profiles", buyActionLimiter, addProfile);
-//app.post("/api/profiles/verify-pin", buyActionLimiter,verifyProfilePin);
-app.post("/api/sendResetPassCode", buyActionLimiter,sendResetPassCode);
-app.post("/api/verifyPassCode", buyActionLimiter,verifyPassCode);
-app.post("/api/changePassword", buyActionLimiter, changePassword)
+app.use("/api/public", publicRouter);
+app.use("/api/auth", authRouter);
+app.use("/api/profiles", profileRouter);
+app.use("/api/chatbot", chatbotRouter);
 
 
-app.get("/api/getAllUsers", async (req, res) => {
+// --------------------
+// Extra endpoints
+// --------------------
+app.get("/api/getAllUsers", async (_req, res) => {
   try {
     const users = await User.find();
-    res.status(200).json(users);
-    console.log(users);
-  } catch (err) {
-    res.status(500).json();
+    return res.status(200).json(users);
+  } catch {
+    return res.status(500).json({ error: "Failed to fetch users" });
   }
 });
 
-// Listen on 127.0.0.1 to perfectly match Vite's proxy target
+app.get("/health", (_req, res) => res.json({ ok: true }));
+
+// --------------------
+// Server
+// --------------------
 const PORT = 5001;
+
 app.listen(PORT, "127.0.0.1", () => {
-console.log(`🚀 BACKEND ACTIVE: http://127.0.0.1:${PORT}`);
+  console.log(`BACKEND ACTIVE: http://127.0.0.1:${PORT}`);
 });
+
+// Listen on 127.0.0.1 to perfectly match Vite's proxy target
+
 //ELias Commit added
