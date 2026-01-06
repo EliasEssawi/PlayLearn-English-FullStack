@@ -3,8 +3,8 @@ import ProfileCard from "../components/profile/ProfileCard";
 import PinModal from "../components/profile/PinModal";
 import {isLoggedIn} from "../utils/auth"
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import { sendVerificationCodeRequest, getProfilesResponse, Profile } from "../Types/Login";
+import axios, { AxiosError } from "axios";
+import { sendVerificationCodeRequest, getProfilesResponse, Profile, verifyPinRequest, verifyPinResponse } from "../Types/Login";
 
 type User = {
   email: string;
@@ -34,6 +34,12 @@ const ChooseProfile: React.FC = () => {
   const [pinError, setPinError] = useState<boolean>(false);
   const [profiles, setProfiles] = useState<Profile[]>([]);
 
+  const parentProfile:Profile = {
+    profileName: "parent",
+    pin: "",
+    role: "parent",
+    points : 0
+  }
   
   /* ===========================
      Fetch profiles
@@ -123,36 +129,37 @@ const ChooseProfile: React.FC = () => {
     if (!selectedProfile || !currentUser) return;
 
     const enteredPin = pinInputs.join("");
-
+    
     try {
-      const res = await fetch(
-        "http://127.0.0.1:5001/api/profiles/verify-pin",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: currentUser.email,
-            profileName: selectedProfile.profileName,
-            pin: enteredPin,
-          }),
-        }
-      );
+      
+      const payload: verifyPinRequest = {
+          email: currentUser.email,
+          profileName: selectedProfile.profileName,
+          pin: enteredPin,
+      };
 
-      const data = await res.json();
+      const res = await axios.post<verifyPinResponse>(`${API_BASE}/profiles/verify-pin`, payload ,{withCredentials: true});
 
-      if (data.success) {
+      if (res) {
         localStorage.setItem(
           "activeProfile",
-          JSON.stringify(data.profile)
+          JSON.stringify(res.data.profile)
         );
-        window.location.href = "/parentPage";
+        console.log("role : "+res.data.profile.role);
+        if(res.data.profile.role === "parent")
+        {
+          window.location.href = "/parentPage";
+          return;
+        }
+        window.location.href = "/mainPage";
         return;
       }
-
+    
       setPinError(true);
       setPinInputs(["", "", "", ""]);
     } catch (err) {
-      console.error(err);
+      const error = err as AxiosError<{ message?: string }>;
+      console.error("err :"+error.response?.data?.message);
       setPinError(true);
     }
   };
@@ -182,7 +189,7 @@ const ChooseProfile: React.FC = () => {
         <ProfileCard
           name="Parent"
           emoji="👨‍👩‍👧"
-          onClick={() => openPin(profiles.find(profile => profile.profileName === "Parent"))}
+          onClick={() => openPin( parentProfile )}
         />
 
         {/* Children */}

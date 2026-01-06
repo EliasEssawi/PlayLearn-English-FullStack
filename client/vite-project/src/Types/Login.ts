@@ -12,10 +12,22 @@ export interface sendVerificationCodeRequest {
   email: string;
 }
 
+export interface verifyPinRequest{
+  email: string,
+  profileName: string,
+  pin: string,
+}
+
+export interface verifyPinResponse{
+  success: boolean;
+  profile:Profile;
+}
+
 export interface Profile {
   profileName: string,
 	pin: string,
-	progress: Record<string, any>,
+  role?: string,
+	progress?: Record<string, any>,
 	points : Number
 }
 

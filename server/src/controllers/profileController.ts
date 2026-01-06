@@ -73,7 +73,9 @@ export const addProfile = async (req: AuthRequest, res: Response) => {
 ========================= */
 export const verifyProfilePin = async (req: Request, res: Response) => {
   try {
-    const { profileName, pin } = req.body;
+    const { email, profileName, pin } = req.body;
+
+    console.log(" email: " +email + ", profileName: " + profileName, ", pin: " + pin);
 
     if (!profileName || !pin) {
       return res.status(400).json({
@@ -89,6 +91,30 @@ export const verifyProfilePin = async (req: Request, res: Response) => {
       return res.status(404).json({
         success: false,
         message: "User not found",
+      });
+    }
+
+    if (profileName === "parent")
+    {
+      console.log("checking parent pin");
+      //const isMatch = await bcrypt.compare(pin, user.pin);
+      const isMatch = pin === user.pin;
+      if (!isMatch) {
+        return res.status(401).json({
+          success: false,
+          message: "Parent Invalid PIN",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        profile: {
+          profileName: profileName,
+          role: "parent",
+          points: 0,
+          rate: 0,
+          progress: null,
+        },
       });
     }
 
