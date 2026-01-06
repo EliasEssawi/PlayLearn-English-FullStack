@@ -2,12 +2,11 @@ import React, { useState, useEffect } from "react";
 import Sidebar from "../components/mainPage/Sidebar";
 import Header from "../components/mainPage/Header";
 import Progrees from "../components/mainPage/Progress";
-<<<<<<< HEAD
-import { MenuItem } from "../Types/Section";
-=======
+
+
 import ChatBot from "../pages/chatbot";
 import { MenuItem, SidebarAction } from "../Types/Section";
->>>>>>> 454fc152f6f2fc9be231aaba63d229b6bb035631
+
 import { useNavigate } from "react-router-dom";
 import { isLoggedIn } from "../utils/auth";
 import { useTheme } from "../context/ThemeContext";
@@ -62,7 +61,7 @@ export default function MainPage() {
             This section is coming soon 🚧
           </div>
         );
-    
+    }
   };
 
   return (
