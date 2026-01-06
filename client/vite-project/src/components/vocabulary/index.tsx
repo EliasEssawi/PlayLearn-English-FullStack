@@ -16,13 +16,6 @@ const VocabularyHome = () => {
         />
 
         <GameCard
-          title="Choose Picture"
-          description="Pick the correct image"
-          emoji="🖼️"
-          path="/vocabulary/picture"
-        />
-
-        <GameCard
           title="Complete Sentence"
           description="Fill in the missing word"
           emoji="✏️"
