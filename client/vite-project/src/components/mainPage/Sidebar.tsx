@@ -60,7 +60,7 @@ export default function Sidebar({ menuItems, title, secondaryMenu, bottomAction,
         <div className="p-6 bg-black/10 border-t border-white/10">
           <button
             onClick={() => onSelect(bottomAction.section)}
-            className="hover:scale-105 w-full flex justify-center items-center gap-2 bg-yellow-400 text-yellow-900 font-bold py-3 rounded-xl hover:bg-yellow-300 transition"
+            className="hover:scale-105 w-full flex justify-center items-center gap-2 bg-white-400 text-white-900 font-bold py-3 rounded-xl hover:bg-green-300 transition"
           >
             <span className="text-xl">{bottomAction.icon}</span>
             {bottomAction.label}
