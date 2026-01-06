@@ -3,24 +3,22 @@
  * Developer: Ilya Zeldner
  */
 import { useState, useEffect, Component } from 'react'
-import Login from './pages/login'
-import Register from './pages/register'
+import Login from './components/authintication/login'
+import Register from './components/authintication/register'
 import StarterPage from './pages/starterPage'
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import ChooseProfile from './pages/chooseProfile'
+import ChooseProfile from './components/profile/chooseProfile'
 import axios, { AxiosError } from "axios";
 const API_BASE = "/api";
 import Layout from './components/NavigationAndSwitcher/Layout';
 import Navigationbar from './components/NavigationAndSwitcher/NavigationBar';
-import ForgotPassword from './pages/forgotPass';
-import AddProfile from './pages/addprofile';
-import ParentPage from './pages/parentPage';
-import MainPage from './pages/mainPage';
-import Vocabulary from './pages/vocabulary/index';
-import TranslateGame from './pages/vocabulary/translate';
-import ChatBot from './pages/chatbot';
-
-
+import ForgotPassword from './components/authintication/forgotPass';
+import AddProfile from './components/profile/addprofile';
+import ParentPage from './components/mainPage/parentPage';
+import MainPage from './components/mainPage/mainPage';
+import Vocabulary from './components/vocabulary/vocabularyHome';
+import TranslateGame from './components/vocabulary/translate';
+import ChatBot from './components/mainPage/chatbot';
 
 
 function App() {

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import TranslateQuestion from "../../components/vocabulary/TranslateQuestion";
+import TranslateQuestion from "./TranslateQuestion";
 
 type Question = {
   word: string;

@@ -15,7 +15,7 @@ export default function ChatbotPage({ darkMode }: ChatbotProps) {
   const [messages, setMessages] = useState<Msg[]>([
     {
       role: "bot",
-      text: "Hi! I’m your Gemini assistant. Ask me anything about the app or React.",
+      text: "Hi! I’m your Gemini assistant. Ask me anything, or just say hello! 😊",
       time: new Date().toLocaleTimeString(),
     },
   ]);

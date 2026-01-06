@@ -1,15 +1,15 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import LoginLayout from "../components/login/Layout";
-import LoginCard from "../components/login/Card";
-import LoginLeftPanel from "../components/login/LeftPanel";
-import LoginRightPanel from "../components/login/RightPanel";
-import LoginHeader from "../components/login/Header";
-import LoginInput from "../components/login/Input";
-import ButtonLogin from "../components/login/Button";
-import LoginActions from "../components/login/Actions";
-import { LoginRequest, LoginResponse } from "../Types/Login";
+import LoginLayout from "./Layout";
+import LoginCard from "./Card";
+import LoginLeftPanel from "./LeftPanel";
+import LoginRightPanel from "./RightPanel";
+import LoginHeader from "./Header";
+import LoginInput from "./Input";
+import ButtonLogin from "./Button";
+import LoginActions from "./Actions";
+import { LoginRequest, LoginResponse } from "../../Types/Login";
 import axios, { AxiosError } from "axios";
 
 const API_BASE = "/api";

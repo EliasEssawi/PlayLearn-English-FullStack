@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import axios, { AxiosError } from "axios";
 
-import Layout from "../components/login/Layout";
-import Card from "../components/login/Card";
-import Input from "../components/login/Input";
-import Button from "../components/login/Button";
-import LoginRightPanel from "../components/login/RightPanel";
+import Layout from "../authintication/Layout";
+import Card from "../authintication/Card";
+import Input from "../authintication/Input";
+import Button from "../authintication/Button";
+import LoginRightPanel from "../authintication/RightPanel";
 
 const API_BASE = "/api";
 

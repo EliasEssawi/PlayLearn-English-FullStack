@@ -102,11 +102,7 @@ export default function Sidebar({
         >
           <button
             onClick={() => onSelect(bottomAction.section)}
-            className="
-              hover:scale-105 w-full flex justify-center items-center gap-2
-              bg-white text-black font-bold py-3 rounded-xl
-              hover:bg-gray-200 transition
-            "
+            className="hover:scale-105 w-full flex justify-center items-center gap-2 bg-white-400 text-white-900 font-bold py-3 rounded-xl hover:bg-green-300 transition"
           >
             <span className="text-xl">{bottomAction.icon}</span>
             {bottomAction.label}
