@@ -110,6 +110,14 @@ html, body {
   margin-right: auto;
   line-height: 1.6;
 }
+/* =========================
+   Dark mode – hero text
+========================= */
+
+body.dark .hero-sub {
+  color: rgba(255, 255, 255, 0.85);
+}
+
 
 /* ---------------------------
    Cards + grid (StarterPage)
@@ -814,3 +822,61 @@ html, body {
   transform: translateY(-2px);
   filter: brightness(1.08);
 }
+/* ===========================
+   🌙 DARK MODE
+=========================== */
+
+body.dark {
+  background: #0f172a; /* dark navy */
+  color: #e5e7eb;
+}
+
+/* page background */
+body.dark .page {
+  background: radial-gradient(circle at top, #1e293b, #020617);
+}
+
+/* header */
+body.dark .header {
+  background: #1e293b;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+}
+
+/* cards */
+body.dark .card {
+  background: #1e293b;
+  color: #e5e7eb;
+}
+
+body.dark .feature-title {
+  color: #7ee081;
+}
+
+body.dark .feature-desc {
+  color: #cbd5e1;
+}
+
+/* buttons */
+body.dark .btn-primary {
+  background: #22c55e;
+  color: #052e16;
+}
+
+body.dark .nav-btn {
+  background: #020617;
+  color: #e5e7eb;
+}
+
+body.dark .nav-btn-login {
+  color: #7ee081;
+}
+
+body.dark .nav-btn-register {
+  color: #f87171;
+}
+
+/* footer */
+body.dark .footer {
+  background: #1e293b;
+}
+

@@ -1,14 +1,16 @@
 import React from "react";
 import Layout from "../components/NavigationAndSwitcher/Layout";
+import { useTheme } from "../context/ThemeContext";
 
-type Page = "login" | "register"|"index";
+type Page = "login" | "register" | "index";
 
 const StarterPage: React.FC = () => {
+  const { darkMode, toggleDarkMode } = useTheme();
+
   const goToPage = (page: Page): void => {
     if (page === "login") window.location.href = "/login";
     if (page === "register") window.location.href = "/register";
     if (page === "index") window.location.href = "/vocabulary/index";
-
   };
 
   const features = [
@@ -21,7 +23,6 @@ const StarterPage: React.FC = () => {
   ];
 
   return (
-    
     <div className="page">
       {/* HEADER */}
       <header className="header">
@@ -44,6 +45,7 @@ const StarterPage: React.FC = () => {
             >
               Register
             </button>
+
             <button
               type="button"
               onClick={() => goToPage("index")}
@@ -51,14 +53,21 @@ const StarterPage: React.FC = () => {
             >
               Vocabulary
             </button>
+
+            {/* 🌙 DARK MODE BUTTON */}
+            <button
+              type="button"
+              onClick={toggleDarkMode}
+              className="nav-btn"
+            >
+              {darkMode ? "☀️ Light" : "🌙 Dark"}
+            </button>
           </nav>
         </div>
       </header>
 
       {/* HERO */}
       <section className="section hero">
-        
-
         <h2 className="hero-title">Learn English the Fun Way!</h2>
 
         <p className="hero-sub">
@@ -71,20 +80,23 @@ const StarterPage: React.FC = () => {
           </button>
         </div>
       </section>
-     
-     
+
       {/* FEATURES */}
       <section className="section">
         <h3 className="features-title">What You Can Do</h3>
 
         <div className="grid">
           {features.map((f, idx) => (
-            <div key={idx} className="card card-pad card-hover" role="button" tabIndex={0}>
+            <div
+              key={idx}
+              className="card card-pad card-hover"
+              role="button"
+              tabIndex={0}
+            >
               <img src={f.icon} className="feature-icon" alt={f.title} />
               <div className="feature-title">{f.title}</div>
               <div className="feature-desc">{f.desc}</div>
             </div>
-            
           ))}
         </div>
       </section>
@@ -95,6 +107,6 @@ const StarterPage: React.FC = () => {
       </footer>
     </div>
   );
-}
+};
 
 export default StarterPage;
