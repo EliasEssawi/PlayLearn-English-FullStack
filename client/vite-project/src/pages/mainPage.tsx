@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Sidebar from "../components/mainPage/Sidebar";
 import Header from "../components/mainPage/Header";
 import Progrees from "../components/mainPage/Progress";
+import ChatBot from "../pages/chatbot";
 import { MenuItem, SidebarAction } from "../Types/Section";
 import { useNavigate } from "react-router-dom";
 import { isLoggedIn } from "../utils/auth";
@@ -39,13 +40,14 @@ export default function MainPage() {
     switch (activeSection) {
       case "View Progress":
         return(<Progrees onSelectSection={setActiveSection} />)
+      
 
       case "Talking":
       case "Reading":
       case "Listening":
       case "Vocabulary":
-      case "AI Chat":
-
+      case "AI Chat":return (<ChatBot/>);
+    
       default:
         return (
           <div className="text-gray-400 text-lg italic">

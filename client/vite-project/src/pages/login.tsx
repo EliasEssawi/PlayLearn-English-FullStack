@@ -54,7 +54,7 @@ export default function Login() {
         ✔ Cookie is sent on every next request
         ✔ JS cannot read it (secure)
       */
-      await axios.post<LoginResponse>(`${API_BASE}/login`, payload, { withCredentials: true });
+      await axios.post<LoginResponse>(`${API_BASE}/public/login`, payload, { withCredentials: true });
 
       localStorage.setItem("loggedInUser", payload.email);
 

@@ -1,10 +1,10 @@
 import { authMiddleware, AuthRequest } from "../controllers/authController";
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
+import { Router } from "express";
 
-const express = require('express');
-const authRouter = express.Router();
+const authRouter = Router();
 
-authRouter.get("/auth/authMe", authMiddleware, (req: AuthRequest, res: Response) => {
+authRouter.get("/authMe", authMiddleware, (req: AuthRequest, res: Response) => {
   console.log("found me");
   res.json({
     success: true,
@@ -15,9 +15,8 @@ authRouter.get("/auth/authMe", authMiddleware, (req: AuthRequest, res: Response)
   });
 });
 
-
-authRouter.get("/", (req:Request, res:Response) => {
-  res.send("Profiles OK");
+authRouter.get("/", (req: Request, res: Response) => {
+  res.send("Auth OK");
 });
 
 module.exports = authRouter;
