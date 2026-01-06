@@ -822,61 +822,60 @@ body.dark .hero-sub {
   transform: translateY(-2px);
   filter: brightness(1.08);
 }
-/* ===========================
-   🌙 DARK MODE
-=========================== */
+/* =========================
+   THEME VARIABLES
+========================= */
 
+/* 🌞 Light Mode (ברירת מחדל) */
+:root {
+  --bg-main: #f3f4f6;      /* רקע כללי */
+  --bg-card: #ffffff;     /* כרטיסים */
+  --bg-sidebar: #1a7822;  /* Sidebar */
+  --text-main: #0f172a;   /* טקסט ראשי */
+  --text-muted: #6b7280;  /* טקסט חלש */
+  --border: #e5e7eb;
+}
+
+/* 🌙 Dark Mode */
+.dark {
+  --bg-main: #020617;
+  --bg-card: #0f172a;
+  --bg-sidebar: #14532d;
+  --text-main: #e5e7eb;
+  --text-muted: #9ca3af;
+  --border: #1f2937;
+}
+
+/* =========================
+   GLOBAL USAGE
+========================= */
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text-main);
+}
+
+/* LIGHT MODE (ברירת מחדל) */
+:root {
+  --bg: #E8F9FD;
+  --card-bg: #ffffff;
+  --header-bg: #7EE081;
+  --primary: #7EE081;
+  --primary-text: #419D78;
+  --danger: #ff6b6b;
+  --text-main: #1f2937;
+  --text-muted: rgba(0,0,0,0.55);
+}
+
+/* DARK MODE */
 body.dark {
-  background: #0f172a; /* dark navy */
-  color: #e5e7eb;
-}
-
-/* page background */
-body.dark .page {
-  background: radial-gradient(circle at top, #1e293b, #020617);
-}
-
-/* header */
-body.dark .header {
-  background: #1e293b;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.6);
-}
-
-/* cards */
-body.dark .card {
-  background: #1e293b;
-  color: #e5e7eb;
-}
-
-body.dark .feature-title {
-  color: #7ee081;
-}
-
-body.dark .feature-desc {
-  color: #cbd5e1;
-}
-
-/* buttons */
-body.dark .btn-primary {
-  background: #22c55e;
-  color: #052e16;
-}
-
-body.dark .nav-btn {
-  background: #020617;
-  color: #e5e7eb;
-}
-
-body.dark .nav-btn-login {
-  color: #7ee081;
-}
-
-body.dark .nav-btn-register {
-  color: #f87171;
-}
-
-/* footer */
-body.dark .footer {
-  background: #1e293b;
+  --bg: #020617;
+  --card-bg: #0f172a;
+  --header-bg: #020617;
+  --primary: #22c55e;
+  --primary-text: #86efac;
+  --danger: #f87171;
+  --text-main: #e5e7eb;
+  --text-muted: #9ca3af;
 }
 

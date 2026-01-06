@@ -1,5 +1,4 @@
 import React from "react";
-import Layout from "../components/NavigationAndSwitcher/Layout";
 import { useTheme } from "../context/ThemeContext";
 
 type Page = "login" | "register" | "index";
@@ -23,9 +22,19 @@ const StarterPage: React.FC = () => {
   ];
 
   return (
-    <div className="page">
+    /* 🌍 רקע כללי של הדף */
+    <div
+      className="min-h-screen w-full font-[Poppins]"
+      style={{
+        background: "var(--bg-main)",
+        color: "var(--text-main)",
+      }}
+    >
       {/* HEADER */}
-      <header className="header">
+      <header
+        className="header"
+      
+      >
         <div className="container header-row">
           <h1 className="header-title">PlayLearn English</h1>
 
@@ -33,7 +42,7 @@ const StarterPage: React.FC = () => {
             <button
               type="button"
               onClick={() => goToPage("login")}
-              className="nav-btn nav-btn-login"
+              className="nav-btn"
             >
               Login
             </button>
@@ -41,7 +50,7 @@ const StarterPage: React.FC = () => {
             <button
               type="button"
               onClick={() => goToPage("register")}
-              className="nav-btn nav-btn-register"
+              className="nav-btn"
             >
               Register
             </button>
@@ -49,7 +58,7 @@ const StarterPage: React.FC = () => {
             <button
               type="button"
               onClick={() => goToPage("index")}
-              className="nav-btn nav-btn-register"
+              className="nav-btn"
             >
               Vocabulary
             </button>
@@ -70,7 +79,7 @@ const StarterPage: React.FC = () => {
       <section className="section hero">
         <h2 className="hero-title">Learn English the Fun Way!</h2>
 
-        <p className="hero-sub">
+        <p className="hero-sub" style={{ color: "var(--text-muted)" }}>
           Play games, practice vocabulary, listen to stories, and chat with our AI friend.
         </p>
 
@@ -90,19 +99,31 @@ const StarterPage: React.FC = () => {
             <div
               key={idx}
               className="card card-pad card-hover"
+              style={{
+                background: "var(--bg-card)",
+                border: "1px solid var(--border)",
+              }}
               role="button"
               tabIndex={0}
             >
               <img src={f.icon} className="feature-icon" alt={f.title} />
               <div className="feature-title">{f.title}</div>
-              <div className="feature-desc">{f.desc}</div>
+              <div className="feature-desc" style={{ color: "var(--text-muted)" }}>
+                {f.desc}
+              </div>
             </div>
           ))}
         </div>
       </section>
 
       {/* FOOTER */}
-      <footer className="footer">
+      <footer
+        className="footer"
+        style={{
+          color: "var(--text-muted)",
+          borderTop: "1px solid var(--border)",
+        }}
+      >
         © 2025 PlayLearn English — Learn &amp; Play!
       </footer>
     </div>
