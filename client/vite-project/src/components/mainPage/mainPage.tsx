@@ -44,16 +44,34 @@ export default function MainPage() {
   const renderMainContent = () => {
     switch (activeSection) {
       case "View Progress":
-
-        return(<Progrees onSelectSection={setActiveSection} />)
-      
+        return(<Progrees onSelectSection={setActiveSection} />);
 
       case "Talking":
+        return (
+          <div className="text-[var(--text-muted)] text-lg italic">
+            This section is coming soon 🚧
+          </div>
+        );
       case "Reading":
+        return (
+          <div className="text-[var(--text-muted)] text-lg italic">
+            This section is coming soon 🚧
+          </div>
+        );
       case "Listening":
+          return (
+          <div className="text-[var(--text-muted)] text-lg italic">
+            This section is coming soon 🚧
+          </div>
+        );
       case "Vocabulary":
-      case "AI Chat":return (<ChatBot/>);
-    
+          return (
+          <div className="text-[var(--text-muted)] text-lg italic">
+            This section is coming soon 🚧
+          </div>
+        );
+      case "AI Chat":
+        return (<ChatBot />);
 
       default:
         return (
