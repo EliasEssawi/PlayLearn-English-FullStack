@@ -8,6 +8,10 @@ type Props = {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   name?: string;
+
+  /* ✅ additions only */
+  min?: number;
+  max?: number;
 };
 
 export default function LoginInput({
@@ -18,6 +22,8 @@ export default function LoginInput({
   value,
   onChange,
   name,
+  min,
+  max,
 }: Props) {
   return (
     <div style={{ marginBottom: "1rem" }}>
@@ -30,6 +36,10 @@ export default function LoginInput({
         onChange={onChange}
         placeholder={placeholder}
         className="auth-input"
+
+        /* ✅ added – no behavior change */
+        min={min}
+        max={max}
       />
     </div>
   );

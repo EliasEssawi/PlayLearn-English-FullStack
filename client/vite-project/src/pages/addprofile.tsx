@@ -13,10 +13,7 @@ type AddProfileData = {
   profileName: string;
   pin: string;
   confirmPin: string;
-};
-
-type LoggedInUser = {
-  email?: string;
+  rate: number;
 };
 
 const AddProfile: React.FC = () => {
@@ -24,13 +21,23 @@ const AddProfile: React.FC = () => {
     profileName: "",
     pin: "",
     confirmPin: "",
+    rate: 1,
   };
 
   const [profileData, setProfileData] = useState(initialData);
   const [message, setMessage] = useState("");
 
-  const handleChange = (name: keyof AddProfileData, value: string) => {
-    if ((name === "pin" || name === "confirmPin") && value.length > 4) return;
+  const handleChange = (
+    name: keyof AddProfileData,
+    value: string | number
+  ) => {
+    if (
+      (name === "pin" || name === "confirmPin") &&
+      String(value).length > 4
+    ) {
+      return;
+    }
+
     setProfileData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -47,21 +54,16 @@ const AddProfile: React.FC = () => {
       return;
     }
 
-    //  שלב 3: שליפת המשתמש המחובר
-    const savedUser: LoggedInUser = JSON.parse(
-      localStorage.getItem("loggedInUser") || "{}"
-    );
-
-    if (!savedUser.email) {
-      setMessage("User is not logged in.");
+    if (profileData.rate < 1 || profileData.rate > 5) {
+      setMessage("Level must be between 1 and 5.");
       return;
     }
 
     try {
       await axios.post(`${API_BASE}/profiles`, {
-        email: savedUser.email, 
         profileName: profileData.profileName.trim(),
         pin: profileData.pin,
+        rate: profileData.rate,
       });
 
       alert("Profile added successfully!");
@@ -79,8 +81,6 @@ const AddProfile: React.FC = () => {
         {/* LEFT SIDE */}
         <div className="auth-left">
           <div className="add-profile-left">
-
-            {/* TITLE */}
             <div className="add-profile-header">
               <h2 className="add-profile-title">Add Child Profile</h2>
               <p className="add-profile-subtitle">
@@ -88,7 +88,6 @@ const AddProfile: React.FC = () => {
               </p>
             </div>
 
-            {/* FORM */}
             <form
               className="add-profile-form"
               onSubmit={(e) => {
@@ -113,9 +112,7 @@ const AddProfile: React.FC = () => {
                 name="pin"
                 type="password"
                 value={profileData.pin}
-                onChange={(e) =>
-                  handleChange("pin", e.target.value)
-                }
+                onChange={(e) => handleChange("pin", e.target.value)}
                 placeholder="1234"
                 required
               />
@@ -132,15 +129,25 @@ const AddProfile: React.FC = () => {
                 required
               />
 
+              <Input
+                label="Child Level (1–5)"
+                name="rate"
+                type="number"
+                value={String(profileData.rate)}
+                onChange={(e) =>
+                  handleChange("rate", Number(e.target.value))
+                }
+                min={1}
+                max={5}
+                required
+              />
+
               {message && <div className="error">{message}</div>}
 
               <div className="add-profile-actions">
-                <Button>
-                  ADD PROFILE
-                </Button>
+                <Button>ADD PROFILE</Button>
               </div>
             </form>
-
           </div>
         </div>
 

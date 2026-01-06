@@ -1,19 +1,19 @@
- import { Request, Response } from "express";
+import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { User } from "../models/User";
 import { AuthRequest } from "./authController";
 
-
 /* =========================
-   ADD PROFILE (קיים)
+   ADD PROFILE
 ========================= */
-//use AuthRequest for any request thats after login
 export const addProfile = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!.userId; // 
-    const { email, profileName, pin } = req.body;
+    const userId = req.user!.userId;
 
-    if (!email || !profileName || !pin) {
+    const { profileName, pin, rate } = req.body;
+
+    /* ✅ validation */
+    if (!profileName || !pin || rate === undefined) {
       return res.status(400).json({
         success: false,
         message: "Missing required fields",
@@ -27,7 +27,14 @@ export const addProfile = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    const user = await User.findOne({ email });
+    if (rate < 1 || rate > 5) {
+      return res.status(400).json({
+        success: false,
+        message: "Rate must be between 1 and 5",
+      });
+    }
+
+    const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -42,6 +49,7 @@ export const addProfile = async (req: AuthRequest, res: Response) => {
       pin: hashedPin,
       progress: {},
       points: 0,
+      rate, // ✅ מגיע מה־frontend
     });
 
     await user.save();
@@ -52,24 +60,31 @@ export const addProfile = async (req: AuthRequest, res: Response) => {
       profiles: user.profiles,
     });
   } catch (err) {
+    console.error(err);
     return res.status(500).json({
       success: false,
       message: "Database error",
     });
   }
 };
+
+/* =========================
+   VERIFY PROFILE PIN
+========================= */
 export const verifyProfilePin = async (req: Request, res: Response) => {
   try {
-    const { email, profileName, pin } = req.body;
+    const { profileName, pin } = req.body;
 
-    if (!email || !profileName || !pin) {
+    if (!profileName || !pin) {
       return res.status(400).json({
         success: false,
         message: "Missing required fields",
       });
     }
 
-    const user = await User.findOne({ email });
+    const userId = (req as any).user?.userId;
+    const user = await User.findById(userId);
+
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -77,30 +92,6 @@ export const verifyProfilePin = async (req: Request, res: Response) => {
       });
     }
 
-    /* ===========================
-       ✅ PARENT PIN CHECK
-    =========================== */
-    if (profileName === "Parent") {
-      if (pin !== user.pin) {
-        return res.status(401).json({
-          success: false,
-          message: "Invalid PIN",
-        });
-      }
-
-      return res.status(200).json({
-        success: true,
-        message: "Parent PIN verified",
-        profile: {
-          profileName: "Parent",
-          role: "parent",
-        },
-      });
-    }
-
-    /* ===========================
-       👶 CHILD PROFILE PIN CHECK
-    =========================== */
     const profile = user.profiles.find(
       (p) => p.profileName === profileName
     );
@@ -112,7 +103,8 @@ export const verifyProfilePin = async (req: Request, res: Response) => {
       });
     }
 
-    if (pin !== profile.pin) {
+    const isMatch = await bcrypt.compare(pin, profile.pin);
+    if (!isMatch) {
       return res.status(401).json({
         success: false,
         message: "Invalid PIN",
@@ -121,11 +113,11 @@ export const verifyProfilePin = async (req: Request, res: Response) => {
 
     return res.status(200).json({
       success: true,
-      message: "PIN verified",
       profile: {
         profileName: profile.profileName,
         role: "child",
         points: profile.points,
+        rate: profile.rate,
         progress: profile.progress,
       },
     });
