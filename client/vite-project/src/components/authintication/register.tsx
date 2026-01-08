@@ -83,6 +83,7 @@ const Register: React.FC = () => {
 
     try {
       const res = await axios.post<RegisterResponse>(`${API_BASE}/public/register`, payload);
+      
       setMessage(res.data.message || "Registered successfully!");
       //Reset form
       setUserData(initialUserData);
@@ -236,7 +237,14 @@ const Register: React.FC = () => {
               </div>
 
               {/* Message */}
-              {message ? <div className="error">{message}</div> : null}
+              {/* Message */}
+{message ? (
+  <div
+    className={message.toLowerCase().includes("successfully") ? "success" : "error"}
+  >
+    {message}
+  </div>
+) : null}
 
               {/* Submit */}
               <button type="submit" className="btn btn-primary">

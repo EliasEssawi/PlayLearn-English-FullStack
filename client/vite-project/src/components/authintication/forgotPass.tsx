@@ -156,8 +156,11 @@ export default function ForgotPassword() {
                         </form>
                     )}
 
-                    {message && <div className="error">{message}</div>}
-
+                   {message && (
+  <div className={message.toLowerCase().includes("failed")||message.toLowerCase().includes("invalid") ? "error" : "success"}>
+    {message}
+  </div>
+)}
                     <Actions
                         text="Back"
                         actionFunction={goBack}
