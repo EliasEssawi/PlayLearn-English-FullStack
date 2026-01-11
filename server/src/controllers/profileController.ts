@@ -155,3 +155,66 @@ export const verifyProfilePin = async (req: Request, res: Response) => {
     });
   }
 };
+
+/* =============================================
+   הוספה: פונקציה לעדכון PIN של פרופיל קיים
+   ============================================= */
+export const updateProfilePin = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.userId;
+    const { profileName, newPin } = req.body;
+
+    // ולידציה בסיסית
+    if (!profileName || !newPin || newPin.length !== 4) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid profile name and 4-digit PIN are required",
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // מציאת הפרופיל בתוך המערך של המשתמש
+    const profileIndex = user.profiles.findIndex(
+      (p) => p.profileName === profileName
+    );
+
+    if (profileIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: "Profile not found",
+      });
+    }
+
+    // הצפנת ה-PIN החדש
+    const hashedPin = await bcrypt.hash(newPin, 10);
+    
+    // עדכון ה-PIN
+    // הוספת סימן קריאה (!) אחרי user מבטיחה ל-TS שהאובייקט קיים
+if (user && user.profiles[profileIndex]) {
+    user.profiles[profileIndex].pin = hashedPin;
+}
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "PIN updated successfully",
+    });
+  } catch (err) {
+    console.error("Update PIN error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Database error during PIN update",
+    });
+  }
+};
+/* =============================================
+   סיום הוספה
+   ============================================= */

@@ -1,16 +1,21 @@
 import React, { useState, useEffect } from "react";
-import { LuSun, LuMoon } from "react-icons/lu";
 import Sidebar from "../mainPage/Sidebar";
 import Header from "../mainPage/Header";
 import Progrees from "../mainPage/Progress";
 import ChatBot from "../mainPage/chatbot";
 import VocabularyHome from "../vocabulary/vocabularyHome";
-import { MenuItem, SidebarAction } from "../../Types/Section";
+import { MenuItem } from "../../Types/Section";
 import { useNavigate } from "react-router-dom";
 import { isLoggedIn } from "../../utils/auth";
+import MainLayout from "../authintication/MainLayout"; 
 
 export default function MainPage() {
   const navigate = useNavigate();
+
+  // בדיקה ראשונית: האם המשתמש כבר בחר Dark Mode בדף קודם?
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem("theme") === "dark";
+  });
 
   /* 🔐 Check login */
   useEffect(() => {
@@ -19,11 +24,10 @@ export default function MainPage() {
     });
   }, [navigate]);
 
-  /* 🌙 Dark Mode – LOCAL */
-  const [darkMode, setDarkMode] = useState(false);
-
-  const toggleDarkMode = () => {
-    setDarkMode(prev => !prev);
+  // בכל פעם ש-darkMode משתנה, נשמור את הבחירה
+  const handleToggleDarkMode = (val: boolean) => {
+    setDarkMode(val);
+    localStorage.setItem("theme", val ? "dark" : "light");
   };
 
   const menuItems: MenuItem[] = [
@@ -48,40 +52,14 @@ export default function MainPage() {
   const renderMainContent = () => {
     switch (activeSection) {
       case "View Progress":
-        return(<Progrees onSelectSection={setActiveSection} />);
-
-      case "Talking":
-        return (
-          <div className="text-[var(--text-muted)] text-lg italic">
-            This section is coming soon 🚧
-          </div>
-        );
-      case "Reading":
-        return (
-          <div className="text-[var(--text-muted)] text-lg italic">
-            This section is coming soon 🚧
-          </div>
-        );
-      case "Listening":
-          return (
-          <div className="text-[var(--text-muted)] text-lg italic">
-            This section is coming soon 🚧
-          </div>
-        );
-     
+        return <Progrees onSelectSection={setActiveSection} />;
       case "AI Chat":
         return <ChatBot darkMode={darkMode} />;
       case "Vocabulary":
-        return <VocabularyHome/>;
+        return <VocabularyHome />;
       default:
         return (
-          <div
-            style={{
-              color: darkMode ? "#d1d5db" : "#6b7280",
-              fontStyle: "italic",
-              fontSize: "1.1rem",
-            }}
-          >
+          <div style={{ color: darkMode ? "#d1d5db" : "#6b7280", fontStyle: "italic" }}>
             This section is coming soon 🚧
           </div>
         );
@@ -89,19 +67,13 @@ export default function MainPage() {
   };
 
   return (
-    <div
-      className="h-screen w-full flex items-center justify-center p-4 overflow-hidden font-[Poppins]"
-      style={{
-        background: darkMode ? "#020617" : "#f8fafc",
-        color: darkMode ? "#f8fafc" : "#0f172a",
-      }}
-    >
-      {/* 🧱 Main Card */}
+    <MainLayout darkMode={darkMode} setDarkMode={handleToggleDarkMode}>
       <div
-        className="flex w-full max-w-7xl h-[95vh] rounded-3xl overflow-hidden shadow-2xl"
+        className="flex w-full max-w-7xl h-[85vh] mx-auto rounded-3xl overflow-hidden shadow-2xl"
         style={{
           background: darkMode ? "#020617" : "#ffffff",
           border: darkMode ? "1px solid #334155" : "1px solid #e2e8f0",
+          marginTop: "20px"
         }}
       >
         <Sidebar
@@ -110,48 +82,20 @@ export default function MainPage() {
           activeSection={activeSection}
           onSelect={setActiveSection}
           secondaryMenu={menuItemsSecondry}
-          bottomAction={{
-                section: "Shop",
-                label: "Go to Shop",
-                icon: "🛒", }}
-         darkMode={darkMode}
-         />
-  
+          bottomAction={{ section: "Shop", label: "Go to Shop", icon: "🛒" }}
+          darkMode={darkMode}
+        />
 
         <main className="flex-1 p-8 md:p-12 overflow-y-auto flex flex-col gap-8">
-          {/* 🌙☀️ Dark Mode Button */}
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={toggleDarkMode}
-              className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition"
-              style={{
-                background: darkMode ? "#020617" : "#ffffff",
-                color: darkMode ? "#f8fafc" : "#0f172a",
-                border: darkMode
-                  ? "1px solid #334155"
-                  : "1px solid #e2e8f0",
-              }}
-            >
-              {darkMode ? <LuSun size={18} /> : <LuMoon size={18} />}
-              {darkMode ? "Light" : "Dark"}
-            </button>
-          </div>
-
           <Header
-            title={
-              activeMenuItem
-                ? `${activeMenuItem.name} ${activeMenuItem.icon}`
-                : activeSection
-            }
+            title={activeMenuItem ? `${activeMenuItem.name} ${activeMenuItem.icon}` : activeSection}
             subtitle="Welcome back! You are doing great."
             points={120}
             imgUrl="https://cdn-icons-png.flaticon.com/512/2922/2922510.png"
           />
-
-          <div>{renderMainContent()}</div>
+          <div className="flex-1">{renderMainContent()}</div>
         </main>
       </div>
-    </div>
+    </MainLayout>
   );
 }

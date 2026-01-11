@@ -4,71 +4,103 @@ type PinModalProps = {
   profileName: string;
   pinInputs: string[];
   pinError: boolean;
+  isDarkMode: boolean;
   onChange: (value: string, idx: number) => void;
   onBackspace: (idx: number, e: React.KeyboardEvent<HTMLInputElement>) => void;
   onSubmit: () => void;
   onClose: () => void;
 };
 
-const PinModal: React.FC<PinModalProps> = ({
-  profileName,
-  pinInputs,
-  pinError,
-  onChange,
-  onBackspace,
-  onSubmit,
-  onClose,
+const PinModal: React.FC<PinModalProps> = ({ 
+  profileName, pinInputs, pinError, isDarkMode, onChange, onBackspace, onSubmit, onClose 
 }) => {
+  // תיקון שגיאת ה-TypeScript ב-Ref: מגדירים מערך של אלמנטים
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  const handleChange = (value: string, idx: number) => {
-    if (!/^\d?$/.test(value)) return;
+  const handleChange = (val: string, idx: number) => {
+    if (!/^\d?$/.test(val)) return; // מקבל רק ספרה אחת או ריק
 
-    onChange(value, idx);
+    onChange(val, idx);
 
-    // move automatically to next input
-    if (value && idx < inputRefs.current.length - 1) {
+    // מעבר אוטומטי קדימה אם הוקלד תו
+    if (val && idx < 3) {
       inputRefs.current[idx + 1]?.focus();
     }
   };
 
-  const handleKeyDown = (
-    idx: number,
-    e: React.KeyboardEvent<HTMLInputElement>
-  ) => {
-    if (e.key === "Backspace" && !pinInputs[idx] && idx > 0) {
-      inputRefs.current[idx - 1]?.focus();
+  const handleKeyDown = (idx: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace") {
+      // מעבר אוטומטי אחורה אם התא ריק
+      if (!pinInputs[idx] && idx > 0) {
+        inputRefs.current[idx - 1]?.focus();
+      }
+      onBackspace(idx, e);
     }
-
-    onBackspace(idx, e);
   };
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2>{profileName}&apos;s PIN</h2>
-
-        {pinError && <p className="error">Wrong PIN</p>}
-
-        <div className="pin-row">
-          {pinInputs.map((val, idx) => (
-            <input
-              key={idx}
-              ref={(el) => {
-                inputRefs.current[idx] = el;
-              }}
-              maxLength={1}
+    <div className="modal-backdrop" onClick={onClose} style={{
+        position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+        backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000
+    }}>
+      <div className="modal" onClick={e => e.stopPropagation()} style={{
+          backgroundColor: isDarkMode ? "#1e293b" : "#ffffff",
+          color: isDarkMode ? "#ffffff" : "#1e293b",
+          padding: '2.5rem', borderRadius: '20px', border: '2px solid #86e07f', 
+          textAlign: 'center', minWidth: '350px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
+      }}>
+        <h2 style={{ color: '#86e07f', marginBottom: '1.5rem', fontSize: '1.5rem' }}>{profileName}'s PIN</h2>
+        
+        {pinError && <p style={{ color: '#f87171', marginBottom: '1rem' }}>Wrong PIN, try again</p>}
+        
+        {/* מרכוז הריבועים - חשוב: justifyContent: 'center' */}
+        <div style={{ 
+          display: 'flex', 
+          gap: '12px', 
+          justifyContent: 'center', 
+          alignItems: 'center',
+          margin: '25px 0' 
+        }}>
+          {pinInputs.map((val, i) => (
+            <input 
+              key={i}
+              // תיקון ה-Ref כדי למנוע את שגיאת ה-TypeScript
+              ref={(el) => { inputRefs.current[i] = el; }}
               value={val}
+              maxLength={1}
               inputMode="numeric"
-              autoFocus={idx === 0}
-              onChange={(e) => handleChange(e.target.value, idx)}
-              onKeyDown={(e) => handleKeyDown(idx, e)}
+              autoFocus={i === 0}
+              onChange={e => handleChange(e.target.value, i)}
+              onKeyDown={e => handleKeyDown(i, e)}
+              style={{ 
+                width: '50px', 
+                height: '65px', 
+                textAlign: 'center', 
+                fontSize: '2rem', 
+                background: 'transparent', 
+                color: 'inherit', 
+                border: '2px solid #86e07f', 
+                borderRadius: '12px', 
+                outline: 'none'
+              }}
             />
           ))}
         </div>
-
-        <button onClick={onSubmit}>Continue</button>
-        <button onClick={onClose}>Cancel</button>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <button onClick={onSubmit} style={{ 
+            background: '#86e07f', color: 'white', padding: '14px', 
+            border: 'none', borderRadius: '12px', fontWeight: 'bold', fontSize: '1.1rem', cursor: 'pointer' 
+          }}>
+            Continue
+          </button>
+          <button onClick={onClose} style={{ 
+            background: 'transparent', border: 'none', color: 'inherit', 
+            cursor: 'pointer', fontSize: '1rem', opacity: 0.8 
+          }}>
+            Cancel
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import { buyActionLimiter } from "..";
-import { addProfile, verifyProfilePin } from "../controllers/profileController";
+import { addProfile, verifyProfilePin,updateProfilePin } from "../controllers/profileController";
 import { Request, Response } from "express";
 import { User } from "../models/User";
 import { authMiddleware, AuthRequest } from "../controllers/authController";
@@ -26,6 +26,18 @@ profileRouter.post(
   buyActionLimiter,
   verifyProfilePin
 );
+/* =============================================
+   הוספה: נתיב לעדכון PIN
+   ============================================= */
+profileRouter.put(
+  "/update-pin",
+  authMiddleware,
+  buyActionLimiter,
+  updateProfilePin
+);
+/* =============================================
+   סיום הוספה
+   ============================================= */
 
 /* =========================
    GET LOGGED-IN USER PROFILES

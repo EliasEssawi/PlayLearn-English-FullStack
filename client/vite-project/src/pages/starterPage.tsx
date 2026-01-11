@@ -1,19 +1,11 @@
-import React, { useState } from "react";
-import { LuSun, LuMoon } from "react-icons/lu";
+import React from "react";
 
-type Page = "login" | "register" | "index";
+type Page = "login" | "register";
 
 const StarterPage: React.FC = () => {
-  const [darkMode, setDarkMode] = useState(false);
-
-  const toggleDarkMode = () => {
-    setDarkMode(prev => !prev);
-  };
-
   const goToPage = (page: Page): void => {
     if (page === "login") window.location.href = "/login";
     if (page === "register") window.location.href = "/register";
-    if (page === "index") window.location.href = "/vocabulary/index";
   };
 
   const features = [
@@ -26,73 +18,42 @@ const StarterPage: React.FC = () => {
   ];
 
   return (
-    <div
-      className="min-h-screen w-full font-[Poppins]"
-      style={{
-        background: darkMode ? "#020617" : "#f8fafc",
-        color: darkMode ? "#f8fafc" : "#0f172a",
-      }}
-    >
+    <div className="min-h-screen w-full font-[Poppins]" style={{ background: "#f8fafc", color: "#0f172a" }}>
+      
       {/* HEADER */}
-      <header
-        style={{
-          background: "#86e07f",
-          borderBottom: darkMode ? "1px solid #334155" : "1px solid #e2e8f0",
-        }}
-      >
+      <header style={{ background: "#86e07f", borderBottom: "1px solid #e2e8f0" }}>
         <div className="container header-row">
           <h1 className="header-title" style={{ color: "#ffffff" }}>
             PlayLearn English
           </h1>
 
           <nav className="nav">
-            {["login", "register", "index"].map(p => (
+            {["login", "register"].map(p => (
               <button
                 key={p}
                 type="button"
                 onClick={() => goToPage(p as Page)}
                 className="nav-btn"
                 style={{
-                  background: darkMode ? "#020617" : "#ffffff",
-                  color: darkMode ? "#f8fafc" : "#0f172a",
-                  border: darkMode ? "1px solid #334155" : "1px solid #e2e8f0",
+                  background: "#ffffff",
+                  color: "#0f172a",
+                  border: "1px solid #e2e8f0",
                 }}
               >
-                {p === "index" ? "Vocabulary" : p.charAt(0).toUpperCase() + p.slice(1)}
+                {p.charAt(0).toUpperCase() + p.slice(1)}
               </button>
             ))}
-
-            {/* DARK MODE BUTTON */}
-            <button
-              type="button"
-              onClick={toggleDarkMode}
-              className="nav-btn flex items-center gap-2"
-              style={{
-                background: darkMode ? "#020617" : "#ffffff",
-                color: darkMode ? "#f8fafc" : "#0f172a",
-                border: darkMode ? "1px solid #334155" : "1px solid #e2e8f0",
-              }}
-            >
-              {darkMode ? <LuSun size={18} /> : <LuMoon size={18} />}
-              {darkMode ? "Light" : "Dark"}
-            </button>
           </nav>
         </div>
       </header>
 
       {/* HERO */}
       <section className="section hero">
-        <h2 style={{ color: darkMode ? "#86e07f" : "#3fa16a" }}>
+        <h2 style={{ color: "#3fa16a" }}>
           Learn English the Fun Way!
         </h2>
 
-        <p
-          style={{
-            color: darkMode ? "#e5e7eb" : "#6b7280",
-            maxWidth: "600px",
-            margin: "0 auto",
-          }}
-        >
+        <p style={{ color: "#6b7280", maxWidth: "600px", margin: "0 auto" }}>
           Play games, practice vocabulary, listen to stories, and chat with our AI friend.
         </p>
 
@@ -105,12 +66,7 @@ const StarterPage: React.FC = () => {
 
       {/* FEATURES */}
       <section className="section">
-        <h3
-          style={{
-            color: darkMode ? "#f8fafc" : "#0f172a",
-            marginBottom: "2rem",
-          }}
-        >
+        <h3 style={{ color: "#0f172a", marginBottom: "2rem" }}>
           What You Can Do
         </h3>
 
@@ -120,19 +76,15 @@ const StarterPage: React.FC = () => {
               key={idx}
               className="card card-pad card-hover"
               style={{
-                background: darkMode ? "#020617" : "#ffffff",
-                border: darkMode ? "1px solid #334155" : "1px solid #e2e8f0",
+                background: "#ffffff",
+                border: "1px solid #e2e8f0",
               }}
             >
               <img src={f.icon} className="feature-icon" alt={f.title} />
               <div style={{ color: "#86e07f", fontWeight: 600 }}>
                 {f.title}
               </div>
-              <div
-                style={{
-                  color: darkMode ? "#d1d5db" : "#6b7280",
-                }}
-              >
+              <div style={{ color: "#6b7280" }}>
                 {f.desc}
               </div>
             </div>
@@ -145,8 +97,8 @@ const StarterPage: React.FC = () => {
         style={{
           textAlign: "center",
           padding: "1rem",
-          color: darkMode ? "#d1d5db" : "#6b7280",
-          borderTop: darkMode ? "1px solid #334155" : "1px solid #e2e8f0",
+          color: "#6b7280",
+          borderTop: "1px solid #e2e8f0",
         }}
       >
         © 2025 PlayLearn English — Learn &amp; Play!

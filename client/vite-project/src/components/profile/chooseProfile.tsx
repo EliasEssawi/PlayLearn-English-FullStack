@@ -1,223 +1,126 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import ProfileCard from "./ProfileCard";
 import PinModal from "./PinModal";
-import {isLoggedIn, logout} from "../../utils/auth"
-import { useNavigate } from "react-router-dom";
-import axios, { AxiosError } from "axios";
-import { sendVerificationCodeRequest, getProfilesResponse, Profile, verifyPinRequest, verifyPinResponse } from "../../Types/Login";
-import LogoutButton from "../authintication/LogoutButton";
-
-type User = {
-  email: string;
-};
-
-type Page = "addprofile";
+import { isLoggedIn } from "../../utils/auth";
+import { Profile, getProfilesResponse, verifyPinResponse } from "../../Types/Login";
+import MainLayout from "../authintication/MainLayout"; 
 
 const API_BASE = "/api";
 
 const ChooseProfile: React.FC = () => {
-  //redirect to login page if user is not logged in
-  const navigate = useNavigate(); 
-  useEffect(() => {
-    isLoggedIn().then(ok => {
-      if (!ok) navigate("/login");
-    });
-  }, []);
+  const navigate = useNavigate();
 
+  // טעינת המצב הראשוני מה-localStorage כדי לשמור על סנכרון בין דפים
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem("theme") === "dark";
+  });
 
-  const goToPage = (page: Page): void => {
-    if (page === "addprofile") window.location.href = "/addprofile";
-  };
-
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
   const [pinInputs, setPinInputs] = useState<string[]>(["", "", "", ""]);
-  const [pinError, setPinError] = useState<boolean>(false);
-  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [pinError, setPinError] = useState(false);
 
-  const parentProfile:Profile = {
-    profileName: "parent",
-    pin: "",
-    role: "parent",
-    points : 0
-  }
-  
-  /* ===========================
-     Fetch profiles
-  =========================== */
+  // פונקציה לעדכון ה-Dark Mode ושמירתו בזיכרון
+  const handleToggleDarkMode = (val: boolean) => {
+    setDarkMode(val);
+    localStorage.setItem("theme", val ? "dark" : "light");
+  };
+
   useEffect(() => {
-    
-    const fetchProfiles = async (): Promise<void> => {
+    isLoggedIn().then(ok => { if (!ok) navigate("/login"); });
+  }, [navigate]);
+
+  useEffect(() => {
+    const fetchProfiles = async () => {
+      const email = localStorage.getItem("loggedInUser");
+      if (!email) return;
       try {
-        console.log("fetching profiles");
-        const savedUserRaw = localStorage.getItem("loggedInUser");
-        if (!savedUserRaw) return;
-
-        /*
-        console.log("found user in local storage");
-        const savedUser = JSON.parse(savedUserRaw) as { email: string };
-        if (!savedUser.email) return;
-        */
-
-        console.log("setting current user");
-        setCurrentUser({ email: savedUserRaw });
-        
-        const payload: sendVerificationCodeRequest = {
-            email: savedUserRaw.trim().toLowerCase(),
-        };
-        console.log(payload.email + "*****");
-        const res = await axios.get<getProfilesResponse>(`${API_BASE}/profiles/${payload.email}`, {withCredentials: true , params: payload});
-        const data = res.data;
-
-        if (data.success) {
-          setProfiles(data.profiles || []);
-        } else {
-          setProfiles([]);
-        }
-      } catch (err) {
-        console.error("Failed to fetch profiles:", err);
-      }
+        const res = await axios.get<getProfilesResponse>(`${API_BASE}/profiles/${email}`, { withCredentials: true });
+        if (res.data.success) setProfiles(res.data.profiles || []);
+      } catch (err) { console.error(err); }
     };
-
     fetchProfiles();
   }, []);
 
-  /* ===========================
-     PIN logic
-  =========================== */
-  const openPin = (profile?: Profile): void => {
-    if(profile)
-    {
-      setSelectedProfile(profile);
-      setPinInputs(["", "", "", ""]);
-      setPinError(false);
-    }
-  };
-
-  const closePin = (): void => {
-    setSelectedProfile(null);
+  const openPin = (p: Profile) => {
+    setSelectedProfile(p);
     setPinInputs(["", "", "", ""]);
     setPinError(false);
   };
 
-  const handlePinChange = (value: string, idx: number): void => {
-    if (!/^\d?$/.test(value)) return;
-
-    setPinInputs((prev) => {
-      const next = [...prev];
-      next[idx] = value;
-      return next;
-    });
-
-    if (value && idx < 3) {
-      const el = document.getElementById(`pin-${idx + 1}`) as HTMLInputElement;
-      el?.focus();
-    }
-  };
-
-  const handlePinBackspace = (
-    idx: number,
-    e: React.KeyboardEvent<HTMLInputElement>
-  ): void => {
-    if (e.key === "Backspace" && !pinInputs[idx] && idx > 0) {
-      const el = document.getElementById(`pin-${idx - 1}`) as HTMLInputElement;
-      el?.focus();
-    }
-  };
-
-  /* ✅ VERIFY PIN VIA BACKEND */
-  const handlePinSubmit = async (): Promise<void> => {
-    if (!selectedProfile || !currentUser) return;
-
-    const enteredPin = pinInputs.join("");
-    
-    try {
-      
-      const payload: verifyPinRequest = {
-          email: currentUser.email,
-          profileName: selectedProfile.profileName,
-          pin: enteredPin,
-      };
-
-      const res = await axios.post<verifyPinResponse>(`${API_BASE}/profiles/verify-pin`, payload ,{withCredentials: true});
-
-      if (res) {
-        localStorage.setItem(
-          "activeProfile",
-          JSON.stringify({email: res.data.profile, pin: enteredPin})
-        );
-        console.log("role : "+res.data.profile.role);
-        if(res.data.profile.role === "parent")
-        {
-          window.location.href = "/parentPage";
-          return;
-        }
-        window.location.href = "/mainPage";
-        return;
-      }
-    
-      setPinError(true);
-      setPinInputs(["", "", "", ""]);
-    } catch (err) {
-      const error = err as AxiosError<{ message?: string }>;
-      console.error("err :"+error.response?.data?.message);
-      setPinError(true);
-    }
-  };
-
-  /* ===========================
-     Render
-  =========================== */
   return (
-    <div className="page">
-      <header className="header">
-        <h1 className="header-title">Who’s Learning Today?</h1>
-        <LogoutButton></LogoutButton>
-      </header>
-
-      {/* Add Profile */}
-      <div className="add-profile-wrapper">
-        <button
-          className="add-profile-btn"
-          onClick={() => goToPage("addprofile")}
-        >
-          ➕ Add Profile
-        </button>
-      </div>
-
-      {/* Profiles */}
-      <section className="profiles-grid">
-        {/* Parent */}
-        <ProfileCard
-          name="Parent"
-          emoji="👨‍👩‍👧"
-          onClick={() => openPin( parentProfile )}
-        />
-
-        {/* Children */}
-        {profiles.map((profile) => (
-          <ProfileCard
-            key={profile.profileName}
-            name={profile.profileName}
-            emoji="🧒"
-            onClick={() => openPin(profile)}
+    <MainLayout darkMode={darkMode} setDarkMode={handleToggleDarkMode}>
+      <div className="page-content text-center">
+        <h2 style={{ 
+            marginBottom: "2rem", 
+            fontSize: "2.5rem", 
+            fontWeight: "bold",
+            color: darkMode ? "#86e07f" : "inherit" 
+        }}>
+          Who’s Learning Today?
+        </h2>
+        
+        <div style={{ display: "flex", gap: "25px", justifyContent: "center", flexWrap: "wrap" }}>
+          {/* פרופיל הורה */}
+          <ProfileCard 
+            name="Parent" 
+            emoji="👨‍👩‍👧" 
+            isDarkMode={darkMode}
+            onClick={() => openPin({ profileName: "parent", role: "parent", points: 0, pin: "" })} 
           />
-        ))}
-      </section>
+          
+          {/* פרופילי ילדים */}
+          {profiles.map(p => (
+            <ProfileCard 
+                key={p.profileName} 
+                name={p.profileName} 
+                emoji="🧒" 
+                isDarkMode={darkMode}
+                onClick={() => openPin(p)} 
+            />
+          ))}
+        </div>
 
-      {/* PIN Modal */}
-      {selectedProfile && (
-        <PinModal
-          profileName={selectedProfile.profileName}
-          pinInputs={pinInputs}
-          pinError={pinError}
-          onChange={handlePinChange}
-          onBackspace={handlePinBackspace}
-          onSubmit={handlePinSubmit}
-          onClose={closePin}
-        />
-      )}
-    </div>
+        {selectedProfile && (
+          <PinModal
+            profileName={selectedProfile.profileName}
+            pinInputs={pinInputs}
+            pinError={pinError}
+            isDarkMode={darkMode}
+            onChange={(val, idx) => {
+                const next = [...pinInputs];
+                next[idx] = val;
+                setPinInputs(next);
+            }}
+            onBackspace={(idx) => {
+                const next = [...pinInputs];
+                next[idx] = "";
+                setPinInputs(next);
+            }}
+            onSubmit={async () => {
+                const email = localStorage.getItem("loggedInUser");
+                if (!email) return;
+                try {
+                  const res = await axios.post<verifyPinResponse>(`${API_BASE}/profiles/verify-pin`, {
+                    email,
+                    profileName: selectedProfile.profileName,
+                    pin: pinInputs.join("")
+                  }, { withCredentials: true });
+                  
+                  if (res.data) {
+                    localStorage.setItem("activeProfile", JSON.stringify({ email: res.data.profile, pin: pinInputs.join("") }));
+                    // ניווט לדף המתאים לפי תפקיד
+                    window.location.href = res.data.profile.role === "parent" ? "/parentPage" : "/mainPage";
+                  }
+                } catch { setPinError(true); }
+            }}
+            onClose={() => setSelectedProfile(null)}
+          />
+        )}
+      </div>
+    </MainLayout>
   );
 };
 
