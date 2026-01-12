@@ -8,6 +8,8 @@ import { MenuItem } from "../../Types/Section";
 import { useNavigate } from "react-router-dom";
 import { isLoggedIn } from "../../utils/auth";
 import MainLayout from "../authintication/MainLayout"; 
+import TopicsPage from "./TopicsPage";
+
 
 export default function MainPage() {
   const navigate = useNavigate();
@@ -57,6 +59,8 @@ export default function MainPage() {
         return <ChatBot darkMode={darkMode} />;
       case "Vocabulary":
         return <VocabularyHome />;
+      case "Talking":
+          return <TopicsPage exercisesType="Talking"/>
       default:
         return (
           <div style={{ color: darkMode ? "#d1d5db" : "#6b7280", fontStyle: "italic" }}>
