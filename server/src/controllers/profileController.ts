@@ -42,6 +42,14 @@ export const addProfile = async (req: AuthRequest, res: Response) => {
       });
     }
 
+    if(user.profiles.some(profile => profile.profileName === profileName))
+    {
+      return res.status(404).json({
+        success: false,
+        message: "There is a profile with this name",
+      });
+    }
+
     const hashedPin = await bcrypt.hash(pin, 10);
 
     user.profiles.push({
