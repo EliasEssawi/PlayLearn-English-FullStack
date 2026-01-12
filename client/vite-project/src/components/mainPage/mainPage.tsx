@@ -36,7 +36,8 @@ export default function MainPage() {
     { name: "Talking", icon: "🗣️" },
     { name: "Reading", icon: "📖" },
     { name: "Listening", icon: "🎧" },
-    { name: "Vocabulary", icon: "🔤" },
+    { name: "Translate", icon: "🔤" },
+    { name: "Fill the blank", icon: "🔤" },
     { name: "AI Chat", icon: "🤖" },
   ];
 
@@ -60,7 +61,15 @@ export default function MainPage() {
       case "Vocabulary":
         return <VocabularyHome />;
       case "Talking":
-          return <TopicsPage exercisesType="Talking"/>
+          return <TopicsPage exercisesType="Talking"/>;
+      case "Listening":
+        return <TopicsPage exercisesType="Listening"/>;
+      case "Fill the blank":
+        return <TopicsPage exercisesType="Fill the blank"/>;
+      case "Translate":
+        return <TopicsPage exercisesType="Translate"/>;
+      case "Reading":
+        return <TopicsPage exercisesType="Reading"/>;  
       default:
         return (
           <div style={{ color: darkMode ? "#d1d5db" : "#6b7280", fontStyle: "italic" }}>
