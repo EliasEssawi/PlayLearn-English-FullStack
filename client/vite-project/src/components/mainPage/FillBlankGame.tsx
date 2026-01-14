@@ -8,6 +8,7 @@ type FillBlankGameProps = {
   correctAnswer: string
   options: string[]
   onContinue?: (isCorrect: boolean) => void
+  darkMode: boolean 
 }
 
 export default function FillBlankGame({
@@ -16,6 +17,7 @@ export default function FillBlankGame({
   correctAnswer,
   options,
   onContinue,
+  darkMode,
 }: FillBlankGameProps) {
   const [selected, setSelected] = useState<string | null>(null)
   const [showResult, setShowResult] = useState(false)
@@ -28,7 +30,7 @@ export default function FillBlankGame({
     setShowResult(true)
   }
 
-  // replace blank with answer after selection
+  // החלפת הקו התחתון בתשובה הנכונה במידה והמשתמש צדק
   const renderedQuestion = question.replace(
     "______",
     selected === correctAnswer ? correctAnswer : "______"
@@ -37,10 +39,18 @@ export default function FillBlankGame({
   return (
     <div className="max-w-xl mx-auto space-y-6">
       {/* Title */}
-      <h2 className="text-2xl font-bold text-white">{title}</h2>
+      <h2 
+        className="text-2xl font-bold transition-colors duration-300"
+        style={{ color: darkMode ? "#ffffff" : "#0f172a" }} 
+      >
+        {title}
+      </h2>
 
       {/* Question */}
-      <p className="text-gray-300 text-lg whitespace-pre-line">
+      <div 
+        className="text-lg whitespace-pre-line transition-colors duration-300"
+        style={{ color: darkMode ? "#d1d5db" : "#374151" }} 
+      >
         {renderedQuestion.split("______").map((part, i, arr) => (
             <span key={i}>
                 {part}
@@ -49,7 +59,7 @@ export default function FillBlankGame({
                 )}
             </span>
         ))}
-      </p>
+      </div>
 
       {/* Answers */}
       <div className="space-y-4">
@@ -69,6 +79,8 @@ export default function FillBlankGame({
               text={opt}
               state={state}
               onClick={() => handleAnswer(opt)}
+              // ה-Prop מועבר עכשיו לתוך הכפתור כדי שישתמש בירוק ב-Light Mode
+              darkMode={darkMode} 
             />
           )
         })}
@@ -79,6 +91,7 @@ export default function FillBlankGame({
         <ResultBar
           correct={isCorrect}
           onContinue={() => onContinue?.(isCorrect)}
+          // ה-Prop מועבר עכשיו לבר התוצאה
         />
       )}
     </div>

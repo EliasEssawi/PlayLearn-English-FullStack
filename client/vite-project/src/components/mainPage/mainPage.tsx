@@ -61,15 +61,15 @@ export default function MainPage() {
       case "Vocabulary":
         return <VocabularyHome />;
       case "Talking":
-          return <TopicsPage exercisesType="Talking"/>;
+          return <TopicsPage exercisesType="Talking" darkMode={darkMode}/>;
       case "Listening":
-        return <TopicsPage exercisesType="Listening"/>;
+        return <TopicsPage exercisesType="Listening" darkMode={darkMode}/>;
       case "Fill the blank":
-        return <TopicsPage exercisesType="Fill the blank"/>;
+        return <TopicsPage exercisesType="Fill the blank" darkMode={darkMode}/>;
       case "Translate":
-        return <TopicsPage exercisesType="Translate"/>;
+        return <TopicsPage exercisesType="Translate" darkMode={darkMode}/>;
       case "Reading":
-        return <TopicsPage exercisesType="Reading"/>;  
+        return <TopicsPage exercisesType="Reading" darkMode={darkMode}/>;  
       default:
         return (
           <div style={{ color: darkMode ? "#d1d5db" : "#6b7280", fontStyle: "italic" }}>

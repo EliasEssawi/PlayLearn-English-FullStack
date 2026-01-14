@@ -3,6 +3,7 @@ type LevelButtonProps = {
   locked?: boolean;
   direction?: "left" | "right";
   onClick?: () => void;
+  darkMode?: boolean; // הוספנו את הפרופ להגדרות
 };
 
 export default function LevelButton({
@@ -10,7 +11,20 @@ export default function LevelButton({
   locked = false,
   direction = "left",
   onClick,
+  darkMode = false,
 }: LevelButtonProps) {
+  
+  // לוגיקת הצבעים: ב-Dark Mode העיגול לבן והאייקון שחור
+  const getDynamicStyles = () => {
+    if (locked) {
+      return "bg-gray-600 text-gray-300 shadow-[0_6px_0_#374151] cursor-not-allowed";
+    }
+    if (darkMode) {
+      return "bg-white text-black shadow-[0_8px_0_#d1d5db] hover:-translate-y-1 active:translate-y-1 active:shadow-[0_4px_0_#d1d5db]";
+    }
+    return "bg-pink-400 text-white shadow-[0_8px_0_#be185d] hover:-translate-y-1 active:translate-y-1 active:shadow-[0_4px_0_#be185d]";
+  };
+
   return (
     <button
       onClick={onClick}
@@ -23,22 +37,7 @@ export default function LevelButton({
         select-none
         transition-all duration-150
         ${direction === "left" ? "-translate-x-10" : "translate-x-10"}
-
-        ${
-          locked
-            ? `
-              bg-gray-600 text-gray-300
-              shadow-[0_6px_0_#374151]
-              cursor-not-allowed
-            `
-            : `
-              bg-pink-400 text-white
-              shadow-[0_8px_0_#be185d]
-              hover:-translate-y-1
-              active:translate-y-1
-              active:shadow-[0_4px_0_#be185d]
-            `
-        }
+        ${getDynamicStyles()}
       `}
     >
       {icon}
