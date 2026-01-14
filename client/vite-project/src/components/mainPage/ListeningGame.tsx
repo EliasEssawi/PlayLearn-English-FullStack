@@ -72,12 +72,12 @@ export default function ListeningGame({
         "
         style={{
           // שינוי צבע הכפתור: ירוק ב-Light, שחור ב-Dark
-          backgroundColor: darkMode ? "#1f2d33" : "#86e07f",
-          borderColor: darkMode ? "#2f3f46" : "#6bc465",
+          backgroundColor: darkMode ? "#1f2d33" : "#ec407a",
+          borderColor: darkMode ? "#2f3f46" : "#ec407a",
           color: darkMode ? "#ffffff" : "#0f172a",
           boxShadow: darkMode 
             ? "0 6px 0 #162227" 
-            : "0 6px 0 #58a352"
+            : "0 6px 0 #ec407a"
         }}
       >
         {isSpeaking ? "🔊 Playing..." : "🔊 Listen"}
