@@ -1,21 +1,18 @@
 import { useState } from "react";
 import TopicCard, { TopicLevel } from "./TopicCard";
-import QuestionCardWithOptions from "./QuestionCardWithOptions"
 import FillBlankGame from "./FillBlankGame";
 import ListeningGame from "./ListeningGame";
 import SpeakingGame from "./SpeakingGame";
 
 type Props = {
-  exercisesType:string,
-
+  exercisesType: string;
+  darkMode: boolean; 
 };
 
-export default function TopicsPage({exercisesType}:Props ) {
-  const [exeType,setExercisesType] = useState(exercisesType);
-  const [topic,setTopic] = useState("");
-  const [level,setLevel] = useState(1);
-  const [showExe, setShowExe] = useState<true|false>(false);
-
+export default function TopicsPage({ exercisesType, darkMode }: Props) {
+  const [topic, setTopic] = useState("");
+  const [level, setLevel] = useState(1);
+  const [showExe, setShowExe] = useState<boolean>(false);
 
   const [progress, setProgress] = useState({
     animals: 2,
@@ -23,7 +20,6 @@ export default function TopicsPage({exercisesType}:Props ) {
   });
 
   const handleLevelClick = (topic: string, levelId: number) => {
-    console.log(topic + "" + levelId);
     setTopic(topic);
     setLevel(levelId);
     setShowExe(true);
@@ -49,58 +45,74 @@ export default function TopicsPage({exercisesType}:Props ) {
     { id: 5, icon: "❄️" },
   ];
 
-  const handleAnswer = (isCorrect: boolean) => {
-    console.log(isCorrect ? "Correct!" : "Wrong!");
-  };
-
   return (
-    <div className="min-h-screen bg-[#0f1b1f] p-6 space-y-8">
+    <div 
+      className="min-h-screen p-6 space-y-8 transition-colors duration-300"
+      style={{ 
+        backgroundColor: darkMode ? "#020617" : "#f8fafc", 
+        color: darkMode ? "#f8fafc" : "#0f172a" 
+      }}
+    >
       {!showExe && (
-          <div>
-            <TopicCard
-              title="Animals"
-              emoji="🐾"
-              levels={animalsLevels}
-              unlockedLevel={progress.animals}
-              onLevelClick={(id) => handleLevelClick("animals", id)}
+        <div className="space-y-6">
+          <TopicCard
+            title="Animals"
+            emoji="🐾"
+            levels={animalsLevels}
+            unlockedLevel={progress.animals}
+            onLevelClick={(id) => handleLevelClick("animals", id)}
+            darkMode={darkMode} 
+          />
+
+          <TopicCard
+            title="Weather"
+            emoji="🌦"
+            levels={weatherLevels}
+            unlockedLevel={progress.weather}
+            onLevelClick={(id) => handleLevelClick("weather", id)}
+            darkMode={darkMode}
+          />
+        </div>
+      )}
+
+      {showExe && (
+        <div className="max-w-2xl mx-auto">
+          <button 
+            onClick={() => setShowExe(false)}
+            className="mb-4 text-sm underline opacity-70 hover:opacity-100"
+          >
+            Back to Topics
+          </button>
+
+          {(exercisesType === "Translate" || exercisesType === "Fill the blank" || exercisesType === "Reading") && (
+            <FillBlankGame
+              title="Fill the blank:"
+              question={"bob"}
+              correctAnswer="barber"
+              options={["barber", "shop", "sea", "cut"]}
+              // מעביר את ה-darkMode לתוך המשחק
+              darkMode={darkMode} 
             />
+          )}
 
-            <TopicCard
-              title="Weather"
-              emoji="🌦"
-              levels={weatherLevels}
-              unlockedLevel={progress.weather}
-              onLevelClick={(id) => handleLevelClick("weather", id)}
+          {exercisesType === "Listening" && (
+            <ListeningGame
+              textToRead="boost your energy"
+              correctAnswer="boost your energy"
+              options={["boost your energy", "change your password", "saleeem"]}
             />
-          </div>
-        )}
+          )}
 
-        {showExe && (
-          <>
-            {(exercisesType === "Translate" || exercisesType === "Fill the blank" || exercisesType === "Reading") && <FillBlankGame
-                title="Fill the blank:"
-                question={"bob"}
-                correctAnswer="barber"
-                options={["barber", "shop", "sea", "cut"]}
-              />
-            }
-
-            {exercisesType === "Listening" && <ListeningGame
-                textToRead="boost your energy"
-                correctAnswer="boost your energy"
-                options={["boost your energy", "change your password", "saleeem"]}
-              />
-            }
-
-            {exercisesType === "Talking" && <SpeakingGame
-                answer="I want to boost my energy"
-                onContinue={(correct, spoken) => {
-                  console.log(correct, spoken)
-                }}
-              />
-            }
-          </>
-        )}
-     </div>
+          {exercisesType === "Talking" && (
+            <SpeakingGame
+              answer="I want to boost my energy"
+              onContinue={(correct, spoken) => {
+                console.log(correct, spoken);
+              }}
+            />
+          )}
+        </div>
+      )}
+    </div>
   );
 }

@@ -11,6 +11,7 @@ type TopicCardProps = {
   levels: TopicLevel[];
   unlockedLevel: number;
   onLevelClick: (levelId: number) => void;
+  darkMode: boolean;
 };
 
 export default function TopicCard({
@@ -19,15 +20,22 @@ export default function TopicCard({
   levels,
   unlockedLevel,
   onLevelClick,
+  darkMode,
 }: TopicCardProps) {
   return (
-    <div className="bg-[#132229] rounded-2xl p-6 shadow-lg">
-      {/* Topic Header */}
-      <h2 className="text-center text-pink-400 text-xl font-bold mb-6">
+    <div 
+      className="rounded-2xl p-6 shadow-lg transition-colors duration-300"
+      style={{
+        backgroundColor: darkMode ? "#000000" : "#86e07f"
+      }}
+    >
+      <h2 
+        className="text-center text-xl font-bold mb-6"
+        style={{ color: darkMode ? "#ffffff" : "#132229" }}
+      >
         {emoji} {title}
       </h2>
 
-      {/* Levels */}
       <div className="flex flex-col gap-8">
         {levels.map((level, index) => (
           <div key={level.id} className="flex justify-center">
@@ -36,6 +44,8 @@ export default function TopicCard({
               locked={level.id > unlockedLevel}
               direction={index % 2 === 0 ? "left" : "right"}
               onClick={() => onLevelClick(level.id)}
+              // כאן הפתרון: מעבירים רק את המשתנה darkMode
+              darkMode={darkMode} 
             />
           </div>
         ))}

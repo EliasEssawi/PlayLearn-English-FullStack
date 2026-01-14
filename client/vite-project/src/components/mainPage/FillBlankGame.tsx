@@ -8,6 +8,7 @@ type FillBlankGameProps = {
   correctAnswer: string
   options: string[]
   onContinue?: (isCorrect: boolean) => void
+  darkMode: boolean // הוספנו את הפרופ כאן
 }
 
 export default function FillBlankGame({
@@ -16,6 +17,7 @@ export default function FillBlankGame({
   correctAnswer,
   options,
   onContinue,
+  darkMode,
 }: FillBlankGameProps) {
   const [selected, setSelected] = useState<string | null>(null)
   const [showResult, setShowResult] = useState(false)
@@ -37,10 +39,18 @@ export default function FillBlankGame({
   return (
     <div className="max-w-xl mx-auto space-y-6">
       {/* Title */}
-      <h2 className="text-2xl font-bold text-white">{title}</h2>
+      <h2 
+        className="text-2xl font-bold transition-colors duration-300"
+        style={{ color: darkMode ? "#ffffff" : "#0f172a" }} // לבן בכהה, כחול כהה בבהיר
+      >
+        {title}
+      </h2>
 
       {/* Question */}
-      <p className="text-gray-300 text-lg whitespace-pre-line">
+      <div 
+        className="text-lg whitespace-pre-line transition-colors duration-300"
+        style={{ color: darkMode ? "#d1d5db" : "#374151" }} // אפור בהיר בכהה, אפור כהה בבהיר
+      >
         {renderedQuestion.split("______").map((part, i, arr) => (
             <span key={i}>
                 {part}
@@ -49,7 +59,7 @@ export default function FillBlankGame({
                 )}
             </span>
         ))}
-      </p>
+      </div>
 
       {/* Answers */}
       <div className="space-y-4">
@@ -69,6 +79,8 @@ export default function FillBlankGame({
               text={opt}
               state={state}
               onClick={() => handleAnswer(opt)}
+              // וודא ש-AnswerButton יודע לקבל darkMode אם תרצה לשנות גם את העיצוב שלו
+              // darkMode={darkMode} 
             />
           )
         })}
@@ -79,6 +91,7 @@ export default function FillBlankGame({
         <ResultBar
           correct={isCorrect}
           onContinue={() => onContinue?.(isCorrect)}
+          // darkMode={darkMode}
         />
       )}
     </div>
