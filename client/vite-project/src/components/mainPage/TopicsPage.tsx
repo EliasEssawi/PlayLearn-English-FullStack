@@ -3,6 +3,7 @@ import TopicCard, { TopicLevel } from "./TopicCard";
 import FillBlankGame from "./FillBlankGame";
 import ListeningGame from "./ListeningGame";
 import SpeakingGame from "./SpeakingGame";
+import { getProfileQuestions, Question } from "../../utils/questionService";
 
 type Props = {
   exercisesType: string;
@@ -13,6 +14,7 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
   const [topic, setTopic] = useState("");
   const [level, setLevel] = useState(1);
   const [showExe, setShowExe] = useState<boolean>(false);
+  const [questions, setQuestions] = useState<Question[]>([]);
 
   const [progress, setProgress] = useState({
     animals: 2,
@@ -23,11 +25,35 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
     setTopic(topic);
     setLevel(levelId);
     setShowExe(true);
+
+    // pass dynamic values
+    fetchQuestions("default", topic, levelId, exercisesType === "Fill the blank" ? "complete" : "otherType"); 
+
     setProgress((prev) => ({
       ...prev,
       [topic]: Math.max(prev[topic as keyof typeof prev], levelId + 1),
     }));
   };
+
+  const fetchQuestions = async (
+    profileName: string,
+    topicParam: string,
+    levelParam: number,
+    type: string = "complete",
+    numberOfQuestions: number = 5
+  ) => {
+    try {
+      const res = await getProfileQuestions(profileName, levelParam, topicParam, type, numberOfQuestions);
+      if (res.success) {
+        setQuestions(res.questions);
+      } else {
+        console.error(res.message);
+      }
+    } catch (err) {
+      console.error("Error fetching questions:", err);
+    }
+  };
+
 
   const animalsLevels: TopicLevel[] = [
     { id: 1, icon: "⭐" },
