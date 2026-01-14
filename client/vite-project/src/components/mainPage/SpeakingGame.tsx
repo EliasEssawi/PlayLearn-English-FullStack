@@ -81,8 +81,8 @@ export default function SpeakingGame({
       <div 
         className="border-2 rounded-xl p-5 text-lg font-semibold transition-colors duration-300"
         style={{
-          backgroundColor: darkMode ? "#1f2d33" : "#86e07f",
-          borderColor: darkMode ? "#2f3f46" : "#6bc465",
+          backgroundColor: darkMode ? "#1f2d33" : "#ec407a",
+          borderColor: darkMode ? "#2f3f46" : "#ec407a",
           color: darkMode ? "#ffffff" : "#0f172a"
         }}
       >
