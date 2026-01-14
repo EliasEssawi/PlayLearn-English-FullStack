@@ -3,6 +3,8 @@ import { addProfile, verifyProfilePin,updateProfilePin } from "../controllers/pr
 import { Request, Response } from "express";
 import { User } from "../models/User";
 import { authMiddleware, AuthRequest } from "../controllers/authController";
+import { getProfileQuestions } from "../controllers/gameController";
+
 
 const express = require("express");
 const profileRouter = express.Router();
@@ -38,6 +40,12 @@ profileRouter.put(
 /* =============================================
    סיום הוספה
    ============================================= */
+
+profileRouter.get(
+  "/update-pin",
+  authMiddleware,
+  getProfileQuestions
+);
 
 /* =========================
    GET LOGGED-IN USER PROFILES

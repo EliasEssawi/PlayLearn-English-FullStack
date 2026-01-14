@@ -79,9 +79,9 @@ export default function TopicsPage({exercisesType}:Props ) {
           <>
             {(exercisesType === "Translate" || exercisesType === "Fill the blank" || exercisesType === "Reading") && <FillBlankGame
                 title="Fill the blank:"
-                question={"bob"}
-                correctAnswer="barber"
-                options={["barber", "shop", "sea", "cut"]}
+                question={"how _____ you"}
+                correctAnswer="are"
+                options={["are", "where", "how", "no"]}
               />
             }
 
