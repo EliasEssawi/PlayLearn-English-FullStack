@@ -79,7 +79,8 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
         <div className="max-w-2xl mx-auto">
           <button 
             onClick={() => setShowExe(false)}
-            className="mb-4 text-sm underline opacity-70 hover:opacity-100"
+            className="mb-4 text-sm underline opacity-70 hover:opacity-100 transition-colors"
+            style={{ color: darkMode ? "#94a3b8" : "#475569" }}
           >
             Back to Topics
           </button>
@@ -90,7 +91,6 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
               question={"bob"}
               correctAnswer="barber"
               options={["barber", "shop", "sea", "cut"]}
-              // מעביר את ה-darkMode לתוך המשחק
               darkMode={darkMode} 
             />
           )}
@@ -100,6 +100,7 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
               textToRead="boost your energy"
               correctAnswer="boost your energy"
               options={["boost your energy", "change your password", "saleeem"]}
+              darkMode={darkMode} // הוספנו כאן
             />
           )}
 
@@ -109,6 +110,7 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
               onContinue={(correct, spoken) => {
                 console.log(correct, spoken);
               }}
+              darkMode={darkMode} // הוספנו כאן
             />
           )}
         </div>

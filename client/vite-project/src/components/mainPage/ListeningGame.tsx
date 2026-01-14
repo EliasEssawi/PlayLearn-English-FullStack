@@ -8,6 +8,7 @@ type ListeningGameProps = {
   correctAnswer: string
   options: string[]
   onContinue?: (isCorrect: boolean) => void
+  darkMode: boolean // הוספת הפרופ
 }
 
 export default function ListeningGame({
@@ -16,6 +17,7 @@ export default function ListeningGame({
   correctAnswer,
   options,
   onContinue,
+  darkMode, // קבלת הפרופ
 }: ListeningGameProps) {
   const [selected, setSelected] = useState<string | null>(null)
   const [showResult, setShowResult] = useState(false)
@@ -52,7 +54,12 @@ export default function ListeningGame({
   return (
     <div className="max-w-xl mx-auto space-y-6">
       {/* Title */}
-      <h2 className="text-2xl font-bold text-white">{title}</h2>
+      <h2 
+        className="text-2xl font-bold transition-colors duration-300"
+        style={{ color: darkMode ? "#ffffff" : "#0f172a" }}
+      >
+        {title}
+      </h2>
 
       {/* Listen button */}
       <button
@@ -60,12 +67,18 @@ export default function ListeningGame({
         className="
           w-full flex items-center justify-center gap-3
           py-4 rounded-xl font-bold text-lg
-          bg-[#1f2d33] border-2 border-[#2f3f46]
-          shadow-[0_6px_0_#162227]
-          hover:-translate-y-0.5 hover:shadow-[0_8px_0_#162227]
-          active:translate-y-0 active:shadow-[0_4px_0_#162227]
-          text-white
+          transition-all duration-150 select-none
+          border-2
         "
+        style={{
+          // שינוי צבע הכפתור: ירוק ב-Light, שחור ב-Dark
+          backgroundColor: darkMode ? "#1f2d33" : "#86e07f",
+          borderColor: darkMode ? "#2f3f46" : "#6bc465",
+          color: darkMode ? "#ffffff" : "#0f172a",
+          boxShadow: darkMode 
+            ? "0 6px 0 #162227" 
+            : "0 6px 0 #58a352"
+        }}
       >
         {isSpeaking ? "🔊 Playing..." : "🔊 Listen"}
       </button>
@@ -88,6 +101,7 @@ export default function ListeningGame({
               text={opt}
               state={state}
               onClick={() => handleAnswer(opt)}
+              darkMode={darkMode} // העברת darkMode ל-AnswerButton
             />
           )
         })}
