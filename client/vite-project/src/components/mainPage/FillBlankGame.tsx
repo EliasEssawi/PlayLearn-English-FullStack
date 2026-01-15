@@ -79,19 +79,21 @@ export default function FillBlankGame({
               text={opt}
               state={state}
               onClick={() => handleAnswer(opt)}
-              // ה-Prop מועבר עכשיו לתוך הכפתור כדי שישתמש בירוק ב-Light Mode
               darkMode={darkMode} 
             />
           )
         })}
       </div>
 
-      {/* Result Bar */}
+      {/* Continue button + Result */}
       {showResult && (
         <ResultBar
           correct={isCorrect}
-          onContinue={() => onContinue?.(isCorrect)}
-          // ה-Prop מועבר עכשיו לבר התוצאה
+          onContinue={() => {
+            setSelected(null)       // reset selection for next question
+            setShowResult(false)    // hide result
+            onContinue?.(isCorrect) // notify parent
+          }}
         />
       )}
     </div>

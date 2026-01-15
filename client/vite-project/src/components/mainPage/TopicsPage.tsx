@@ -4,7 +4,6 @@ import FillBlankGame from "./FillBlankGame";
 import ListeningGame from "./ListeningGame";
 import SpeakingGame from "./SpeakingGame";
 import { getProfileQuestions, Question } from "../../utils/questionService";
-
 type Props = {
   exercisesType: string;
   darkMode: boolean; 
@@ -15,30 +14,54 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
   const [level, setLevel] = useState(1);
   const [showExe, setShowExe] = useState<boolean>(false);
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
+  const savedUserRaw = localStorage.getItem("loggedInUser");
+  const profileStr = localStorage.getItem("activeProfile");
+
+  if (!savedUserRaw || !profileStr) return null;
+
+  const profile = JSON.parse(profileStr);
+  if (!profile.email.profileName) return null;
+
+  // Reset state when exercisesType changes
   useEffect(() => {
     setShowExe(false);
     setTopic("");
     setLevel(1);
     setQuestions([]);
+    setCurrentIndex(0);
   }, [exercisesType]);
 
   const [progress, setProgress] = useState({
     animals: 2,
     weather: 1,
+    transportation:3,
+    jobs: 4,
+    furniture: 5,
+    colors: 6
   });
 
-  const handleLevelClick = (topic: string, levelId: number) => {
-    setTopic(topic);
+  const handleLevelClick = (topicName: string, levelId: number) => {
+    setTopic(topicName);
     setLevel(levelId);
     setShowExe(true);
 
-    // pass dynamic values
-    fetchQuestions("default", topic, levelId, exercisesType === "Fill the blank" ? "complete" : "otherType"); 
+    let exeType = exercisesType;
+    if(exercisesType === "Fill the blank")
+      exeType = "complete"
+    
+    fetchQuestions(
+      profile.email.profileName,
+      topicName,
+      levelId,
+      exeType,
+      10
+    );
 
     setProgress((prev) => ({
       ...prev,
-      [topic]: Math.max(prev[topic as keyof typeof prev], levelId + 1),
+      [topicName]: Math.max(prev[topicName as keyof typeof prev], levelId + 1),
     }));
   };
 
@@ -46,13 +69,15 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
     profileName: string,
     topicParam: string,
     levelParam: number,
-    type: string = "complete",
-    numberOfQuestions: number = 5
+    type: string,
+    numberOfQuestions: number
   ) => {
     try {
+      type = type.toLowerCase();
       const res = await getProfileQuestions(profileName, levelParam, topicParam, type, numberOfQuestions);
       if (res.success) {
         setQuestions(res.questions);
+        setCurrentIndex(0); // start from first question
       } else {
         console.error(res.message);
       }
@@ -60,7 +85,6 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
       console.error("Error fetching questions:", err);
     }
   };
-
 
   const animalsLevels: TopicLevel[] = [
     { id: 1, icon: "⭐" },
@@ -78,6 +102,40 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
     { id: 5, icon: "❄️" },
   ];
 
+  const transportationLevels: TopicLevel[] = [
+    { id: 1, icon: "🚶" }, // walking
+    { id: 2, icon: "🚲" }, // bicycle
+    { id: 3, icon: "🚗" }, // car
+    { id: 4, icon: "🚌" }, // public transport
+    { id: 5, icon: "✈️" }, // air travel
+  ];
+
+  const jobsLevels: TopicLevel[] = [
+    { id: 1, icon: "🧑‍🎓" }, // student
+    { id: 2, icon: "🧑‍🍳" }, // cook
+    { id: 3, icon: "🧑‍🔧" }, // mechanic
+    { id: 4, icon: "🧑‍🏫" }, // teacher
+    { id: 5, icon: "🧑‍💼" }, // office professional
+  ];
+
+  const furnitureLevels: TopicLevel[] = [
+    { id: 1, icon: "🪑" }, // chair
+    { id: 2, icon: "🛋" }, // sofa
+    { id: 3, icon: "🛏" }, // bed
+    { id: 4, icon: "🪟" }, // window
+    { id: 5, icon: "🚪" }, // door
+  ];
+
+  const colorsLevels: TopicLevel[] = [
+    { id: 1, icon: "🔴" }, // red
+    { id: 2, icon: "🟡" }, // yellow
+    { id: 3, icon: "🔵" }, // blue
+    { id: 4, icon: "🟢" }, // green
+    { id: 5, icon: "🟣" }, // purple
+  ];
+
+  const currentQuestion = questions[currentIndex];
+
   return (
     <div 
       className="min-h-screen p-6 space-y-8 transition-colors duration-300"
@@ -86,6 +144,7 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
         color: darkMode ? "#f8fafc" : "#0f172a" 
       }}
     >
+      {/* Topics selection */}
       {!showExe && (
         <div className="space-y-6">
           <TopicCard
@@ -96,18 +155,53 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
             onLevelClick={(id) => handleLevelClick("animals", id)}
             darkMode={darkMode} 
           />
-
           <TopicCard
             title="Weather"
             emoji="🌦"
             levels={weatherLevels}
             unlockedLevel={progress.weather}
-            onLevelClick={(id) => handleLevelClick("weather", id)}
+            onLevelClick={(id) => handleLevelClick("environment", id)}
+            darkMode={darkMode}
+          />
+          <TopicCard
+            title="Transportation"
+            emoji="🚗"
+            levels={transportationLevels}
+            unlockedLevel={progress.transportation}
+            onLevelClick={(id) => handleLevelClick("transportation", id)}
+            darkMode={darkMode}
+          />
+
+          <TopicCard
+            title="Jobs"
+            emoji="🧑‍🍳"
+            levels={jobsLevels}
+            unlockedLevel={progress.jobs}
+            onLevelClick={(id) => handleLevelClick("jobs", id)}
+            darkMode={darkMode}
+          />
+
+          <TopicCard
+            title="Furniture"
+            emoji="🚪"
+            levels={furnitureLevels}
+            unlockedLevel={progress.furniture}
+            onLevelClick={(id) => handleLevelClick("furniture", id)}
+            darkMode={darkMode}
+          />
+
+          <TopicCard
+            title="Colors"
+            emoji="🚪"
+            levels={colorsLevels}
+            unlockedLevel={progress.colors}
+            onLevelClick={(id) => handleLevelClick("colors", id)}
             darkMode={darkMode}
           />
         </div>
       )}
 
+      {/* Exercise */}
       {showExe && (
         <div className="max-w-2xl mx-auto">
           <button 
@@ -118,32 +212,66 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
             Back to Topics
           </button>
 
-          {(exercisesType === "Translate" || exercisesType === "Fill the blank" || exercisesType === "Reading") && (
-            <FillBlankGame
-              title="Fill the blank:"
-              question={"bob"}
-              correctAnswer="barber"
-              options={["barber", "shop", "sea", "cut"]}
-              darkMode={darkMode} 
-            />
-          )}
+          {/* Fill in the blank / Translate / Reading */}
+          {(exercisesType === "Translate" || exercisesType === "Fill the blank" || exercisesType === "Reading") &&
+            currentQuestion && (
+              <FillBlankGame
+                title={`Question ${currentIndex + 1} / ${questions.length}`}
+                question={currentQuestion.prompt}
+                correctAnswer={currentQuestion.answer}
+                options={currentQuestion.options}
+                darkMode={darkMode}
+                onContinue={(isCorrect) => {
+                  console.log(`Question ${currentIndex + 1} answered:`, isCorrect);
 
-          {exercisesType === "Listening" && (
+                  if (currentIndex + 1 < questions.length) {
+                    setCurrentIndex(prev => prev + 1); // go to next question
+                  } else {
+                    setShowExe(false); // finished all questions
+                    console.log("Exercise finished!");
+                  }
+                }}
+              />
+            )
+          }
+
+          {/* Listening */}
+          {exercisesType === "Listening" && currentQuestion && (
             <ListeningGame
-              textToRead="boost your energy"
-              correctAnswer="boost your energy"
-              options={["boost your energy", "change your password", "saleeem"]}
-              darkMode={darkMode} // הוספנו כאן
+              title={`Question ${currentIndex + 1} / ${questions.length}`}
+              textToRead={currentQuestion.prompt}
+              correctAnswer={currentQuestion.prompt}
+              options={currentQuestion.options}
+              darkMode={darkMode}
+              onContinue={(isCorrect) => {
+                  console.log(`Question ${currentIndex + 1} answered:`, isCorrect);
+
+                  if (currentIndex + 1 < questions.length) {
+                    setCurrentIndex(prev => prev + 1); // go to next question
+                  } else {
+                    setShowExe(false); // finished all questions
+                    console.log("Exercise finished!");
+                  }
+                }}
             />
           )}
 
-          {exercisesType === "Talking" && (
+          {/* Talking */}
+          {exercisesType === "Talking" && currentQuestion &&(
             <SpeakingGame
-              answer="I want to boost my energy"
-              onContinue={(correct, spoken) => {
-                console.log(correct, spoken);
-              }}
-              darkMode={darkMode} // הוספנו כאן
+              title={`Question ${currentIndex + 1} / ${questions.length}`}
+              answer={currentQuestion.prompt}
+              onContinue={(isCorrect, spoken) => {
+                  console.log(`Question ${currentIndex + 1} answered:`, isCorrect);
+
+                  if (currentIndex + 1 < questions.length) {
+                    setCurrentIndex(prev => prev + 1); // go to next question
+                  } else {
+                    setShowExe(false); // finished all questions
+                    console.log("Exercise finished!");
+                  }
+                }}
+              darkMode={darkMode}
             />
           )}
         </div>

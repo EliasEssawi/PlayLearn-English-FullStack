@@ -12,7 +12,6 @@ interface AnsweredQuestion {
 export const getProfileQuestions = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.userId;
-
     const { profileName, level, topic, type, numberOfQuestions = 5 } = req.body;
 
     /* ✅ validation */
@@ -22,7 +21,7 @@ export const getProfileQuestions = async (req: AuthRequest, res: Response) => {
         message: "Missing required fields",
       });
     }
-
+    
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({
@@ -55,6 +54,8 @@ export const getProfileQuestions = async (req: AuthRequest, res: Response) => {
       },
       { $sample: { size: numberOfQuestions } } // randomize
     ]);
+
+    console.log("level: " + level + " topic: " + topic + " type: " + type);
 
     // Step 2: If not enough, include some already answered correctly
     if (questions.length < numberOfQuestions) {

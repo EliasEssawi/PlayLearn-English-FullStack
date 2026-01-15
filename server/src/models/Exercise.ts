@@ -19,4 +19,4 @@ const ExerciseSchema: Schema = new Schema({
   answer: { type: String, required: true },
 });
 
-export const Exercise = mongoose.model<IExercise>("Exercise", ExerciseSchema);
+export const Exercise = mongoose.model<IExercise>("Exercise", ExerciseSchema, "excersises");

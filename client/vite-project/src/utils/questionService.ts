@@ -25,7 +25,7 @@ export const getProfileQuestions = async (
   numberOfQuestions: number = 5
 ): Promise<GetQuestionsResponse> => {
   const response = await axios.post<GetQuestionsResponse>(
-    "/api/questions/profile", // adjust your endpoint
+    "/api/profiles/getQuestions", // adjust your endpoint
     {
       profileName,
       level,

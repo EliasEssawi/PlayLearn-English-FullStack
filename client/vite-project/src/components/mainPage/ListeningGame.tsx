@@ -107,11 +107,15 @@ export default function ListeningGame({
         })}
       </div>
 
-      {/* Result */}
+      {/* Continue button + Result */}
       {showResult && (
         <ResultBar
           correct={isCorrect}
-          onContinue={() => onContinue?.(isCorrect)}
+          onContinue={() => {
+            setSelected(null)       // reset selection for next question
+            setShowResult(false)    // hide result
+            onContinue?.(isCorrect) // notify parent
+          }}
         />
       )}
     </div>

@@ -41,8 +41,8 @@ profileRouter.put(
    סיום הוספה
    ============================================= */
 
-profileRouter.get(
-  "/update-pin",
+profileRouter.post(
+  "/getQuestions",
   authMiddleware,
   getProfileQuestions
 );

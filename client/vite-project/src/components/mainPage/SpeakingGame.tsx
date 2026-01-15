@@ -122,11 +122,14 @@ export default function SpeakingGame({
         </div>
       )}
 
-      {/* Result Bar */}
+      {/* Continue button + Result */}
       {showResult && (
         <ResultBar
           correct={isCorrect}
-          onContinue={() => onContinue?.(isCorrect, spokenText)}
+          onContinue={() => {
+            setShowResult(false)    // hide result
+            onContinue?.(isCorrect, spokenText) // notify parent
+          }}
         />
       )}
     </div>

@@ -15,6 +15,7 @@ import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
 
 import { User } from "./models/User";
+import { Exercise } from "./models/Exercise";
 
 // ✅ Create app FIRST
 const app = express();
@@ -85,6 +86,15 @@ app.use("/api/chatbot", chatbotRouter);
 app.get("/api/getAllUsers", async (_req, res) => {
   try {
     const users = await User.find();
+    return res.status(200).json(users);
+  } catch {
+    return res.status(500).json({ error: "Failed to fetch users" });
+  }
+});
+
+app.get("/api/getAllQuestions", async (_req, res) => {
+  try {
+    const users = await Exercise.find();
     return res.status(200).json(users);
   } catch {
     return res.status(500).json({ error: "Failed to fetch users" });
