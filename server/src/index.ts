@@ -86,7 +86,8 @@ app.use("/api/chatbot", chatbotRouter);
 app.get("/api/getAllUsers", async (_req, res) => {
   try {
     const users = await User.find();
-    return res.status(200).json(users);
+    console.log(users);
+    return res.status(200).json(users); 
   } catch {
     return res.status(500).json({ error: "Failed to fetch users" });
   }

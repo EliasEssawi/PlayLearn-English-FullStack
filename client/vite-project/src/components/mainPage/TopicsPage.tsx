@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import TopicCard, { TopicLevel } from "./TopicCard";
 import FillBlankGame from "./FillBlankGame";
 import ListeningGame from "./ListeningGame";
 import SpeakingGame from "./SpeakingGame";
-import { getProfileQuestions, Question } from "../../utils/questionService";
+import { getProfileQuestions, Question, saveProgress } from "../../utils/questionService";
 type Props = {
   exercisesType: string;
   darkMode: boolean; 
@@ -15,6 +15,7 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
   const [showExe, setShowExe] = useState<boolean>(false);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const questionStartRef = useRef<number>(Date.now());
 
   const savedUserRaw = localStorage.getItem("loggedInUser");
   const profileStr = localStorage.getItem("activeProfile");
@@ -32,6 +33,10 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
     setQuestions([]);
     setCurrentIndex(0);
   }, [exercisesType]);
+
+  useEffect(() => {
+    questionStartRef.current = Date.now();
+  }, [currentIndex]);
 
   const [progress, setProgress] = useState({
     animals: 2,
@@ -221,14 +226,29 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
                 correctAnswer={currentQuestion.answer}
                 options={currentQuestion.options}
                 darkMode={darkMode}
-                onContinue={(isCorrect) => {
-                  console.log(`Question ${currentIndex + 1} answered:`, isCorrect);
+                onContinue={async (isCorrect) => {
+                  const timeSpentMs = Date.now() - questionStartRef.current;
 
+                  try {
+                    await saveProgress({
+                      profileName: profile.email.profileName,
+                      questionId: currentQuestion._id,
+                      topic,
+                      level,
+                      type: "complete",
+                      correct: isCorrect,
+                      answeredAt: new Date().toISOString(),
+                      timeSpentMs,
+                    });
+                  } catch (err) {
+                    console.error("Failed to save progress", err);
+                  }
+
+                  // Move to next question
                   if (currentIndex + 1 < questions.length) {
-                    setCurrentIndex(prev => prev + 1); // go to next question
+                    setCurrentIndex(i => i + 1);
                   } else {
-                    setShowExe(false); // finished all questions
-                    console.log("Exercise finished!");
+                    setShowExe(false);
                   }
                 }}
               />
@@ -261,8 +281,8 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
             <SpeakingGame
               title={`Question ${currentIndex + 1} / ${questions.length}`}
               answer={currentQuestion.prompt}
-              onContinue={(isCorrect, spoken) => {
-                  console.log(`Question ${currentIndex + 1} answered:`, isCorrect);
+              onContinue={(isCorrect, spokenText) => {
+                  console.log(`Question ${currentIndex + 1} answered:`, isCorrect);              
 
                   if (currentIndex + 1 < questions.length) {
                     setCurrentIndex(prev => prev + 1); // go to next question

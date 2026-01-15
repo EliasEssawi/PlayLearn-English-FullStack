@@ -88,3 +88,39 @@ export const getProfileQuestions = async (req: AuthRequest, res: Response) => {
     });
   }
 };
+
+export const SetProfileAnswer = async (req: AuthRequest, res: Response) => {
+  const {
+    profileName,
+    questionId,
+    topic,
+    level,
+    type,
+    correct,
+    answeredAt,
+    timeSpentMs,
+  } = req.body;
+
+  await User.updateOne(
+  {
+    _id: req.user!.userId,                 // 🔐 secure
+    "profiles.profileName": profileName,  // 🎯 correct profile
+  },
+  {
+    $push: {
+      "profiles.$.progress": {
+        questionId: new mongoose.Types.ObjectId(questionId),
+        topic,
+        level,
+        type,
+        correct,
+        answeredAt: new Date(answeredAt),
+        timeSpentMs,
+      }
+    }
+  }
+);
+
+
+  res.json({ success: true });
+};

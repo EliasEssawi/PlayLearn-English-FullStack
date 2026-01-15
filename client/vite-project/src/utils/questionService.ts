@@ -38,3 +38,26 @@ export const getProfileQuestions = async (
 
   return response.data;
 };
+
+type SaveProgressPayload = {
+  profileName: string;
+  questionId: string;
+  topic: string;
+  level: number;
+  type: string;
+  correct: boolean;
+  answeredAt: string;
+  timeSpentMs: number;
+};
+
+export const saveProgress = async (payload: SaveProgressPayload) => {
+  const res = await axios.post(
+    "/api/profiles/saveAnswer",
+    payload,
+    {
+      withCredentials: true, // ✅ for cookies auth
+    }
+  );
+
+  return res.data;
+};
