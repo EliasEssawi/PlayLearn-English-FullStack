@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import TopicCard, { TopicLevel } from "./TopicCard";
 import FillBlankGame from "./FillBlankGame";
 import ListeningGame from "./ListeningGame";
@@ -15,6 +15,13 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
   const [level, setLevel] = useState(1);
   const [showExe, setShowExe] = useState<boolean>(false);
   const [questions, setQuestions] = useState<Question[]>([]);
+
+  useEffect(() => {
+    setShowExe(false);
+    setTopic("");
+    setLevel(1);
+    setQuestions([]);
+  }, [exercisesType]);
 
   const [progress, setProgress] = useState({
     animals: 2,
