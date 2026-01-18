@@ -30,6 +30,12 @@ const ParentPage: React.FC = () => {
   const [pinMessage, setPinMessage] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
 
+  // 📜 Report History Modal
+const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+const [reportData, setReportData] = useState<any[]>([]);
+const [isLoadingReport, setIsLoadingReport] = useState(false);
+
+
   const handleToggleDarkMode = (val: boolean) => {
     setDarkMode(val);
     localStorage.setItem("theme", val ? "dark" : "light");
@@ -111,7 +117,7 @@ const ParentPage: React.FC = () => {
       setIsModalOpen(true); // פתיחת המודל במקום ניווט
     }
     if (action === "viewProgress") navigate(`/progress?profile=${profileName}`);
-    if (action === "reportHistory") navigate(`/reports?profile=${profileName}`);
+    if (action === "reportHistory") fetchReportHistory();
   };
 
   const actionRowStyle = {
@@ -132,6 +138,42 @@ const ParentPage: React.FC = () => {
     boxShadow: "0 2px 4px rgba(0,0,0,0.02)",
   };
 
+
+
+  /////
+  const fetchReportHistory = async () => {
+  if (!selectedProfile) return;
+
+  try {
+    setIsLoadingReport(true);
+    const email = localStorage.getItem("loggedInUser");
+
+    const res = await axios.get(`${API_BASE}/profiles/report-history`, {
+      params: {
+        email: email?.trim().toLowerCase(),
+        profileName: selectedProfile.profileName,
+      },
+      withCredentials: true,
+    });
+
+    if (res.data.success) {
+      setReportData(res.data.history || []);
+      setIsReportModalOpen(true);
+    }
+  } catch (err) {
+    console.error("Failed to load report history", err);
+  } finally {
+    setIsLoadingReport(false);
+  }
+};
+const groupedReports = reportData.reduce((acc: any, item: any) => {
+  const type = item.type || "other";
+  if (!acc[type]) acc[type] = [];
+  acc[type].push(item);
+  return acc;
+}, {});
+
+/////
   return (
     <MainLayout darkMode={darkMode} setDarkMode={handleToggleDarkMode}>
       <div style={{ maxWidth: "850px", margin: "0 auto", padding: "40px 20px" }}>
@@ -233,6 +275,98 @@ const ParentPage: React.FC = () => {
                   {isUpdating ? "Saving..." : "Save PIN"}
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+        {isReportModalOpen && (
+          <div style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(0,0,0,0.7)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000
+          }}>
+            <div style={{
+              background: darkMode ? "#0f172a" : "#fff",
+              width: "90%",
+              maxWidth: "900px",
+              maxHeight: "85vh",
+              overflowY: "auto",
+              borderRadius: "28px",
+              padding: "30px",
+              border: `1px solid ${darkMode ? "#334155" : "#e2e8f0"}`
+            }}>
+              <h2 style={{ marginBottom: "20px", color: "#86e07f" }}>
+                📜 Report History – {selectedProfile?.profileName}
+              </h2>
+
+                        {isLoadingReport ? (
+                <p>Loading...</p>
+              ) : Object.keys(groupedReports).length === 0 ? (
+                <p>No solved questions yet.</p>
+              ) : (
+                Object.entries(groupedReports).map(([type, items]: any) => (
+                  <div key={type} style={{ marginBottom: "35px" }}>
+                    
+                    {/* 🔹 عنوان نوع التمرين */}
+                    <h3 style={{
+                      marginBottom: "15px",
+                      color: "#38bdf8",
+                      textTransform: "capitalize"
+                    }}>
+                      🧩 {type} Exercises
+                    </h3>
+
+                    {items.map((item: any, idx: number) => (
+                      <div key={idx} style={{
+                        padding: "20px",
+                        marginBottom: "15px",
+                        borderRadius: "18px",
+                        backgroundColor: darkMode ? "#1e293b" : "#f8fafc",
+                        border: `1px solid ${darkMode ? "#334155" : "#e2e8f0"}`
+                      }}>
+                        <h4 style={{ marginBottom: "8px" }}>
+                          🧠 {item.exercise.prompt}
+                        </h4>
+
+                        <p><b>Topic:</b> {item.topic}</p>
+                        <p><b>Level:</b> {item.level}</p>
+                        <p><b>Type:</b> {item.type}</p>
+
+                        <p>
+                          <b>Correct:</b>{" "}
+                          <span style={{ color: item.correct ? "#22c55e" : "#ef4444" }}>
+                            {item.correct ? "Yes" : "No"}
+                          </span>
+                        </p>
+
+                        <p><b>Answer Time:</b> {new Date(item.answeredAt).toLocaleString()}</p>
+                        <p><b>Time Spent:</b> {(item.timeSpentMs / 1000).toFixed(1)} sec</p>
+                        <p><b>Correct Answer:</b> {item.exercise.answer}</p>
+                      </div>
+                    ))}
+                  </div>
+                ))
+              )}
+
+
+              <button
+                onClick={() => setIsReportModalOpen(false)}
+                style={{
+                  marginTop: "15px",
+                  padding: "14px 20px",
+                  borderRadius: "12px",
+                  backgroundColor: "#86e07f",
+                  color: "#fff",
+                  border: "none",
+                  cursor: "pointer",
+                  fontWeight: "700"
+                }}
+              >
+                Close
+              </button>
             </div>
           </div>
         )}

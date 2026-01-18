@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { User } from "../models/User";
 import { AuthRequest } from "./authController";
-
+import { Exercise } from "../models/Exercise";
 /* =========================
    ADD PROFILE
 ========================= */
@@ -226,3 +226,44 @@ if (user && user.profiles[profileIndex]) {
 /* =============================================
    סיום הוספה
    ============================================= */
+
+
+
+
+export const getReportHistory = async (req: Request, res: Response) => {
+  try {
+    const { email, profileName } = req.query;
+
+    if (!email || !profileName) {
+      return res.status(400).json({ success: false, message: "Missing params" });
+    }
+
+    const parent = await User.findOne({ email });
+    if (!parent) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const profile = parent.profiles.find(
+      (p) => p.profileName === profileName
+    );
+
+    if (!profile) {
+      return res.status(404).json({ success: false, message: "Profile not found" });
+    }
+
+    const history = await Promise.all(
+      profile.progress.map(async (p: any) => {
+        const exercise = await Exercise.findById(p.questionId);
+        return {
+          ...p,
+          exercise,
+        };
+      })
+    );
+
+    res.json({ success: true, history });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};

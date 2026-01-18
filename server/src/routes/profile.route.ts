@@ -54,6 +54,9 @@ profileRouter.post(
   buyActionLimiter,
   SetProfileAnswer
 )
+import { getReportHistory } from "../controllers/profileController";
+
+profileRouter.get("/report-history", getReportHistory);
 
 /* =========================
    GET LOGGED-IN USER PROFILES
