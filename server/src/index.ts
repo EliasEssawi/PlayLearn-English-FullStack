@@ -29,7 +29,8 @@ app.use(morgan("dev"));
 
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://webproject-plum.vercel.app"
+  "https://webproject-plum.vercel.app",
+  "https://webproject-5n1kxaupz-elias-projects-826243b3.vercel.app/"
 ];
 
 app.use(
