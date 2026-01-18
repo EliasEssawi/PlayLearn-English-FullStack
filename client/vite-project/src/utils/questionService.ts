@@ -1,6 +1,7 @@
 // services/questionService.ts
 import axios from "axios";
-
+const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
+   
 export interface Question {
   _id: string;
   level: number;
@@ -24,17 +25,18 @@ export const getProfileQuestions = async (
   type: string,
   numberOfQuestions: number = 5
 ): Promise<GetQuestionsResponse> => {
-  const response = await axios.post<GetQuestionsResponse>(
-    "/api/profiles/getQuestions", // adjust your endpoint
-    {
-      profileName,
-      level,
-      topic,
-      type,
-      numberOfQuestions,
-    },
-    { withCredentials: true }
-  );
+ const response = await axios.post<GetQuestionsResponse>(
+  `${API_BASE}/profiles/getQuestions`,
+  {
+    profileName,
+    level,
+    topic,
+    type,
+    numberOfQuestions,
+  },
+  { withCredentials: true }
+);
+
 
   return response.data;
 };
@@ -52,7 +54,7 @@ type SaveProgressPayload = {
 
 export const saveProgress = async (payload: SaveProgressPayload) => {
   const res = await axios.post(
-    "/api/profiles/saveAnswer",
+    `${API_BASE}/profiles/saveAnswer`,
     payload,
     {
       withCredentials: true, // ✅ for cookies auth

@@ -7,7 +7,8 @@ import Input from "../authintication/Input";
 import Button from "../authintication/Button";
 import LoginRightPanel from "../authintication/RightPanel";
 
-const API_BASE = "/api";
+const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
+
 
 type AddProfileData = {
   profileName: string;

@@ -9,7 +9,8 @@ import Layout from "./Layout";
 import axios, { AxiosError } from "axios";
 import {sendVerificationCodeRequest, LoginResponse, VerifyCodeRequest, ChangePassRequest} from "../../Types/Login"
 
-const API_BASE = "/api";
+const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
+
 
 export default function ForgotPassword() {
     const [message, setMessage] = useState<string>("");

@@ -11,7 +11,8 @@ type Profile = {
 
 type OptionAction = "changePin" | "viewProgress" | "reportHistory";
 
-const API_BASE = "/api";
+const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
+
 
 const ParentPage: React.FC = () => {
   const navigate = useNavigate();

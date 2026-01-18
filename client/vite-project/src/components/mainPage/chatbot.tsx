@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
+const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
 
 type Msg = {
   role: "user" | "bot";
@@ -41,7 +42,12 @@ export default function ChatbotPage({ darkMode }: ChatbotProps) {
     setLoading(true);
 
     try {
-      const { data } = await axios.post("/api/chatbot", { message: text });
+      const { data } = await axios.post(
+  `${API_BASE}/chatbot`,
+  { message: text },
+  { withCredentials: true }
+);
+
       const reply = String(data?.reply ?? "").trim() || "No reply.";
       setMessages(prev => [
         ...prev,

@@ -11,8 +11,8 @@ import ButtonLogin from "./Button";
 import LoginActions from "./Actions";
 import { LoginRequest, LoginResponse } from "../../Types/Login";
 import axios, { AxiosError } from "axios";
+const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
 
-const API_BASE = "/api";
 
 export default function Login() {
   type UserData = {

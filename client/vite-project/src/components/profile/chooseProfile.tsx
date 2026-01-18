@@ -7,7 +7,8 @@ import { isLoggedIn } from "../../utils/auth";
 import { Profile, getProfilesResponse, verifyPinResponse } from "../../Types/Login";
 import MainLayout from "../authintication/MainLayout"; 
 
-const API_BASE = "/api";
+const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
+
 
 const ChooseProfile: React.FC = () => {
   const navigate = useNavigate();

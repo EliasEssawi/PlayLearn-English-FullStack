@@ -3,7 +3,8 @@ import axios, { AxiosError } from "axios";
 import { RegisterRequest, RegisterResponse } from "../../Types/Register";
 import LoginRightPanel from "./RightPanel";
 
-const API_BASE = "/api";
+const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
+
 
 type Captcha = { question: string; answer: string };
 
