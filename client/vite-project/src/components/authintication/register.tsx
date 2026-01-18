@@ -83,8 +83,11 @@ const Register: React.FC = () => {
     };
 
     try {
-      const res = await axios.post<RegisterResponse>(`${API_BASE}/public/register`, payload);
-      
+      const res = await axios.post<RegisterResponse>(
+  `${API_BASE}/public/register`,
+  payload,
+  { withCredentials: true }
+);
       setMessage(res.data.message || "Registered successfully!");
       //Reset form
       setUserData(initialUserData);
