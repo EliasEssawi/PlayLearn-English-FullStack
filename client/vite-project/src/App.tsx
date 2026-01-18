@@ -9,7 +9,7 @@ import StarterPage from './pages/starterPage'
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ChooseProfile from './components/profile/chooseProfile'
 import axios, { AxiosError } from "axios";
-const API_BASE = "/api";
+const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
 import Layout from './components/NavigationAndSwitcher/Layout';
 import Navigationbar from './components/NavigationAndSwitcher/NavigationBar';
 import ForgotPassword from './components/authintication/forgotPass';

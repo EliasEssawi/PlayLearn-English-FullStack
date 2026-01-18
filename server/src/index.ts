@@ -26,12 +26,22 @@ const app = express();
 app.use(helmet());
 app.use(morgan("dev"));
 
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://webproject-plum.vercel.app"
+];
+
 app.use(
   cors({
-    origin: "http://localhost:5173", // ✅ Frontend (Vite default). Change if yours is different.
-    credentials: true,
+    origin: (origin, cb) => {
+      if (!origin) return cb(null, true);
+      cb(null, allowedOrigins.includes(origin));
+    },
+    credentials: true
   })
 );
+
 
 app.use(express.json());
 app.use(cookieParser());
@@ -107,11 +117,12 @@ app.get("/health", (_req, res) => res.json({ ok: true }));
 // --------------------
 // Server
 // --------------------
-const PORT = 5001;
+const PORT = process.env.PORT || 5001;
 
-app.listen(PORT, "127.0.0.1", () => {
-  console.log(`BACKEND ACTIVE: http://127.0.0.1:${PORT}`);
+app.listen(Number(PORT), "0.0.0.0", () => {
+  console.log(`BACKEND ACTIVE: http://0.0.0.0:${PORT}`);
 });
+
 
 // Listen on 127.0.0.1 to perfectly match Vite's proxy target
 
