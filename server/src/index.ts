@@ -17,7 +17,9 @@ import rateLimit from "express-rate-limit";
 import { User } from "./models/User";
 import { Exercise } from "./models/Exercise";
 
-// ✅ Create app FIRST
+// import dotenv from "dotenv";
+dotenv.config();
+
 const app = express();
 
 // --------------------
@@ -26,40 +28,44 @@ const app = express();
 app.use(helmet());
 app.use(morgan("dev"));
 
+// ✅ IMPORTANT: must be before routes
+app.use(
+  cors({
+    origin: (origin, cb) => {
+      // allow server-to-server / curl / render health checks
+      if (!origin) return cb(null, true);
 
-const corsOptions: cors.CorsOptions = {
-  origin: (origin, cb) => {
-    if (!origin) return cb(null, true);
+      // ✅ Allowed exact origins (NO path here!)
+      const allowedExact = new Set<string>([
+        "http://localhost:5173",
+        "https://webproject-plum.vercel.app",
+        // add your main production client here if you have it
+      ]);
 
-    const allowed =
-      origin === "http://localhost:5173" ||
-      origin === "https://webproject-plum.vercel.app" ||
-      origin === "https://webproject-kanpnozle-elias-projects-826243b3.vercel.app/login" ||
-      /^https:\/\/webproject-.*\.vercel\.app$/.test(origin);
+      // ✅ allow all your Vercel preview deployments
+      const isVercelPreview = /^https:\/\/webproject-.*\.vercel\.app$/.test(origin);
 
-    return cb(null, allowed);
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-};
+      const allowed = allowedExact.has(origin) || isVercelPreview;
 
-app.use(cors(corsOptions));
+      return cb(null, allowed);
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
-app.use((req, res, next) => {
-  if (req.method === "OPTIONS") {
-    return cors(corsOptions)(req, res, () => res.sendStatus(204));
-  }
-  next();
-});
+// ✅ Preflight handled automatically by cors middleware
+app.options("*", cors());
 
 app.use(express.json());
 app.use(cookieParser());
 
-app.use((req: Request, res: Response, next: NextFunction) => {
-  res.set("Cache-Control", "no-store");
+app.use((_req: Request, res: Response, next: NextFunction) => {
+  res.setHeader("Cache-Control", "no-store");
   next();
 });
+
 
 // --------------------
 // Database

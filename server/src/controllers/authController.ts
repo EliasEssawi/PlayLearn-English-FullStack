@@ -120,12 +120,16 @@ export const login = async (req: Request, res: Response) => {
       { expiresIn: "1h" }
     );
 
-    res.cookie("authToken", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 60 * 60 * 1000,
-    });
+   const isProd = process.env.NODE_ENV === "production";
+
+res.cookie("authToken", token, {
+  httpOnly: true,
+  secure: isProd,                 // true on Render HTTPS
+  sameSite: isProd ? "none" : "lax",
+  path: "/",
+  maxAge: 60 * 60 * 1000,
+});
+
 
     return res.status(200).json({
       success: true,
