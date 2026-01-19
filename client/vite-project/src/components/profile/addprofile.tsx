@@ -6,8 +6,7 @@ import Card from "../authintication/Card";
 import Input from "../authintication/Input";
 import Button from "../authintication/Button";
 import LoginRightPanel from "../authintication/RightPanel";
-
-const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
+import api from "../../api/axios.ts";
 
 
 type AddProfileData = {
@@ -61,7 +60,7 @@ const AddProfile: React.FC = () => {
     }
 
     try {
-      await axios.post(`${API_BASE}/profiles`, {
+      await api.post(`/api/profiles`, {
         profileName: profileData.profileName.trim(),
         pin: profileData.pin,
         rate: profileData.rate,

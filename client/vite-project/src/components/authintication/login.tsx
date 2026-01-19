@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
 import LoginLayout from "./Layout";
 import LoginCard from "./Card";
 import LoginLeftPanel from "./LeftPanel";
@@ -11,7 +10,8 @@ import ButtonLogin from "./Button";
 import LoginActions from "./Actions";
 import { LoginRequest, LoginResponse } from "../../Types/Login";
 import axios, { AxiosError } from "axios";
-const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
+import api from "../../api/axios.ts";
+
 
 
 export default function Login() {
@@ -54,8 +54,7 @@ export default function Login() {
         ✔ Cookie is sent on every next request
         ✔ JS cannot read it (secure)
       */
-      await axios.post<LoginResponse>(`${API_BASE}/public/login`, payload, { withCredentials: true });
-
+      await api.post<LoginResponse>("/api/public/login", payload);
       localStorage.setItem("loggedInUser", payload.email);
 
       //navigate — auth is now server-side
