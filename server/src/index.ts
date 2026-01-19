@@ -55,8 +55,7 @@ app.use(
   })
 );
 
-// ✅ Preflight handled automatically by cors middleware
-app.options("*", cors());
+
 
 app.use(express.json());
 app.use(cookieParser());
