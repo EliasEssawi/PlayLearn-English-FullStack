@@ -23,10 +23,11 @@ export const register = async (req: Request, res: Response) => {
   try {
     const parsed = RegisterSchema.safeParse(req.body);
 
-    if (!parsed.success) {
-      const firstError = parsed.error.issues[0];
-      return res.status(400).json({ success: false, message: firstError?.message });
-    }
+   if (!parsed.success) {
+  console.log("REGISTER VALIDATION:", parsed.error.issues);
+  return res.status(400).json({ success: false, message: parsed.error.issues[0]?.message });
+}
+
 
     const { name, email, password, pin, dateOfBirth } = parsed.data;
 
@@ -285,10 +286,13 @@ export const changePassword = async (req: Request, res: Response) => {
  * LOGOUT
  */
 export const logout = (req: Request, res: Response) => {
+  const isProd = process.env.NODE_ENV === "production";
+
   res.clearCookie("authToken", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    secure: isProd,
+    sameSite: isProd ? "none" : "lax",
+    path: "/",                     // ✅ MUST MATCH
   });
 
   return res.status(200).json({
@@ -296,3 +300,4 @@ export const logout = (req: Request, res: Response) => {
     message: "Logged out successfully",
   });
 };
+
