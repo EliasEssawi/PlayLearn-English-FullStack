@@ -156,13 +156,14 @@ export interface AuthRequest extends Request {
  */
 export const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction) => {
   const token = req.cookies?.authToken;
-
+  console.log("AUTH MIDDLEWARE TOKEN:", token);
   if (!token) {
     return res.sendStatus(401);
   }
 
   try {
     const jwtSecret = process.env.JWT_SECRET;
+    console.log("JWT SECRET:", jwtSecret);
     if (!jwtSecret) return res.sendStatus(500);
 
     const decoded = jwt.verify(token, jwtSecret) as JwtPayload;
