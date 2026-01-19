@@ -167,13 +167,23 @@ const [isLoadingReport, setIsLoadingReport] = useState(false);
     setIsLoadingReport(false);
   }
 };
+const [reportViewMode, setReportViewMode] = useState<"type" | "date">("type");
+
 const groupedReports = reportData.reduce((acc: any, item: any) => {
-  const type = item.type || "other";
-  if (!acc[type]) acc[type] = [];
-  acc[type].push(item);
+  let key = "Other";
+  
+  if (reportViewMode === "type") {
+    // קיבוץ לפי סוג תרגיל (Talking, Listening וכו')
+    key = item.type || "Other";
+  } else {
+    // קיבוץ לפי תאריך (YYYY-MM-DD)
+    key = new Date(item.answeredAt).toLocaleDateString();
+  }
+
+  if (!acc[key]) acc[key] = [];
+  acc[key].push(item);
   return acc;
 }, {});
-
 /////
   return (
     <MainLayout darkMode={darkMode} setDarkMode={handleToggleDarkMode}>
@@ -279,98 +289,110 @@ const groupedReports = reportData.reduce((acc: any, item: any) => {
             </div>
           </div>
         )}
-        {isReportModalOpen && (
-          <div style={{
-            position: "fixed",
-            inset: 0,
-            backgroundColor: "rgba(0,0,0,0.7)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 1000
-          }}>
-            <div style={{
-              background: darkMode ? "#0f172a" : "#fff",
-              width: "90%",
-              maxWidth: "900px",
-              maxHeight: "85vh",
-              overflowY: "auto",
-              borderRadius: "28px",
-              padding: "30px",
-              border: `1px solid ${darkMode ? "#334155" : "#e2e8f0"}`
+       {isReportModalOpen && (
+  <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.7)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 }}>
+    <div style={{
+      background: darkMode ? "#0f172a" : "#fff",
+      width: "90%", maxWidth: "900px", maxHeight: "85vh", overflowY: "auto",
+      borderRadius: "28px", padding: "30px", border: `1px solid ${darkMode ? "#334155" : "#e2e8f0"}`
+    }}>
+      
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "25px", flexWrap: "wrap", gap: "15px" }}>
+        <h2 style={{ color: "#86e07f", margin: 0 }}>
+          📜 Report History – {selectedProfile?.profileName}
+        </h2>
+
+        {/* 🔘 כפתורי סינון (Filter Tabs) */}
+        <div style={{ display: "flex", backgroundColor: darkMode ? "#1e293b" : "#f1f5f9", padding: "5px", borderRadius: "12px" }}>
+          <button 
+            onClick={() => setReportViewMode("type")}
+            style={{
+              padding: "8px 16px", borderRadius: "8px", border: "none", cursor: "pointer",
+              backgroundColor: reportViewMode === "type" ? "#86e07f" : "transparent",
+              color: reportViewMode === "type" ? "#fff" : (darkMode ? "#94a3b8" : "#64748b"),
+              fontWeight: "600", transition: "all 0.2s"
             }}>
-              <h2 style={{ marginBottom: "20px", color: "#86e07f" }}>
-                📜 Report History – {selectedProfile?.profileName}
-              </h2>
+            By Exercise Type
+          </button>
+          <button 
+            onClick={() => setReportViewMode("date")}
+            style={{
+              padding: "8px 16px", borderRadius: "8px", border: "none", cursor: "pointer",
+              backgroundColor: reportViewMode === "date" ? "#86e07f" : "transparent",
+              color: reportViewMode === "date" ? "#fff" : (darkMode ? "#94a3b8" : "#64748b"),
+              fontWeight: "600", transition: "all 0.2s"
+            }}>
+            By Date
+          </button>
+        </div>
+      </div>
 
-                        {isLoadingReport ? (
-                <p>Loading...</p>
-              ) : Object.keys(groupedReports).length === 0 ? (
-                <p>No solved questions yet.</p>
-              ) : (
-                Object.entries(groupedReports).map(([type, items]: any) => (
-                  <div key={type} style={{ marginBottom: "35px" }}>
-                    
-                    {/* 🔹 عنوان نوع التمرين */}
-                    <h3 style={{
-                      marginBottom: "15px",
-                      color: "#38bdf8",
-                      textTransform: "capitalize"
+      {isLoadingReport ? (
+        <p style={{ color: darkMode ? "#fff" : "#000" }}>Loading records...</p>
+      ) : Object.keys(groupedReports).length === 0 ? (
+        <p style={{ color: darkMode ? "#94a3b8" : "#64748b" }}>No solved questions yet.</p>
+      ) : (
+        Object.entries(groupedReports).map(([groupTitle, items]: any) => (
+          <div key={groupTitle} style={{ marginBottom: "35px" }}>
+            
+            {/* כותרת הקבוצה (התאריך או סוג התרגיל) */}
+            <h3 style={{
+              marginBottom: "15px",
+              color: "#38bdf8",
+              textTransform: "capitalize",
+              borderBottom: `1px solid ${darkMode ? "#1e293b" : "#f1f5f9"}`,
+              paddingBottom: "8px"
+            }}>
+              {reportViewMode === "type" ? `🧩 ${groupTitle} Exercises` : `📅 ${groupTitle}`}
+            </h3>
+
+            {items.map((item: any, idx: number) => (
+              <div key={idx} style={{
+                padding: "20px", marginBottom: "15px", borderRadius: "18px",
+                backgroundColor: darkMode ? "#1e293b" : "#f8fafc",
+                border: `1px solid ${darkMode ? "#334155" : "#e2e8f0"}`
+              }}>
+                <h4 style={{ marginBottom: "10px", color: darkMode ? "#f8fafc" : "#1e293b" }}>
+                  🧠 {item.exercise.prompt}
+                </h4>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", fontSize: "0.9rem", color: darkMode ? "#cbd5e1" : "#475569" }}>
+                  <p><b>Topic:</b> {item.topic}</p>
+                  <p><b>Level:</b> {item.level}</p>
+                  <p><b>Type:</b> {item.type}</p>
+                  <p>
+                    <b>Result:</b>{" "}
+                    <span style={{ 
+                      backgroundColor: item.correct ? "rgba(34, 197, 94, 0.1)" : "rgba(239, 68, 68, 0.1)",
+                      color: item.correct ? "#22c55e" : "#ef4444",
+                      padding: "2px 8px", borderRadius: "6px", fontWeight: "bold"
                     }}>
-                      🧩 {type} Exercises
-                    </h3>
-
-                    {items.map((item: any, idx: number) => (
-                      <div key={idx} style={{
-                        padding: "20px",
-                        marginBottom: "15px",
-                        borderRadius: "18px",
-                        backgroundColor: darkMode ? "#1e293b" : "#f8fafc",
-                        border: `1px solid ${darkMode ? "#334155" : "#e2e8f0"}`
-                      }}>
-                        <h4 style={{ marginBottom: "8px" }}>
-                          🧠 {item.exercise.prompt}
-                        </h4>
-
-                        <p><b>Topic:</b> {item.topic}</p>
-                        <p><b>Level:</b> {item.level}</p>
-                        <p><b>Type:</b> {item.type}</p>
-
-                        <p>
-                          <b>Correct:</b>{" "}
-                          <span style={{ color: item.correct ? "#22c55e" : "#ef4444" }}>
-                            {item.correct ? "Yes" : "No"}
-                          </span>
-                        </p>
-
-                        <p><b>Answer Time:</b> {new Date(item.answeredAt).toLocaleString()}</p>
-                        <p><b>Time Spent:</b> {(item.timeSpentMs / 1000).toFixed(1)} sec</p>
-                        <p><b>Correct Answer:</b> {item.exercise.answer}</p>
-                      </div>
-                    ))}
-                  </div>
-                ))
-              )}
-
-
-              <button
-                onClick={() => setIsReportModalOpen(false)}
-                style={{
-                  marginTop: "15px",
-                  padding: "14px 20px",
-                  borderRadius: "12px",
-                  backgroundColor: "#86e07f",
-                  color: "#fff",
-                  border: "none",
-                  cursor: "pointer",
-                  fontWeight: "700"
-                }}
-              >
-                Close
-              </button>
-            </div>
+                      {item.correct ? "Correct" : "Wrong"}
+                    </span>
+                  </p>
+                  <p><b>Time Spent:</b> {(item.timeSpentMs / 1000).toFixed(1)}s</p>
+                  <p><b>Answered:</b> {new Date(item.answeredAt).toLocaleTimeString()}</p>
+                </div>
+                <div style={{ marginTop: "10px", paddingTop: "10px", borderTop: `1px dashed ${darkMode ? "#334155" : "#cbd5e1"}` }}>
+                   <p style={{ margin: 0 }}><b>Correct Answer:</b> <span style={{ color: "#86e07f" }}>{item.exercise.answer}</span></p>
+                </div>
+              </div>
+            ))}
           </div>
-        )}
+        ))
+      )}
+
+      <button
+        onClick={() => setIsReportModalOpen(false)}
+        style={{
+          width: "100%", marginTop: "15px", padding: "14px", borderRadius: "12px",
+          backgroundColor: "#86e07f", color: "#fff", border: "none", cursor: "pointer", fontWeight: "700"
+        }}>
+        Close
+      </button>
+    </div>
+  </div>
+)}
 
       </div>
     </MainLayout>
