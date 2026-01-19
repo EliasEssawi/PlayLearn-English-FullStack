@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
-const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
 
 type Msg = {
   role: "user" | "bot";
@@ -8,11 +7,11 @@ type Msg = {
   time: string;
 };
 
-type ChatbotProps = {
+type ChatBotProps = {
   darkMode: boolean;
 };
 
-export default function ChatbotPage({ darkMode }: ChatbotProps) {
+export default function ChatBot({ darkMode }: ChatBotProps) {
   const [messages, setMessages] = useState<Msg[]>([
     {
       role: "bot",
@@ -42,12 +41,7 @@ export default function ChatbotPage({ darkMode }: ChatbotProps) {
     setLoading(true);
 
     try {
-      const { data } = await axios.post(
-  `${API_BASE}/chatbot`,
-  { message: text },
-  { withCredentials: true }
-);
-
+      const { data } = await axios.post("/api/chatbot", { message: text });
       const reply = String(data?.reply ?? "").trim() || "No reply.";
       setMessages(prev => [
         ...prev,
@@ -76,6 +70,7 @@ export default function ChatbotPage({ darkMode }: ChatbotProps) {
 
   return (
     <div
+      className="transition-colors duration-300"
       style={{
         maxWidth: 950,
         margin: "0 auto",
@@ -83,16 +78,17 @@ export default function ChatbotPage({ darkMode }: ChatbotProps) {
         color: darkMode ? "#f8fafc" : "#0f172a",
       }}
     >
-      <h2>Chatbot</h2>
-      <p style={{ color: darkMode ? "#d1d5db" : "#6b7280" }}>
+      <h2 className="text-2xl font-bold mb-2">Chatbot</h2>
+      <p style={{ color: darkMode ? "#94a3b8" : "#475569" }}>
         Talk to the Gemini assistant. Press <b>Enter</b> to send, <b>Shift+Enter</b> for new line.
       </p>
 
       {/* CHAT BOX */}
       <div
+        className="transition-all duration-300"
         style={{
           marginTop: 14,
-          border: darkMode ? "1px solid #334155" : "1px solid #e5e7eb",
+          border: darkMode ? "2px solid #334155" : "2px solid #6bc465",
           borderRadius: 14,
           background: darkMode ? "#020617" : "#ffffff",
           height: 460,
@@ -113,17 +109,18 @@ export default function ChatbotPage({ darkMode }: ChatbotProps) {
             >
               <div style={{ maxWidth: "75%" }}>
                 <div
+                  className="transition-all duration-300"
                   style={{
-                    padding: "10px 12px",
+                    padding: "10px 14px",
                     borderRadius: 14,
-                    border: darkMode ? "1px solid #334155" : "1px solid #e5e7eb",
+                    // הודעת משתמש: ירוק ב-Light, כחול כהה ב-Dark
+                    // הודעת בוט: לבן ב-Light, שחור ב-Dark
                     background: isUser
-                      ? darkMode
-                        ? "#1e293b"
-                        : "#f3f4f6"
-                      : darkMode
-                      ? "#020617"
-                      : "#ffffff",
+                      ? darkMode ? "#1e293b" : "#86e07f"
+                      : darkMode ? "#020617" : "#f1f5f9",
+                    color: isUser && !darkMode ? "#0f172a" : "inherit",
+                    border: darkMode ? "1px solid #334155" : "1px solid #e2e8f0",
+                    boxShadow: !darkMode && isUser ? "0 4px 0 #58a352" : "none",
                     whiteSpace: "pre-wrap",
                   }}
                 >
@@ -133,7 +130,7 @@ export default function ChatbotPage({ darkMode }: ChatbotProps) {
                 <div
                   style={{
                     fontSize: 12,
-                    color: darkMode ? "#9ca3af" : "#888",
+                    color: darkMode ? "#9ca3af" : "#64748b",
                     marginTop: 4,
                     textAlign: isUser ? "right" : "left",
                   }}
@@ -146,14 +143,14 @@ export default function ChatbotPage({ darkMode }: ChatbotProps) {
         })}
 
         {loading && (
-          <div style={{ color: darkMode ? "#d1d5db" : "#666" }}>
+          <div style={{ color: darkMode ? "#94a3b8" : "#64748b", fontStyle: "italic" }}>
             Bot is typing…
           </div>
         )}
         <div ref={bottomRef} />
       </div>
 
-      {/* INPUT */}
+      {/* INPUT AREA */}
       <div style={{ marginTop: 12 }}>
         <textarea
           value={input}
@@ -165,10 +162,11 @@ export default function ChatbotPage({ darkMode }: ChatbotProps) {
             width: "100%",
             padding: 12,
             borderRadius: 12,
-            border: darkMode ? "1px solid #334155" : "1px solid #e5e7eb",
+            border: darkMode ? "2px solid #334155" : "2px solid #6bc465",
             background: darkMode ? "#020617" : "#ffffff",
             color: darkMode ? "#f8fafc" : "#0f172a",
             resize: "none",
+            outline: "none",
           }}
         />
 
@@ -176,13 +174,16 @@ export default function ChatbotPage({ darkMode }: ChatbotProps) {
           <button
             onClick={() => void sendMessage()}
             disabled={!input.trim() || loading}
+            className="font-bold transition-all active:translate-y-1"
             style={{
-              padding: "10px 16px",
+              padding: "10px 24px",
               borderRadius: 12,
-              border: darkMode ? "1px solid #334155" : "1px solid #e5e7eb",
-              background: darkMode ? "#1e293b" : "#ffffff",
+              border: "none",
+              background: darkMode ? "#1e293b" : "#86e07f",
               color: darkMode ? "#f8fafc" : "#0f172a",
+              boxShadow: darkMode ? "0 4px 0 #0f172a" : "0 4px 0 #58a352",
               cursor: !input.trim() || loading ? "not-allowed" : "pointer",
+              opacity: !input.trim() || loading ? 0.6 : 1,
             }}
           >
             {loading ? "Sending…" : "Send"}

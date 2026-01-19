@@ -18,7 +18,6 @@ import ParentPage from './components/mainPage/parentPage';
 import MainPage from './components/mainPage/mainPage';
 import Vocabulary from './components/vocabulary/vocabularyHome';
 import TranslateGame from './components/vocabulary/translate';
-import ChatBot from './components/mainPage/chatbot';
 
 
 function App() {
@@ -35,7 +34,6 @@ function App() {
         <Route path="/parentPage" element={<ParentPage/>}/>
         <Route path="/vocabulary/index" element={<Vocabulary/>}/>
         <Route path="/vocabulary/translate" element={<TranslateGame />} />
-        <Route path="chatbot" element={<ChatBot />} />
         <Route path="/mainPage" element={<MainPage/>}/>
       </Routes> 
      

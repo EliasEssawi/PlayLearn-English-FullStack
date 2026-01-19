@@ -73,6 +73,13 @@ const Register: React.FC = () => {
       setMessage("PINs do not match.");
       return;
     }
+    // 4. Date of Birth Validation (Check if future date)
+    const selectedDate = new Date(userData.dateOfBirth);
+    const today = new Date();
+    if (selectedDate > today) {
+      setMessage("Date of birth cannot be in the future.");
+      return;
+    }
 
     const payload: RegisterRequest = {
       name: userData.name.trim(),
