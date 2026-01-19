@@ -21,7 +21,7 @@ import { Exercise } from "./models/Exercise";
 dotenv.config();
 
 const app = express();
-
+app.set("trust proxy", 1);
 // --------------------
 // Middleware
 // --------------------
@@ -38,7 +38,7 @@ app.use(
       // ✅ Allowed exact origins (NO path here!)
       const allowedExact = new Set<string>([
         "http://localhost:5173",
-        "webproject-coral.vercel.app"
+        "https://webproject-coral.vercel.app"
         // add your main production client here if you have it
       ]);
 
