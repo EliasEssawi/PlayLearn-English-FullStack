@@ -45,9 +45,12 @@ const corsOptions: cors.CorsOptions = {
 
 app.use(cors(corsOptions));
 
-// 🔥 THIS IS THE MISSING LINE (MOST IMPORTANT)
-app.options("*", cors(corsOptions));
-
+app.use((req, res, next) => {
+  if (req.method === "OPTIONS") {
+    return cors(corsOptions)(req, res, () => res.sendStatus(204));
+  }
+  next();
+});
 
 app.use(express.json());
 app.use(cookieParser());
@@ -129,7 +132,3 @@ app.listen(Number(PORT), "0.0.0.0", () => {
   console.log(`BACKEND ACTIVE: http://0.0.0.0:${PORT}`);
 });
 
-
-// Listen on 127.0.0.1 to perfectly match Vite's proxy target
-
-//ELias Commit added
