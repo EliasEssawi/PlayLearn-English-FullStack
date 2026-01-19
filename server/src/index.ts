@@ -34,6 +34,7 @@ const corsOptions: cors.CorsOptions = {
     const allowed =
       origin === "http://localhost:5173" ||
       origin === "https://webproject-plum.vercel.app" ||
+      origin === "https://webproject-kanpnozle-elias-projects-826243b3.vercel.app/login" ||
       /^https:\/\/webproject-.*\.vercel\.app$/.test(origin);
 
     return cb(null, allowed);
