@@ -41,6 +41,7 @@ app.use(
         "https://webproject-coral.vercel.app"
         // add your main production client here if you have it
       ]);
+      
 
       // ✅ allow all your Vercel preview deployments
       const isVercelPreview = /^https:\/\/webproject-.*\.vercel\.app$/.test(origin);

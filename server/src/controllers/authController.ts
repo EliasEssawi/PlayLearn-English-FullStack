@@ -35,12 +35,11 @@ function isProductionEnv(req?: Request): boolean {
 }
 
 function getCookieOptions(req?: Request): CookieOptions {
-  const isProd = isProductionEnv(req);
-
+ 
   const opts: CookieOptions = {
     httpOnly: true,
-    secure: isProd,                  // must be true when sameSite is "none"
-    sameSite: isProd ? "none" : "lax",
+    secure: true,                  // must be true when sameSite is "none"
+    sameSite: "none",
     path: "/",
     maxAge: 60 * 60 * 1000,
   };
