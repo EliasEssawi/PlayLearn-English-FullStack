@@ -26,22 +26,31 @@ const app = express();
 app.use(helmet());
 app.use(morgan("dev"));
 
-
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://webproject-plum.vercel.app",
-  "https://webproject-5n1kxaupz-elias-projects-826243b3.vercel.app/"
+  "https://webproject-plum.vercel.app"
 ];
 
 app.use(
   cors({
     origin: (origin, cb) => {
       if (!origin) return cb(null, true);
-      cb(null, allowedOrigins.includes(origin));
+
+      const isAllowed =
+        allowedOrigins.includes(origin) ||
+        /^https:\/\/webproject-.*\.vercel\.app$/.test(origin);
+
+      return cb(null, isAllowed);
     },
-    credentials: true
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
+// VERY IMPORTANT: allow preflight
+app.options("*", cors());
+
 
 
 app.use(express.json());
