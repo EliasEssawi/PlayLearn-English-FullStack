@@ -4,8 +4,6 @@
  */
 
 import dotenv from "dotenv";
-dotenv.config();
-
 import express, { Request, Response, NextFunction } from "express";
 import mongoose from "mongoose";
 import cors from "cors";
@@ -17,8 +15,10 @@ import rateLimit from "express-rate-limit";
 import { User } from "./models/User";
 import { Exercise } from "./models/Exercise";
 
-// import dotenv from "dotenv";
-dotenv.config();
+dotenv.config({
+  path: process.env.NODE_ENV === "production" ? ".env.production" : ".env.development",
+});
+
 
 const app = express();
 app.set("trust proxy", 1);
@@ -38,6 +38,7 @@ app.use(
       // ✅ Allowed exact origins (NO path here!)
       const allowedExact = new Set<string>([
         "http://localhost:5173",
+        "http://localhost:3005",
         "https://webproject-coral.vercel.app"
         // add your main production client here if you have it
       ]);
