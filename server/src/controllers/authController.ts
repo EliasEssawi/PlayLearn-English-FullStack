@@ -6,6 +6,8 @@ import crypto from "crypto";
 import { verifyUserResetCode } from "../services/userService";
 import { sendWelcomeEmail, sendPasswordResetEmail } from "../services/mailService";
 import jwt from "jsonwebtoken";
+import type { CookieOptions } from "express";
+
 
 export function generateCode(length = 8): string {
   return crypto
@@ -16,6 +18,38 @@ export function generateCode(length = 8): string {
     .toUpperCase();
 }
 
+
+function isProductionEnv(req?: Request): boolean {
+  const nodeEnvProd = process.env.NODE_ENV === "production";
+  const renderProd = process.env.RENDER === "true";
+  const vercelProd = process.env.VERCEL === "1";
+
+  const xfProto = req?.headers["x-forwarded-proto"];
+  const httpsByReq =
+    !!req &&
+    (req.secure ||
+      xfProto === "https" ||
+      (Array.isArray(xfProto) && xfProto[0] === "https"));
+
+  return nodeEnvProd || renderProd || vercelProd || httpsByReq;
+}
+
+function getCookieOptions(req?: Request): CookieOptions {
+  const isProd = isProductionEnv(req);
+
+  const opts: CookieOptions = {
+    httpOnly: true,
+    secure: isProd,                  // must be true when sameSite is "none"
+    sameSite: isProd ? "none" : "lax",
+    path: "/",
+    maxAge: 60 * 60 * 1000,
+  };
+
+  return opts;
+}
+
+
+
 /**
  * REGISTER
  */
@@ -23,11 +57,12 @@ export const register = async (req: Request, res: Response) => {
   try {
     const parsed = RegisterSchema.safeParse(req.body);
 
-   if (!parsed.success) {
-  console.log("REGISTER VALIDATION:", parsed.error.issues);
-  return res.status(400).json({ success: false, message: parsed.error.issues[0]?.message });
-}
-
+    if (!parsed.success) {
+      console.log("REGISTER VALIDATION:", parsed.error.issues);
+      return res
+        .status(400)
+        .json({ success: false, message: parsed.error.issues[0]?.message });
+    }
 
     const { name, email, password, pin, dateOfBirth } = parsed.data;
 
@@ -56,13 +91,9 @@ export const register = async (req: Request, res: Response) => {
     sendWelcomeEmail(email, name)
       .then((mail) => {
         console.log("WELCOME MAIL RESULT:", mail);
-        if (!mail.ok) {
-          console.error("Sign Up Mail Failed To Send.", mail.error);
-        }
+        if (!mail.ok) console.error("Sign Up Mail Failed To Send.", mail.error);
       })
-      .catch((e) => {
-        console.error("Sign Up Mail Threw Error:", e);
-      });
+      .catch((e) => console.error("Sign Up Mail Threw Error:", e));
 
     return res.status(201).json({
       success: true,
@@ -113,24 +144,23 @@ export const login = async (req: Request, res: Response) => {
     }
 
     const token = jwt.sign(
-      {
-        userId: userData._id,
-        email: userData.email,
-      },
+      { userId: String(userData._id), email: userData.email },
       jwtSecret,
       { expiresIn: "1h" }
     );
 
-   const isProd = process.env.NODE_ENV === "production";
+    const cookieOptions = getCookieOptions(req);
 
-res.cookie("authToken", token, {
-  httpOnly: true,
-  secure: isProd,                 // true on Render HTTPS
-  sameSite: isProd ? "none" : "lax",
-  path: "/",
-  maxAge: 60 * 60 * 1000,
-});
+    // Helpful debug (no secret, no token printed)
+    console.log("LOGIN SET COOKIE:", {
+      origin: req.headers.origin,
+      secure: cookieOptions.secure,
+      sameSite: cookieOptions.sameSite,
+      host: req.headers.host,
+      xfProto: req.headers["x-forwarded-proto"],
+    });
 
+    res.cookie("authToken", token, cookieOptions);
 
     return res.status(200).json({
       success: true,
@@ -156,21 +186,32 @@ export interface AuthRequest extends Request {
  */
 export const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction) => {
   const token = req.cookies?.authToken;
-  console.log("AUTH MIDDLEWARE TOKEN:", token);
+
+  // Debug: tells you EXACTLY what the server received
+  console.log("AUTH CHECK:", {
+    path: req.path,
+    origin: req.headers.origin,
+    cookieHeader: req.headers.cookie ? "present" : "missing",
+    parsedCookies: req.cookies ? Object.keys(req.cookies) : "no-cookie-parser?",
+    hasAuthToken: Boolean(token),
+    xfProto: req.headers["x-forwarded-proto"],
+  });
+
   if (!token) {
-    return res.sendStatus(401);
+    return res.status(401).json({ success: false, message: "Unauthorized (no cookie)" });
   }
 
   try {
     const jwtSecret = process.env.JWT_SECRET;
-    console.log("JWT SECRET:", jwtSecret);
-    if (!jwtSecret) return res.sendStatus(500);
+    if (!jwtSecret) return res.status(500).json({ success: false, message: "Missing JWT_SECRET" });
 
     const decoded = jwt.verify(token, jwtSecret) as JwtPayload;
     req.user = decoded;
     return next();
-  } catch {
-    return res.sendStatus(401);
+  } catch (e: any) {
+    // Token expired / invalid / wrong secret
+    console.log("JWT VERIFY FAILED:", e?.name || "Error");
+    return res.status(401).json({ success: false, message: "Unauthorized (invalid token)" });
   }
 };
 
@@ -190,26 +231,17 @@ export const sendResetPassCode = async (req: Request, res: Response) => {
     }
 
     const code = generateCode();
-
     const hashedCode = crypto.createHash("sha256").update(code).digest("hex");
 
     await User.updateOne(
       { email },
-      {
-        resetCode: hashedCode,
-        resetCodeExpiresAt: new Date(Date.now() + 3 * 60 * 1000), // 3 minutes
-      }
+      { resetCode: hashedCode, resetCodeExpiresAt: new Date(Date.now() + 3 * 60 * 1000) }
     );
 
-    // Try to send the code email
     const mail = await sendPasswordResetEmail(email, code);
     console.log("RESET MAIL RESULT:", mail);
+    if (!mail.ok) console.error("Reset Code Failed To Send.", mail.error);
 
-    if (!mail.ok) {
-      console.error("Reset Code Failed To Send.", mail.error);
-      // Security note: still respond OK-ish so attackers can't probe email delivery
-    }
-    console.log(`Reset code for ${email}: ${code} (hashed: ${hashedCode})`);
     return res.status(200).json({
       success: true,
       message: "Verification code sent to email",
@@ -228,7 +260,6 @@ export const verifyPassCode = async (req: Request, res: Response) => {
     const { email, code } = req.body;
 
     const user = await verifyUserResetCode(email, code);
-
     if (!user) {
       return res.status(400).json({
         success: false,
@@ -266,11 +297,8 @@ export const changePassword = async (req: Request, res: Response) => {
     }
 
     user.password = await bcrypt.hash(newPassword, 10);
-
-    // Clear reset code after successful use
     user.resetCode = undefined;
     user.resetCodeExpiresAt = undefined;
-
     await user.save();
 
     return res.status(200).json({
@@ -287,13 +315,14 @@ export const changePassword = async (req: Request, res: Response) => {
  * LOGOUT
  */
 export const logout = (req: Request, res: Response) => {
-  const isProd = process.env.NODE_ENV === "production";
+  const cookieOptions = getCookieOptions(req);
 
+  // clearCookie must match sameSite/secure/path used when setting cookie
   res.clearCookie("authToken", {
     httpOnly: true,
-    secure: isProd,
-    sameSite: isProd ? "none" : "lax",
-    path: "/",                     // ✅ MUST MATCH
+    secure: cookieOptions.secure,
+    sameSite: cookieOptions.sameSite,
+    path: cookieOptions.path,
   });
 
   return res.status(200).json({
@@ -301,4 +330,3 @@ export const logout = (req: Request, res: Response) => {
     message: "Logged out successfully",
   });
 };
-
