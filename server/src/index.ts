@@ -38,7 +38,7 @@ app.use(
       // ✅ Allowed exact origins (NO path here!)
       const allowedExact = new Set<string>([
         "http://localhost:5173",
-        "https://webproject-plum.vercel.app",
+        "webproject-coral.vercel.app"
         // add your main production client here if you have it
       ]);
 
