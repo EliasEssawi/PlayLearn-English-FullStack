@@ -3,7 +3,7 @@ import { addProfile, verifyProfilePin,updateProfilePin } from "../controllers/pr
 import { Request, Response } from "express";
 import { User } from "../models/User";
 import { authMiddleware, AuthRequest } from "../controllers/authController";
-import { getProfileQuestions, SetProfileAnswer } from "../controllers/gameController";
+import { getProfileQuestions, SetProfileAnswer, getProfileProgress } from "../controllers/gameController";
 
 
 const express = require("express");
