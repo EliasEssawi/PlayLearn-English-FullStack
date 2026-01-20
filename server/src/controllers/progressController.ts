@@ -18,14 +18,29 @@ function lower(x: any) {
   return String(x ?? "").trim().toLowerCase();
 }
 
-function toDateOrUndef(x: any): Date | undefined {
+/** Parse "YYYY-MM-DD" or ISO -> Date */
+function parseDate(x: any): Date | undefined {
   if (!x) return undefined;
-  const d = new Date(x);
+  const d = new Date(String(x));
   return Number.isNaN(d.getTime()) ? undefined : d;
 }
 
+/** inclusive boundaries */
+function startOfDay(d?: Date) {
+  if (!d) return undefined;
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+function endOfDay(d?: Date) {
+  if (!d) return undefined;
+  const x = new Date(d);
+  x.setHours(23, 59, 59, 999);
+  return x;
+}
+
 function inRange(dateVal: any, from?: Date, to?: Date) {
-  if (!from && !to) return true; // no date filter
+  if (!from && !to) return true;
   if (!dateVal) return false;
   const d = new Date(dateVal);
   if (Number.isNaN(d.getTime())) return false;
@@ -34,21 +49,21 @@ function inRange(dateVal: any, from?: Date, to?: Date) {
   return true;
 }
 
-// ✅ normalize questionId (ObjectId or string or {$oid:...})
+// ✅ normalize ObjectId / string / {$oid}
 function normalizeQuestionId(q: any): string {
   if (!q) return "";
   if (typeof q === "string") return q;
+  if (q?.$oid) return String(q.$oid);
+  // mongoose ObjectId
+  if (q?.toHexString && typeof q.toHexString === "function") return q.toHexString();
   if (q?.toString && typeof q.toString === "function") {
     const s = q.toString();
-    // ObjectId.toString() is ok, but [object Object] is not
     if (s && s !== "[object Object]") return s;
   }
-  if (q?.$oid) return String(q.$oid);
   if (q?._id) return normalizeQuestionId(q._id);
   return "";
 }
 
-// ✅ count UNIQUE correct questionId per (level,type) with optional filters
 function getSolvedCount(
   answers: AnswerEvent[],
   level: number,
@@ -71,7 +86,6 @@ function getSolvedCount(
     const qid = normalizeQuestionId(a?.questionId);
     if (qid) solved.add(qid);
   }
-
   return solved.size;
 }
 
@@ -82,12 +96,16 @@ export async function getProfileProgressSummary(req: Request, res: Response) {
   try {
     const { email, profileName } = req.params;
 
-    // optional filters from query string
+    // ---- query filters
     const qLevel = req.query.level ? Number(req.query.level) : undefined;
-    const qTopic = req.query.topic ? String(req.query.topic) : undefined;
-    const qType = req.query.type ? lower(req.query.type) : undefined; // translate/talking...
-    const from = toDateOrUndef(req.query.dateFrom);
-    const to = toDateOrUndef(req.query.dateTo);
+    const qTopic = req.query.topic ? lower(req.query.topic) : undefined;
+    const qType = req.query.type ? lower(req.query.type) : undefined;
+
+    const rawFrom = req.query.dateFrom ?? req.query.from;
+    const rawTo = req.query.dateTo ?? req.query.to;
+
+    const from = startOfDay(parseDate(rawFrom));
+    const to = endOfDay(parseDate(rawTo)); // ✅ inclusive
 
     if (!email || !profileName) {
       return res.status(400).json({ success: false, message: "Missing email or profileName" });
@@ -100,59 +118,39 @@ export async function getProfileProgressSummary(req: Request, res: Response) {
     const profile = profiles.find((p) => p.profileName === profileName);
     if (!profile) return res.status(404).json({ success: false, message: "Profile not found" });
 
-    // ✅ REAL saved shape
-    const answers: AnswerEvent[] = Array.isArray(profile.progress?.answers)
-      ? profile.progress.answers
-      : [];
+    // ✅ your DB shape: progress.answers
+    const answers: AnswerEvent[] = Array.isArray(profile.progress?.answers) ? profile.progress.answers : [];
 
-    // ----------------------------
-    // Totals from Exercises (DB truth)
-    // IMPORTANT: Only apply filters that are safe.
-    // topic + level are safe, type might be stored with different casing in DB.
-    // If your Exercise.type is stored lowercase, you can keep matchLT.type=qType.
-    // ----------------------------
-    const matchLT: any = {};
-    if (typeof qLevel === "number" && !Number.isNaN(qLevel)) matchLT.level = qLevel;
-    if (qTopic) matchLT.topic = lower(qTopic); // assume stored lowercase
-    // If your DB stores type lowercase, uncomment next line:
-    // if (qType) matchLT.type = qType;
+    // ---- totals from DB exercises (apply level/topic/type filters)
+    const match: any = {};
+    if (typeof qLevel === "number" && !Number.isNaN(qLevel)) match.level = qLevel;
+    if (qTopic) match.topic = qTopic;
+    if (qType) match.type = qType;
 
     const totalsLT = (await Exercise.aggregate([
-      { $match: matchLT },
+      { $match: match },
       { $group: { _id: { level: "$level", type: "$type" }, total: { $sum: 1 } } },
     ])) as TotalRowLT[];
 
     const totalMapLT = new Map<string, number>();
-    for (const t of totalsLT) {
-      totalMapLT.set(`${t._id.level}:${lower(t._id.type)}`, t.total);
-    }
-
-    const matchLTT: any = {};
-    if (typeof qLevel === "number" && !Number.isNaN(qLevel)) matchLTT.level = qLevel;
-    if (qTopic) matchLTT.topic = lower(qTopic);
-    // If your DB stores type lowercase, uncomment next line:
-    // if (qType) matchLTT.type = qType;
+    for (const t of totalsLT) totalMapLT.set(`${t._id.level}:${lower(t._id.type)}`, t.total);
 
     const totalsLTT = (await Exercise.aggregate([
-      { $match: matchLTT },
+      { $match: match },
       { $group: { _id: { level: "$level", topic: "$topic", type: "$type" }, total: { $sum: 1 } } },
     ])) as TotalRowLTT[];
 
-    // totalsByLevelTopicType[level][topic][type] = total
     const totalsByLevelTopicType: Record<string, Record<string, Record<string, number>>> = {};
     for (const row of totalsLTT) {
       const lvl = String(row._id.level);
       const topic = lower(row._id.topic || "other");
       const type = lower(row._id.type);
-
       totalsByLevelTopicType[lvl] ??= {};
       totalsByLevelTopicType[lvl][topic] ??= {};
       totalsByLevelTopicType[lvl][topic][type] = row.total;
     }
 
-    // ----------------------------
-    // Cards (Level + Type)
-    // ----------------------------
+    // ---- cards
     const icons: Record<ExerciseType, string> = {
       translate: "🌍",
       complete: "✍️",
@@ -164,10 +162,7 @@ export async function getProfileProgressSummary(req: Request, res: Response) {
     const levelsToShow =
       typeof qLevel === "number" && !Number.isNaN(qLevel) ? [qLevel] : [1, 2, 3, 4, 5];
 
-    // ✅ FIX: keep readonly, no casting
-    const typesToShow: readonly ExerciseType[] = qType
-      ? TYPES.filter((t) => lower(t) === qType)
-      : TYPES;
+    const typesToShow: readonly ExerciseType[] = qType ? TYPES.filter((t) => lower(t) === qType) : TYPES;
 
     const cards: Array<{
       title: string;
@@ -180,35 +175,27 @@ export async function getProfileProgressSummary(req: Request, res: Response) {
 
     for (const lvl of levelsToShow) {
       for (const type of typesToShow) {
-        // If user asked for type filter but DB type is case-messy,
-        // still compute solved correctly (we normalized), but total might be 0
         const total = totalMapLT.get(`${lvl}:${lower(type)}`) ?? 0;
+        const filters: { topic?: string; from?: Date; to?: Date } = {};
+        if (qTopic) filters.topic = qTopic;
+        if (from) filters.from = from;
+        if (to) filters.to = to;
 
-        const solved = getSolvedCount(answers, lvl, type, { topic: qTopic, from, to });
+        const solved = getSolvedCount(answers, lvl, type, filters);
         const percent = total === 0 ? 0 : Math.round((solved / total) * 100);
 
-        cards.push({
-          title: type,
-          level: lvl,
-          progress: percent,
-          icon: icons[type],
-          solved,
-          total,
-        });
+        cards.push({ title: type, level: lvl, progress: percent, icon: icons[type], solved, total });
       }
     }
 
-    // ----------------------------
-    // byLevelTopicType: Level -> Topic -> Type -> solved/total/percent
-    // ----------------------------
+    // ---- byLevelTopicType (baseline = totals; solved respects date)
     const byLevelTopicType: Record<
       string,
       Record<string, Record<string, { solved: number; total: number; percent: number }>>
     > = {};
 
-    // solvedSets per (lvl|topic|type) respecting date filter + optional filters
+    // solved sets with ALL filters
     const solvedSets: Record<string, Set<string>> = {};
-
     for (const a of answers) {
       if (a?.correct !== true) continue;
 
@@ -217,7 +204,7 @@ export async function getProfileProgressSummary(req: Request, res: Response) {
       if (typeof qLevel === "number" && !Number.isNaN(qLevel) && lvl !== qLevel) continue;
 
       const topic = lower(a?.topic || "other");
-      if (qTopic && topic !== lower(qTopic)) continue;
+      if (qTopic && topic !== qTopic) continue;
 
       const type = lower(a?.type);
       if (!type) continue;
@@ -233,7 +220,7 @@ export async function getProfileProgressSummary(req: Request, res: Response) {
       solvedSets[k].add(qid);
     }
 
-    // baseline from totals so UI can show everything even if solved=0
+    // baseline from totals (already filtered by match)
     for (const lvl of Object.keys(totalsByLevelTopicType)) {
       const topicsObj = totalsByLevelTopicType[lvl] ?? {};
       byLevelTopicType[lvl] ??= {};
@@ -243,7 +230,6 @@ export async function getProfileProgressSummary(req: Request, res: Response) {
         byLevelTopicType[lvl][topic] ??= {};
 
         for (const typeKey of Object.keys(typesObj)) {
-          // ✅ correct total for THIS (level,topic,type)
           const total = typesObj[typeKey] ?? 0;
           const solved = solvedSets[`${lvl}|${topic}|${typeKey}`]?.size ?? 0;
           const percent = total === 0 ? 0 : Math.round((solved / total) * 100);
@@ -256,15 +242,7 @@ export async function getProfileProgressSummary(req: Request, res: Response) {
       success: true,
       cards,
       byLevelTopicType,
-      filtersApplied: {
-        level: qLevel,
-        topic: qTopic,
-        type: qType,
-        dateFrom: from,
-        dateTo: to,
-      },
-      totalsDebug: totalsLT,
-      answersDebug: { totalAnswers: answers.length },
+      filtersApplied: { level: qLevel, topic: qTopic, type: qType, dateFrom: from, dateTo: to },
     });
   } catch (e) {
     console.error(e);

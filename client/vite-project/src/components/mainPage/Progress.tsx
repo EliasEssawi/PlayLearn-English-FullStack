@@ -55,33 +55,40 @@ export default function Progress({ email, profileName }: { email: string; profil
   // ------------------------
   // Fetch (date aware)
   // ------------------------
-  useEffect(() => {
-    const fetch = async () => {
-      setLoading(true);
-      try {
-        const params: any = {};
-        if (from) params.from = new Date(from).toISOString();
-        if (to) params.to = new Date(to).toISOString();
+useEffect(() => {
+  const fetch = async () => {
+    setLoading(true);
+    try {
+      const params: any = {};
 
-        const url = `${API_BASE}/profiles/${encodeURIComponent(email)}/${encodeURIComponent(
-          profileName
-        )}/progress-summary`;
+      //  send filters to backend
+      if (selectedLevel !== "all") params.level = selectedLevel;
+      if (selectedTopic !== "all") params.topic = selectedTopic;
+      if (selectedType !== "all") params.type = selectedType;
 
-        const res = await axios.get<ApiResponse>(url, { withCredentials: true, params });
+      //  send as YYYY-MM-DD (backend will do start/end of day)
+      if (from) params.dateFrom = from;
+      if (to) params.dateTo = to;
 
-        if (res.data?.success) {
-          setCards(res.data.cards || []);
-          setByLevelTopicType(res.data.byLevelTopicType || {});
-        }
-      } catch (e) {
-        console.error("Failed to load progress", e);
-      } finally {
-        setLoading(false);
+      const url = `${API_BASE}/profiles/${encodeURIComponent(email)}/${encodeURIComponent(
+        profileName
+      )}/progress-summary`;
+
+      const res = await axios.get<ApiResponse>(url, { withCredentials: true, params });
+
+      if (res.data?.success) {
+        setCards(res.data.cards || []);
+        setByLevelTopicType(res.data.byLevelTopicType || {});
       }
-    };
+    } catch (e) {
+      console.error("Failed to load progress", e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetch();
-  }, [email, profileName, from, to]);
+  fetch();
+}, [email, profileName, from, to, selectedLevel, selectedTopic, selectedType]);
 
   // ------------------------
   // Topics list (depends on selectedLevel)
@@ -227,7 +234,8 @@ export default function Progress({ email, profileName }: { email: string; profil
   // Render
   // ------------------------
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white">
+    <div className="min-h-screen bg-gradient-to-b from-green-50 to-white text-slate-900">
+
       <div className="max-w-6xl mx-auto px-5 py-8">
         {/* Header */}
         <div className="flex flex-col gap-2 mb-6">
