@@ -5,7 +5,7 @@ import { User } from "../models/User";
 import { authMiddleware, AuthRequest } from "../controllers/authController";
 import { getProfileQuestions, SetProfileAnswer, getProfileProgress} from "../controllers/gameController";
 
-import { getProfileProgressSummary  } from "../controllers/progressController";
+import { getProfileProgressSummary } from "../controllers/progressController";
 import { getReportHistory } from "../controllers/profileController";
 
 
