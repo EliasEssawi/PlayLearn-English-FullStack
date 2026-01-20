@@ -117,7 +117,12 @@ const [isLoadingReport, setIsLoadingReport] = useState(false);
     if (action === "changePin") {
       setIsModalOpen(true); // פתיחת המודל במקום ניווט
     }
-    if (action === "viewProgress") navigate(`/progress?profile=${profileName}`);
+    if (action === "viewProgress") {
+    const email = (localStorage.getItem("loggedInUser") || "").trim().toLowerCase();
+    const profile = encodeURIComponent(selectedProfile.profileName);
+    navigate(`/progress?email=${encodeURIComponent(email)}&profileName=${profile}`);
+  }
+
     if (action === "reportHistory") fetchReportHistory();
   };
 

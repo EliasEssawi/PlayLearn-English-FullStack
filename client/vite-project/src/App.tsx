@@ -18,7 +18,7 @@ import ParentPage from './components/mainPage/parentPage';
 import MainPage from './components/mainPage/mainPage';
 import Vocabulary from './components/vocabulary/vocabularyHome';
 import TranslateGame from './components/vocabulary/translate';
-
+import ProgressPage from './components/mainPage/progressPage'; 
 
 function App() {
   return (
@@ -33,6 +33,7 @@ function App() {
         <Route path="/forgotPassword" element={<ForgotPassword />}/>
         <Route path="/parentPage" element={<ParentPage/>}/>
         <Route path="/vocabulary/index" element={<Vocabulary/>}/>
+        <Route path="/progress" element={<ProgressPage />} />
         <Route path="/vocabulary/translate" element={<TranslateGame />} />
         <Route path="/mainPage" element={<MainPage/>}/>
       </Routes> 

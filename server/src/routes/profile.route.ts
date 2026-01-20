@@ -4,6 +4,7 @@ import { Request, Response } from "express";
 import { User } from "../models/User";
 import { authMiddleware, AuthRequest } from "../controllers/authController";
 import { getProfileQuestions, SetProfileAnswer } from "../controllers/gameController";
+import { getProfileProgress } from "../controllers/progressController";
 
 
 const express = require("express");
@@ -58,6 +59,14 @@ import { getReportHistory } from "../controllers/profileController";
 
 profileRouter.get("/report-history", getReportHistory);
 
+/* =========================
+   PROFILE PROGRESS SUMMARY
+========================= */
+profileRouter.get(
+  "/:email/:profileName/progress-summary",
+  authMiddleware,
+  getProfileProgress
+);
 /* =========================
    GET LOGGED-IN USER PROFILES
 ========================= */
