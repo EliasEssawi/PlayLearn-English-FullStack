@@ -3,7 +3,7 @@ import { addProfile, verifyProfilePin,updateProfilePin } from "../controllers/pr
 import { Request, Response } from "express";
 import { User } from "../models/User";
 import { authMiddleware, AuthRequest } from "../controllers/authController";
-import { getProfileQuestions, SetProfileAnswer, getProfileProgress } from "../controllers/gameController";
+import { getProfileQuestions, SetProfileAnswer } from "../controllers/gameController";
 
 
 const express = require("express");
@@ -66,6 +66,14 @@ import { getReportHistory } from "../controllers/profileController";
 
 profileRouter.get("/report-history", getReportHistory);
 
+/* =========================
+   PROFILE PROGRESS SUMMARY
+========================= */
+profileRouter.get(
+  "/:email/:profileName/progress-summary",
+  authMiddleware,
+  getProfileProgress
+);
 /* =========================
    GET LOGGED-IN USER PROFILES
 ========================= */
