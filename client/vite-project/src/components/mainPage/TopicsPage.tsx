@@ -3,10 +3,11 @@ import TopicCard, { TopicLevel } from "./TopicCard";
 import FillBlankGame from "./FillBlankGame";
 import ListeningGame from "./ListeningGame";
 import SpeakingGame from "./SpeakingGame";
-import { getProfileQuestions, Question, saveProgress } from "../../utils/questionService";
+import { getProfileQuestions, Question, saveProgress, getProgress  } from "../../utils/questionService";
+
 type Props = {
   exercisesType: string;
-  darkMode: boolean; 
+  darkMode: boolean;
 };
 
 export default function TopicsPage({ exercisesType, darkMode }: Props) {
@@ -38,36 +39,37 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
     questionStartRef.current = Date.now();
   }, [currentIndex]);
 
-  const [progress, setProgress] = useState({
-    animals: 2,
-    weather: 1,
-    transportation:3,
-    jobs: 4,
-    furniture: 5,
-    colors: 6
-  });
+  useEffect(() => {
+  const load = async () => {
+    try {
+      const res = await getProgress(profile.email.profileName);
+      if (res.success) {
+        setProgress(res.unlocked || {});
+      }
+    } catch (e) {
+      console.error("Failed to load progress", e);
+    }
+  };
+  load();
+}, [profile.email.profileName]);
+
+  const [progress, setProgress] = useState<Record<string, number>>({});
+
+  const normalizeType = (t: string) => {
+    if (t === "Fill the blank") return "complete";
+    return t.toLowerCase(); // Talking -> talking, Listening -> listening, etc.
+  };
+
+  const keyFor = (topicName: string) => `${topicName}|${normalizeType(exercisesType)}`;
 
   const handleLevelClick = (topicName: string, levelId: number) => {
     setTopic(topicName);
     setLevel(levelId);
     setShowExe(true);
 
-    let exeType = exercisesType;
-    if(exercisesType === "Fill the blank")
-      exeType = "complete"
-    
-    fetchQuestions(
-      profile.email.profileName,
-      topicName,
-      levelId,
-      exeType,
-      10
-    );
+    const exeType = normalizeType(exercisesType);
 
-    setProgress((prev) => ({
-      ...prev,
-      [topicName]: Math.max(prev[topicName as keyof typeof prev], levelId + 1),
-    }));
+    fetchQuestions(profile.email.profileName, topicName, levelId, exeType, 10);
   };
 
   const fetchQuestions = async (
@@ -78,11 +80,10 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
     numberOfQuestions: number
   ) => {
     try {
-      type = type.toLowerCase();
       const res = await getProfileQuestions(profileName, levelParam, topicParam, type, numberOfQuestions);
       if (res.success) {
         setQuestions(res.questions);
-        setCurrentIndex(0); // start from first question
+        setCurrentIndex(0);
       } else {
         console.error(res.message);
       }
@@ -108,45 +109,45 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
   ];
 
   const transportationLevels: TopicLevel[] = [
-    { id: 1, icon: "🚶" }, // walking
-    { id: 2, icon: "🚲" }, // bicycle
-    { id: 3, icon: "🚗" }, // car
-    { id: 4, icon: "🚌" }, // public transport
-    { id: 5, icon: "✈️" }, // air travel
+    { id: 1, icon: "🚶" },
+    { id: 2, icon: "🚲" },
+    { id: 3, icon: "🚗" },
+    { id: 4, icon: "🚌" },
+    { id: 5, icon: "✈️" },
   ];
 
   const jobsLevels: TopicLevel[] = [
-    { id: 1, icon: "🧑‍🎓" }, // student
-    { id: 2, icon: "🧑‍🍳" }, // cook
-    { id: 3, icon: "🧑‍🔧" }, // mechanic
-    { id: 4, icon: "🧑‍🏫" }, // teacher
-    { id: 5, icon: "🧑‍💼" }, // office professional
+    { id: 1, icon: "🧑‍🎓" },
+    { id: 2, icon: "🧑‍🍳" },
+    { id: 3, icon: "🧑‍🔧" },
+    { id: 4, icon: "🧑‍🏫" },
+    { id: 5, icon: "🧑‍💼" },
   ];
 
   const furnitureLevels: TopicLevel[] = [
-    { id: 1, icon: "🪑" }, // chair
-    { id: 2, icon: "🛋" }, // sofa
-    { id: 3, icon: "🛏" }, // bed
-    { id: 4, icon: "🪟" }, // window
-    { id: 5, icon: "🚪" }, // door
+    { id: 1, icon: "🪑" },
+    { id: 2, icon: "🛋" },
+    { id: 3, icon: "🛏" },
+    { id: 4, icon: "🪟" },
+    { id: 5, icon: "🚪" },
   ];
 
   const colorsLevels: TopicLevel[] = [
-    { id: 1, icon: "🔴" }, // red
-    { id: 2, icon: "🟡" }, // yellow
-    { id: 3, icon: "🔵" }, // blue
-    { id: 4, icon: "🟢" }, // green
-    { id: 5, icon: "🟣" }, // purple
+    { id: 1, icon: "🔴" },
+    { id: 2, icon: "🟡" },
+    { id: 3, icon: "🔵" },
+    { id: 4, icon: "🟢" },
+    { id: 5, icon: "🟣" },
   ];
 
   const currentQuestion = questions[currentIndex];
 
   return (
-    <div 
+    <div
       className="min-h-screen p-6 space-y-8 transition-colors duration-300"
-      style={{ 
-        backgroundColor: darkMode ? "#020617" : "#f8fafc", 
-        color: darkMode ? "#f8fafc" : "#0f172a" 
+      style={{
+        backgroundColor: darkMode ? "#020617" : "#f8fafc",
+        color: darkMode ? "#f8fafc" : "#0f172a",
       }}
     >
       {/* Topics selection */}
@@ -156,23 +157,25 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
             title="Animals"
             emoji="🐾"
             levels={animalsLevels}
-            unlockedLevel={progress.animals}
+            unlockedLevel={progress[keyFor("animals")] ?? 1}
             onLevelClick={(id) => handleLevelClick("animals", id)}
-            darkMode={darkMode} 
+            darkMode={darkMode}
           />
+
           <TopicCard
             title="Weather"
             emoji="🌦"
             levels={weatherLevels}
-            unlockedLevel={progress.weather}
-            onLevelClick={(id) => handleLevelClick("environment", id)}
+            unlockedLevel={progress[keyFor("weather")] ?? 1}
+            onLevelClick={(id) => handleLevelClick("weather", id)}
             darkMode={darkMode}
           />
+
           <TopicCard
             title="Transportation"
             emoji="🚗"
             levels={transportationLevels}
-            unlockedLevel={progress.transportation}
+            unlockedLevel={progress[keyFor("transportation")] ?? 1}
             onLevelClick={(id) => handleLevelClick("transportation", id)}
             darkMode={darkMode}
           />
@@ -181,7 +184,7 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
             title="Jobs"
             emoji="🧑‍🍳"
             levels={jobsLevels}
-            unlockedLevel={progress.jobs}
+            unlockedLevel={progress[keyFor("jobs")] ?? 1}
             onLevelClick={(id) => handleLevelClick("jobs", id)}
             darkMode={darkMode}
           />
@@ -190,16 +193,16 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
             title="Furniture"
             emoji="🚪"
             levels={furnitureLevels}
-            unlockedLevel={progress.furniture}
+            unlockedLevel={progress[keyFor("furniture")] ?? 1}
             onLevelClick={(id) => handleLevelClick("furniture", id)}
             darkMode={darkMode}
           />
 
           <TopicCard
             title="Colors"
-            emoji="🚪"
+            emoji="🎨"
             levels={colorsLevels}
-            unlockedLevel={progress.colors}
+            unlockedLevel={progress[keyFor("colors")] ?? 1}
             onLevelClick={(id) => handleLevelClick("colors", id)}
             darkMode={darkMode}
           />
@@ -209,7 +212,7 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
       {/* Exercise */}
       {showExe && (
         <div className="max-w-2xl mx-auto">
-          <button 
+          <button
             onClick={() => setShowExe(false)}
             className="mb-4 text-sm underline opacity-70 hover:opacity-100 transition-colors"
             style={{ color: darkMode ? "#94a3b8" : "#475569" }}
@@ -218,7 +221,9 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
           </button>
 
           {/* Fill in the blank / Translate / Reading */}
-          {(exercisesType === "Translate" || exercisesType === "Fill the blank" || exercisesType === "Reading") &&
+          {(exercisesType === "Translate" ||
+            exercisesType === "Fill the blank" ||
+            exercisesType === "Reading") &&
             currentQuestion && (
               <FillBlankGame
                 title={`Question ${currentIndex + 1} / ${questions.length}`}
@@ -230,30 +235,34 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
                   const timeSpentMs = Date.now() - questionStartRef.current;
 
                   try {
-                    await saveProgress({
+                    const res = await saveProgress({
                       profileName: profile.email.profileName,
                       questionId: currentQuestion._id,
                       topic,
                       level,
-                      type: "complete",
+                      type: normalizeType(exercisesType),
                       correct: isCorrect,
                       answeredAt: new Date().toISOString(),
                       timeSpentMs,
                     });
+
+                    const key = `${topic}|${normalizeType(exercisesType)}`;
+                    setProgress((prev) => ({
+                      ...prev,
+                      [key]: res.unlockedLevel,
+                    }));
                   } catch (err) {
                     console.error("Failed to save progress", err);
                   }
 
-                  // Move to next question
                   if (currentIndex + 1 < questions.length) {
-                    setCurrentIndex(i => i + 1);
+                    setCurrentIndex((i) => i + 1);
                   } else {
                     setShowExe(false);
                   }
                 }}
               />
-            )
-          }
+            )}
 
           {/* Listening */}
           {exercisesType === "Listening" && currentQuestion && (
@@ -263,34 +272,75 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
               correctAnswer={currentQuestion.prompt}
               options={currentQuestion.options}
               darkMode={darkMode}
-              onContinue={(isCorrect) => {
-                  console.log(`Question ${currentIndex + 1} answered:`, isCorrect);
+              onContinue={async (isCorrect) => {
+                const timeSpentMs = Date.now() - questionStartRef.current;
 
-                  if (currentIndex + 1 < questions.length) {
-                    setCurrentIndex(prev => prev + 1); // go to next question
-                  } else {
-                    setShowExe(false); // finished all questions
-                    console.log("Exercise finished!");
-                  }
-                }}
+                try {
+                  const res = await saveProgress({
+                    profileName: profile.email.profileName,
+                    questionId: currentQuestion._id,
+                    topic,
+                    level,
+                    type: normalizeType(exercisesType), // "listening"
+                    correct: isCorrect,
+                    answeredAt: new Date().toISOString(),
+                    timeSpentMs,
+                  });
+
+                  const key = `${topic}|${normalizeType(exercisesType)}`;
+                  setProgress((prev) => ({
+                    ...prev,
+                    [key]: res.unlockedLevel,
+                  }));
+                } catch (err) {
+                  console.error("Failed to save progress", err);
+                }
+
+                if (currentIndex + 1 < questions.length) {
+                  setCurrentIndex((prev) => prev + 1);
+                } else {
+                  setShowExe(false);
+                }
+              }}
             />
           )}
 
           {/* Talking */}
-          {exercisesType === "Talking" && currentQuestion &&(
+          {exercisesType === "Talking" && currentQuestion && (
             <SpeakingGame
               title={`Question ${currentIndex + 1} / ${questions.length}`}
               answer={currentQuestion.prompt}
-              onContinue={(isCorrect, spokenText) => {
-                  console.log(`Question ${currentIndex + 1} answered:`, isCorrect);              
+              onContinue={async (isCorrect, spokenText) => {
+                const timeSpentMs = Date.now() - questionStartRef.current;
 
-                  if (currentIndex + 1 < questions.length) {
-                    setCurrentIndex(prev => prev + 1); // go to next question
-                  } else {
-                    setShowExe(false); // finished all questions
-                    console.log("Exercise finished!");
-                  }
-                }}
+                try {
+                  const res = await saveProgress({
+                    profileName: profile.email.profileName,
+                    questionId: currentQuestion._id,
+                    topic,
+                    level,
+                    type: normalizeType(exercisesType), // "talking"
+                    correct: isCorrect,
+                    answeredAt: new Date().toISOString(),
+                    timeSpentMs,
+                    // אם תרצה לשמור spokenText בעתיד, אפשר להוסיף לשדה נוסף בשרת
+                  });
+
+                  const key = `${topic}|${normalizeType(exercisesType)}`;
+                  setProgress((prev) => ({
+                    ...prev,
+                    [key]: res.unlockedLevel,
+                  }));
+                } catch (err) {
+                  console.error("Failed to save progress", err);
+                }
+
+                if (currentIndex + 1 < questions.length) {
+                  setCurrentIndex((prev) => prev + 1);
+                } else {
+                  setShowExe(false);
+                }
+              }}
               darkMode={darkMode}
             />
           )}

@@ -55,7 +55,7 @@ export const addProfile = async (req: AuthRequest, res: Response) => {
     user.profiles.push({
       profileName,
       pin: hashedPin,
-      progress: {},
+      progress: { answers: [], unlocked: {} },
       points: 0,
       rate, // ✅ מגיע מה־frontend
     });

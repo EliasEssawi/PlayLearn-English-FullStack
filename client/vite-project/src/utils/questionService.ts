@@ -63,3 +63,13 @@ export const saveProgress = async (payload: SaveProgressPayload) => {
 
   return res.data;
 };
+
+export const getProgress = async (profileName: string) => {
+  const res = await axios.post(
+    `${API_BASE}/profiles/getProgress`,
+    { profileName },
+    { withCredentials: true }
+  );
+  return res.data; // { success, unlocked }
+};
+
