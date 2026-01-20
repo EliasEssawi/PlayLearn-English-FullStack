@@ -1,5 +1,5 @@
 import { useSearchParams } from "react-router-dom";
-import Progrees from "./Progress"; // <-- change path to where Progress.tsx is
+import Progress from "./Progress";
 
 export default function ProgressPage() {
   const [params] = useSearchParams();
@@ -9,11 +9,5 @@ export default function ProgressPage() {
 
   if (!email || !profileName) return <div>Missing email or profile</div>;
 
-  return (
-    <Progrees
-      email={email}
-      profileName={profileName}
-      onSelectSection={(s) => console.log("Selected:", s)}
-    />
-  );
+  return <Progress email={email} profileName={profileName} />;
 }

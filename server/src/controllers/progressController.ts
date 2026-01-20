@@ -11,14 +11,37 @@ type AnswerEvent = {
   level?: number;
   type?: string;
   correct?: boolean;
+  answeredAt?: any; // ✅ important for date filtering (exists in your DB events)
 };
 
 function lower(x: any) {
   return String(x || "").toLowerCase();
 }
 
-// ✅ solved = UNIQUE correct questionId per (level,type)
-function getSolvedCount(progress: any, level: number, type: ExerciseType): number {
+function toDateOrUndef(v: any): Date | undefined {
+  if (!v) return undefined;
+  const d = new Date(String(v));
+  return Number.isNaN(d.getTime()) ? undefined : d;
+}
+
+// ✅ If no from/to => accept all
+function passesDateFilter(item: AnswerEvent, from?: Date, to?: Date): boolean {
+  if (!from && !to) return true; // ✅ no date filter
+  const d = toDateOrUndef((item as any).answeredAt);
+  if (!d) return false;
+  if (from && d < from) return false;
+  if (to && d > to) return false;
+  return true;
+}
+
+// ✅ solved = UNIQUE correct questionId per (level,type), with date filter support
+function getSolvedCount(
+  progress: any,
+  level: number,
+  type: ExerciseType,
+  from?: Date,
+  to?: Date
+): number {
   if (!Array.isArray(progress)) return 0;
 
   const wantedType = lower(type);
@@ -28,6 +51,9 @@ function getSolvedCount(progress: any, level: number, type: ExerciseType): numbe
     if (Number(item?.level) !== level) continue;
     if (lower(item?.type) !== wantedType) continue;
     if (item?.correct !== true) continue;
+
+    // ✅ date filter applied here
+    if (!passesDateFilter(item, from, to)) continue;
 
     const qid = String(item?.questionId || "");
     if (qid) solvedIds.add(qid);
@@ -45,22 +71,25 @@ export async function getProfileProgressSummary(req: Request, res: Response) {
     const profileName = req.params.profileName;
 
     if (!email || !profileName) {
-      return res.status(400).json({ message: "Missing email or profileName" });
+      return res.status(400).json({ success: false, message: "Missing email or profileName" });
     }
 
-    // ✅ only READ
+    // ✅ read optional date filters
+    const from = toDateOrUndef(req.query.from);
+    const to = toDateOrUndef(req.query.to);
+
     const user = await User.findOne({ email }).lean();
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
     const profiles = (user.profiles ?? []) as any[];
     const profile = profiles.find((p) => p.profileName === profileName);
-    if (!profile) return res.status(404).json({ message: "Profile not found" });
+    if (!profile) return res.status(404).json({ success: false, message: "Profile not found" });
 
     // ✅ your real mongo shape: progress is an array of answer events
     const progressArr: AnswerEvent[] = Array.isArray(profile.progress) ? profile.progress : [];
 
     // ----------------------------
-    // 1) Totals per (level,type)
+    // 1) Totals per (level,type) from Exercises collection
     // ----------------------------
     const totalsLT = (await Exercise.aggregate([
       { $group: { _id: { level: "$level", type: "$type" }, total: { $sum: 1 } } },
@@ -72,17 +101,16 @@ export async function getProfileProgressSummary(req: Request, res: Response) {
     }
 
     // ----------------------------
-    // 2) Totals per (level,topic,type)  ✅ for topic pages
+    // 2) Totals per (level,topic,type)
     // ----------------------------
     const totalsLTT = (await Exercise.aggregate([
       { $group: { _id: { level: "$level", topic: "$topic", type: "$type" }, total: { $sum: 1 } } },
     ])) as TotalRowLTT[];
 
-    // totalsByLevelTopicType[level][topic][type] = total
     const totalsByLevelTopicType: Record<string, Record<string, Record<string, number>>> = {};
     for (const row of totalsLTT) {
       const lvl = String(row._id.level);
-      const topic = String(row._id.topic || "Other").trim().toLowerCase();
+      const topic = String(row._id.topic || "other").trim().toLowerCase();
       const type = lower(row._id.type);
 
       totalsByLevelTopicType[lvl] ??= {};
@@ -102,7 +130,7 @@ export async function getProfileProgressSummary(req: Request, res: Response) {
     };
 
     // ----------------------------
-    // 3) Cards for Progress page (level+type)
+    // 3) Cards for Progress page (level+type) ✅ date-aware
     // ----------------------------
     const cards: Array<{
       title: string;
@@ -116,7 +144,7 @@ export async function getProfileProgressSummary(req: Request, res: Response) {
 
     for (let level = 1; level <= 5; level++) {
       for (const type of TYPES) {
-        const solved = getSolvedCount(progressArr, level, type);
+        const solved = getSolvedCount(progressArr, level, type, from, to);
         const total = totalMapLT.get(`${level}:${lower(type)}`) ?? 0;
         const percent = total === 0 ? 0 : Math.round((solved / total) * 100);
 
@@ -133,23 +161,26 @@ export async function getProfileProgressSummary(req: Request, res: Response) {
     }
 
     // ----------------------------
-    // 4) Topic summary: byLevelTopicType  reuse in other pages
-    // byLevelTopicType[level][topic][type] = { solved,total,percent }
+    // 4) Topic summary: byLevelTopicType ✅ date-aware
     // ----------------------------
     const byLevelTopicType: Record<
       string,
       Record<string, Record<string, { solved: number; total: number; percent: number }>>
     > = {};
 
-    // Build solved sets per group (level|topic|type)
+    // Build solved sets per (level|topic|type) with date filter
     const solvedSets: Record<string, Set<string>> = {};
+
     for (const item of progressArr) {
       if (item?.correct !== true) continue;
+
+      // ✅ date filter here too
+      if (!passesDateFilter(item, from, to)) continue;
 
       const lvl = String(Number(item?.level));
       if (!lvl || lvl === "NaN") continue;
 
-      const topic = String(item?.topic || "Other").trim().toLowerCase();
+      const topic = String(item?.topic || "other").trim().toLowerCase();
       const type = lower(item?.type);
       if (!type) continue;
 
@@ -161,31 +192,36 @@ export async function getProfileProgressSummary(req: Request, res: Response) {
       solvedSets[k].add(qid);
     }
 
- // Use totals as baseline so every topic/type that exists in DB appears
-for (const lvl of Object.keys(totalsByLevelTopicType)) {
-  const topicsObj = totalsByLevelTopicType[lvl] ?? {}; //  fallback
-  byLevelTopicType[lvl] ??= {};
+    // Use totals as baseline so everything in DB appears
+    for (const lvl of Object.keys(totalsByLevelTopicType)) {
+      const topicsObj = totalsByLevelTopicType[lvl] ?? {};
+      byLevelTopicType[lvl] ??= {};
 
-  for (const topic of Object.keys(topicsObj)) {
-    const typesObj = topicsObj[topic] ?? {}; //  fallback
-    byLevelTopicType[lvl][topic] ??= {};
+      for (const topic of Object.keys(topicsObj)) {
+        const typesObj = topicsObj[topic] ?? {};
+        byLevelTopicType[lvl][topic] ??= {};
 
-    for (const typeKey of Object.keys(typesObj)) {
-      //  total for THIS (level+topic+type)
-      const total = typesObj[typeKey] ?? 0;
+        for (const typeKey of Object.keys(typesObj)) {
+          const total = typesObj[typeKey] ?? 0;
+          const solved = solvedSets[`${lvl}|${topic}|${typeKey}`]?.size ?? 0;
+          const percent = total === 0 ? 0 : Math.round((solved / total) * 100);
 
-      const solved = solvedSets[`${lvl}|${topic}|${typeKey}`]?.size ?? 0;
-      const percent = total === 0 ? 0 : Math.round((solved / total) * 100);
-
-      byLevelTopicType[lvl][topic][typeKey] = { solved, total, percent };
+          byLevelTopicType[lvl][topic][typeKey] = { solved, total, percent };
+        }
+      }
     }
-  }
-}
 
-    // Return both (cards for progress page + topic summary for other pages)
-    return res.json({ success: true, cards, byLevelTopicType });
+    return res.json({
+      success: true,
+      filtersApplied: {
+        from: from ? from.toISOString() : null,
+        to: to ? to.toISOString() : null,
+      },
+      cards,
+      byLevelTopicType,
+    });
   } catch (e) {
     console.error(e);
-    return res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 }
