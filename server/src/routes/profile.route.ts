@@ -3,7 +3,10 @@ import { addProfile, verifyProfilePin,updateProfilePin } from "../controllers/pr
 import { Request, Response } from "express";
 import { User } from "../models/User";
 import { authMiddleware, AuthRequest } from "../controllers/authController";
-import { getProfileQuestions, SetProfileAnswer, getProfileProgress } from "../controllers/gameController";
+import { getProfileQuestions, SetProfileAnswer, getProfileProgress} from "../controllers/gameController";
+
+import { getProfileProgressSummary  } from "../controllers/progressController";
+import { getReportHistory } from "../controllers/profileController";
 
 
 const express = require("express");
@@ -62,7 +65,6 @@ profileRouter.post(
   getProfileProgress
 )
 
-import { getReportHistory } from "../controllers/profileController";
 
 profileRouter.get("/report-history", getReportHistory);
 
@@ -72,7 +74,7 @@ profileRouter.get("/report-history", getReportHistory);
 profileRouter.get(
   "/:email/:profileName/progress-summary",
   authMiddleware,
-  getProfileProgress
+  getProfileProgressSummary
 );
 /* =========================
    GET LOGGED-IN USER PROFILES

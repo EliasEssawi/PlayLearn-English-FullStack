@@ -4,10 +4,11 @@ import ProgressCard from "./ProgressCard";
 import RecentAchievement from "./RecentAchievement";
 
 interface ProgreesProps {
-  onSelectSection: (section: string) => void;
   email: string;
   profileName: string;
+  onSelectSection: (section: string) => void;
 }
+
 
 type Card = { title: string; level: number; progress: number; icon: string; url: string };
 

@@ -6,8 +6,11 @@ interface ProgressCardProps {
   progress: number;
   icon: string;
   url: string;
-  onClick?: () => void; // ✅ optional onClick handler
+  solved?: number;   
+  total?: number;   
+  onClick?: () => void;
 }
+
 
 export default function ProgressCard({
   title,
@@ -15,8 +18,11 @@ export default function ProgressCard({
   progress,
   icon,
   url,
+  solved,   
+  total,    
   onClick,
 }: ProgressCardProps) {
+
   const [animatedProgress, setAnimatedProgress] = useState(0);
 
   useEffect(() => {
@@ -60,7 +66,14 @@ export default function ProgressCard({
             style={{ width: `${animatedProgress}%` }}
           />
         </div>
-        <span className="text-gray-500 dark:text-slate-300">{progress}% Completed</span>
+        <span className="text-gray-500 dark:text-slate-300">
+          {progress}% Completed
+          {typeof solved === "number" && typeof total === "number"
+            ? ` • ${solved}/${total}`
+            : ""}
+        </span>
+
+
       </div>
     </div>
   );
