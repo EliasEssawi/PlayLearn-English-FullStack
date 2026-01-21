@@ -10,7 +10,7 @@ import ButtonLogin from "./Button";
 import LoginActions from "./Actions";
 import { LoginRequest, LoginResponse } from "../../Types/Login";
 import axios, { AxiosError } from "axios";
-import api from "../../api/axios.ts";
+import api from "../../api/axios";
 
 
 

@@ -67,19 +67,41 @@ const Register: React.FC = () => {
       setMessage("Passwords do not match.");
       return;
     }
+    const passwordRegex = /^(?=.*[A-Z]).{8,}$/;
+    if (!passwordRegex.test(userData.password)) {
+           setMessage("Password must be at least 8 characters long and include at least one capital letter.");
+  return;
+}
 
     // Pin validation
     if (userData.pin !== userData.confirmPin) {
       setMessage("PINs do not match.");
       return;
     }
-    // 4. Date of Birth Validation (Check if future date)
-    const selectedDate = new Date(userData.dateOfBirth);
-    const today = new Date();
-    if (selectedDate > today) {
-      setMessage("Date of birth cannot be in the future.");
-      return;
-    }
+   // 4. Date of Birth Validation (Check if future date and age range)
+const selectedDate = new Date(userData.dateOfBirth);
+const today = new Date();
+
+// בדיקה אם התאריך בעתיד
+if (selectedDate > today) {
+  setMessage("Date of birth cannot be in the future.");
+  return;
+}
+
+// חישוב הגיל
+let age = today.getFullYear() - selectedDate.getFullYear();
+const monthDiff = today.getMonth() - selectedDate.getMonth();
+
+// תיקון אם יום ההולדת עוד לא חל השנה
+if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < selectedDate.getDate())) {
+  age--;
+}
+
+// בדיקת טווח הגילאים (24 עד 100)
+if (age < 24 || age > 100) {
+  setMessage("Age must be between 24 and 100 years old.");
+  return;
+}
 
     const payload: RegisterRequest = {
       name: userData.name.trim(),
