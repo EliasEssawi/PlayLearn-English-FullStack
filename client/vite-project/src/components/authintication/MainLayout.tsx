@@ -1,21 +1,18 @@
 import React from "react";
-import DarkModeToggle from "./DarkModeToggle"; // וודא ששם הקובץ בתיקייה תואם
+import { useTheme } from "../context/ThemeContext";
+import DarkModeToggle from "./DarkModeToggle";
 import LogoutButton from "./LogoutButton";
 
-type LayoutProps = {
-  children: React.ReactNode;
-  darkMode: boolean;
-  setDarkMode: (val: boolean) => void;
-};
+const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { darkMode } = useTheme();
 
-const MainLayout: React.FC<LayoutProps> = ({ children, darkMode, setDarkMode }) => {
   return (
-    <div 
-      className="min-h-screen transition-all duration-300"
+    <div
       style={{
         background: darkMode ? "#020617" : "#f8fafc",
         color: darkMode ? "#f8fafc" : "#0f172a",
-        minHeight: "100vh"
+        minHeight: "100vh",
+        transition: "all 0.3s",
       }}
     >
       <header style={{
@@ -23,20 +20,17 @@ const MainLayout: React.FC<LayoutProps> = ({ children, darkMode, setDarkMode }) 
         padding: "0.75rem 1.5rem",
         display: "flex",
         justifyContent: "space-between",
-        alignItems: "center",
-        boxShadow: "0 2px 10px rgba(0,0,0,0.1)"
+        alignItems: "center"
       }}>
-        <h1 style={{ color: "white", margin: 0, fontSize: "1.5rem" }}>PlayLearn</h1>
-        
-        <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-          <DarkModeToggle darkMode={darkMode} setDarkMode={setDarkMode} />
+        <h1 style={{ color: "white", margin: 0 }}>PlayLearn</h1>
+
+        <div style={{ display: "flex", gap: "12px" }}>
+          <DarkModeToggle />
           <LogoutButton />
         </div>
       </header>
 
-      <main style={{ padding: "2rem" }}>
-        {children}
-      </main>
+      <main style={{ padding: "2rem" }}>{children}</main>
     </div>
   );
 };

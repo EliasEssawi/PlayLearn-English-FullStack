@@ -4,6 +4,7 @@ import { isLoggedIn } from "../../utils/auth";
 import { getProfilesResponse, sendVerificationCodeRequest } from "../../Types/Login";
 import axios from "axios";
 import MainLayout from "../authintication/MainLayout";
+import { useTheme } from "../context/ThemeContext";
 
 type Profile = {
   profileName: string;
@@ -13,34 +14,21 @@ type OptionAction = "changePin" | "viewProgress" | "reportHistory";
 
 const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
 
-
 const ParentPage: React.FC = () => {
   const navigate = useNavigate();
-
-  // 🌙 Dark Mode State
-  const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem("theme") === "dark";
-  });
+  const { darkMode } = useTheme();
 
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
 
-  // 🔑 PIN Modal States
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newPin, setNewPin] = useState("");
   const [pinMessage, setPinMessage] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // 📜 Report History Modal
-const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-const [reportData, setReportData] = useState<any[]>([]);
-const [isLoadingReport, setIsLoadingReport] = useState(false);
-
-
-  const handleToggleDarkMode = (val: boolean) => {
-    setDarkMode(val);
-    localStorage.setItem("theme", val ? "dark" : "light");
-  };
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportData, setReportData] = useState<any[]>([]);
+  const [isLoadingReport, setIsLoadingReport] = useState(false);
 
   useEffect(() => {
     isLoggedIn().then((ok) => {
@@ -62,7 +50,7 @@ const [isLoadingReport, setIsLoadingReport] = useState(false);
           `${API_BASE}/profiles/${payload.email}`,
           { withCredentials: true, params: payload }
         );
-        
+
         if (res.data.success) {
           setProfiles(res.data.profiles || []);
           setSelectedProfile(null);
@@ -78,7 +66,6 @@ const [isLoadingReport, setIsLoadingReport] = useState(false);
     navigate("/addprofile");
   };
 
-  // פונקציה לעדכון ה-PIN ב-Database
   const handleUpdatePin = async () => {
     setPinMessage("");
     if (newPin.length !== 4) {
@@ -89,12 +76,16 @@ const [isLoadingReport, setIsLoadingReport] = useState(false);
     try {
       setIsUpdating(true);
       const email = localStorage.getItem("loggedInUser");
-      
-      const res = await axios.put(`${API_BASE}/profiles/update-pin`, {
-        email: email?.trim().toLowerCase(),
-        profileName: selectedProfile?.profileName,
-        newPin: newPin,
-      }, { withCredentials: true });
+
+      const res = await axios.put(
+        `${API_BASE}/profiles/update-pin`,
+        {
+          email: email?.trim().toLowerCase(),
+          profileName: selectedProfile?.profileName,
+          newPin: newPin,
+        },
+        { withCredentials: true }
+      );
 
       if (res.data.success) {
         alert("PIN updated successfully! ✅");
@@ -103,7 +94,7 @@ const [isLoadingReport, setIsLoadingReport] = useState(false);
       } else {
         setPinMessage(res.data.message || "Failed to update PIN.");
       }
-    } catch (err) {
+    } catch {
       setPinMessage("Server error. Please try again.");
     } finally {
       setIsUpdating(false);
@@ -112,16 +103,14 @@ const [isLoadingReport, setIsLoadingReport] = useState(false);
 
   const handleOption = (action: OptionAction): void => {
     if (!selectedProfile) return;
-    const profileName = encodeURIComponent(selectedProfile.profileName);
-    
-    if (action === "changePin") {
-      setIsModalOpen(true); // פתיחת המודל במקום ניווט
-    }
+
+    if (action === "changePin") setIsModalOpen(true);
+
     if (action === "viewProgress") {
-    const email = (localStorage.getItem("loggedInUser") || "").trim().toLowerCase();
-    const profile = encodeURIComponent(selectedProfile.profileName);
-    navigate(`/progress?email=${encodeURIComponent(email)}&profileName=${profile}`);
-  }
+      const email = (localStorage.getItem("loggedInUser") || "").trim().toLowerCase();
+      const profile = encodeURIComponent(selectedProfile.profileName);
+      navigate(`/progress?email=${encodeURIComponent(email)}&profileName=${profile}`);
+    }
 
     if (action === "reportHistory") fetchReportHistory();
   };
@@ -144,54 +133,48 @@ const [isLoadingReport, setIsLoadingReport] = useState(false);
     boxShadow: "0 2px 4px rgba(0,0,0,0.02)",
   };
 
-
-
-  /////
   const fetchReportHistory = async () => {
-  if (!selectedProfile) return;
+    if (!selectedProfile) return;
 
-  try {
-    setIsLoadingReport(true);
-    const email = localStorage.getItem("loggedInUser");
+    try {
+      setIsLoadingReport(true);
+      const email = localStorage.getItem("loggedInUser");
 
-    const res = await axios.get(`${API_BASE}/profiles/report-history`, {
-      params: {
-        email: email?.trim().toLowerCase(),
-        profileName: selectedProfile.profileName,
-      },
-      withCredentials: true,
-    });
+      const res = await axios.get(`${API_BASE}/profiles/report-history`, {
+        params: {
+          email: email?.trim().toLowerCase(),
+          profileName: selectedProfile.profileName,
+        },
+        withCredentials: true,
+      });
 
-    if (res.data.success) {
-      setReportData(res.data.history || []);
-      setIsReportModalOpen(true);
+      if (res.data.success) {
+        setReportData(res.data.history || []);
+        setIsReportModalOpen(true);
+      }
+    } finally {
+      setIsLoadingReport(false);
     }
-  } catch (err) {
-    console.error("Failed to load report history", err);
-  } finally {
-    setIsLoadingReport(false);
-  }
-};
-const [reportViewMode, setReportViewMode] = useState<"type" | "date">("type");
+  };
 
-const groupedReports = reportData.reduce((acc: any, item: any) => {
-  let key = "Other";
-  
-  if (reportViewMode === "type") {
-    // קיבוץ לפי סוג תרגיל (Talking, Listening וכו')
-    key = item.type || "Other";
-  } else {
-    // קיבוץ לפי תאריך (YYYY-MM-DD)
-    key = new Date(item.answeredAt).toLocaleDateString();
-  }
+  const [reportViewMode, setReportViewMode] = useState<"type" | "date">("type");
 
-  if (!acc[key]) acc[key] = [];
-  acc[key].push(item);
-  return acc;
-}, {});
-/////
+  const groupedReports = reportData.reduce((acc: any, item: any) => {
+    let key = "Other";
+
+    if (reportViewMode === "type") {
+      key = item.type || "Other";
+    } else {
+      key = new Date(item.answeredAt).toLocaleDateString();
+    }
+
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(item);
+    return acc;
+  }, {});
+
   return (
-    <MainLayout darkMode={darkMode} setDarkMode={handleToggleDarkMode}>
+    <MainLayout>
       <div style={{ maxWidth: "850px", margin: "0 auto", padding: "40px 20px" }}>
         
         <header style={{ marginBottom: "50px", textAlign: "left" }}>
@@ -398,7 +381,6 @@ const groupedReports = reportData.reduce((acc: any, item: any) => {
     </div>
   </div>
 )}
-
       </div>
     </MainLayout>
   );

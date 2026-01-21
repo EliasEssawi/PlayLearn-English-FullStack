@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Sidebar from "../mainPage/Sidebar";
 import Header from "../mainPage/Header";
 import Progrees from "../mainPage/Progress";
@@ -7,17 +7,15 @@ import VocabularyHome from "../vocabulary/vocabularyHome";
 import { MenuItem } from "../../Types/Section";
 import { useNavigate } from "react-router-dom";
 import { isLoggedIn } from "../../utils/auth";
-import MainLayout from "../authintication/MainLayout"; 
+import MainLayout from "../authintication/MainLayout";
 import TopicsPage from "./TopicsPage";
-
+import { useTheme } from "../context/ThemeContext"; // ✅ חדש
 
 export default function MainPage() {
   const navigate = useNavigate();
 
-  // בדיקה ראשונית: האם המשתמש כבר בחר Dark Mode בדף קודם?
-  const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem("theme") === "dark";
-  });
+  /* 🌙 Dark Mode – מה־ThemeContext בלבד */
+  const { darkMode } = useTheme();
 
   /* 🔐 Check login */
   useEffect(() => {
@@ -25,12 +23,6 @@ export default function MainPage() {
       if (!ok) navigate("/login");
     });
   }, [navigate]);
-
-  // בכל פעם ש-darkMode משתנה, נשמור את הבחירה
-  const handleToggleDarkMode = (val: boolean) => {
-    setDarkMode(val);
-    localStorage.setItem("theme", val ? "dark" : "light");
-  };
 
   const menuItems: MenuItem[] = [
     { name: "Talking", icon: "🗣️" },
@@ -51,25 +43,29 @@ export default function MainPage() {
   const activeMenuItem =
     menuItems.find(m => m.name === activeSection) ||
     menuItemsSecondry.find(m => m.name === activeSection);
+const activeProfileRaw = localStorage.getItem("activeProfile");
+const activeProfile = activeProfileRaw ? JSON.parse(activeProfileRaw) : null;
 
+const email = activeProfile?.email;
+const profileName = activeProfile?.profileName;
   const renderMainContent = () => {
     switch (activeSection) {
       case "View Progress":
-        return <Progrees onSelectSection={setActiveSection} />;
+       return <Progrees email={email} profileName={profileName} />;
       case "AI Chat":
         return <ChatBot darkMode={darkMode} />;
       case "Vocabulary":
         return <VocabularyHome />;
       case "Talking":
-          return <TopicsPage exercisesType="Talking" darkMode={darkMode}/>;
+        return <TopicsPage exercisesType="Talking" darkMode={darkMode} />;
       case "Listening":
-        return <TopicsPage exercisesType="Listening" darkMode={darkMode}/>;
+        return <TopicsPage exercisesType="Listening" darkMode={darkMode} />;
       case "Fill the blank":
-        return <TopicsPage exercisesType="Fill the blank" darkMode={darkMode}/>;
+        return <TopicsPage exercisesType="Fill the blank" darkMode={darkMode} />;
       case "Translate":
-        return <TopicsPage exercisesType="Translate" darkMode={darkMode}/>;
+        return <TopicsPage exercisesType="Translate" darkMode={darkMode} />;
       case "Reading":
-        return <TopicsPage exercisesType="Reading" darkMode={darkMode}/>;  
+        return <TopicsPage exercisesType="Reading" darkMode={darkMode} />;
       default:
         return (
           <div style={{ color: darkMode ? "#d1d5db" : "#6b7280", fontStyle: "italic" }}>
@@ -80,13 +76,13 @@ export default function MainPage() {
   };
 
   return (
-    <MainLayout darkMode={darkMode} setDarkMode={handleToggleDarkMode}>
+    <MainLayout>
       <div
         className="flex w-full max-w-7xl h-[85vh] mx-auto rounded-3xl overflow-hidden shadow-2xl"
         style={{
           background: darkMode ? "#020617" : "#ffffff",
           border: darkMode ? "1px solid #334155" : "1px solid #e2e8f0",
-          marginTop: "20px"
+          marginTop: "20px",
         }}
       >
         <Sidebar

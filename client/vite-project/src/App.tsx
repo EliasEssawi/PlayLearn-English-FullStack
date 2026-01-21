@@ -23,7 +23,6 @@ import ProgressPage from './components/mainPage/progressPage';
 function App() {
   return (
 
-    <BrowserRouter>
       <Routes>
         <Route path="/" element={<StarterPage />} />
         <Route path="/login" element={<Login />} />
@@ -38,7 +37,6 @@ function App() {
         <Route path="/mainPage" element={<MainPage/>}/>
       </Routes> 
      
-    </BrowserRouter>
     
   );
 }
