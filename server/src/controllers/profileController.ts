@@ -235,35 +235,69 @@ export const getReportHistory = async (req: Request, res: Response) => {
     const { email, profileName } = req.query;
 
     if (!email || !profileName) {
-      return res.status(400).json({ success: false, message: "Missing params" });
+      return res.status(400).json({
+        success: false,
+        message: "Missing params",
+      });
     }
 
-    const parent = await User.findOne({ email });
+    const parent = await User.findOne({ email }).lean();
     if (!parent) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
     }
 
     const profile = parent.profiles.find(
-      (p) => p.profileName === profileName
+      (p: any) => p.profileName === profileName
     );
 
     if (!profile) {
-      return res.status(404).json({ success: false, message: "Profile not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Profile not found",
+      });
     }
 
-    const history = await Promise.all(
-      profile.progress.map(async (p: any) => {
-        const exercise = await Exercise.findById(p.questionId);
-        return {
-          ...p,
-          exercise,
-        };
-      })
+    // ✅ answers array
+    const answers = Array.isArray(profile.progress?.answers)
+      ? profile.progress.answers
+      : [];
+
+    if (answers.length === 0) {
+      return res.json({ success: true, history: [] });
+    }
+
+    // ✅ כל ה־IDs של השאלות
+    const questionIds = answers.map((a: any) => a.questionId);
+
+    // ✅ שליפת השאלות מה־DB
+    const exercises = await Exercise.find({
+      _id: { $in: questionIds },
+    }).lean();
+
+    // map מהיר לפי id
+    const exerciseMap = new Map(
+      exercises.map((e) => [String(e._id), e])
     );
 
-    res.json({ success: true, history });
+    // ✅ חיבור answer + exercise
+    const history = answers.map((a: any) => ({
+      ...a,
+      exercise: exerciseMap.get(String(a.questionId)) || null,
+    }));
+
+    return res.json({
+      success: true,
+      history,
+    });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, message: "Server error" });
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
   }
 };
+

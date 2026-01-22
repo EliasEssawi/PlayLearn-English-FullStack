@@ -29,6 +29,10 @@ const ParentPage: React.FC = () => {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [reportData, setReportData] = useState<any[]>([]);
   const [isLoadingReport, setIsLoadingReport] = useState(false);
+  const [dateFilter, setDateFilter] = useState<
+  "all" | "today" | "7days" | "30days"
+>("all");
+
 
   useEffect(() => {
     isLoggedIn().then((ok) => {
@@ -115,24 +119,6 @@ const ParentPage: React.FC = () => {
     if (action === "reportHistory") fetchReportHistory();
   };
 
-  const actionRowStyle = {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    width: "100%",
-    padding: "18px 25px",
-    marginBottom: "12px",
-    backgroundColor: darkMode ? "#1e293b" : "#ffffff",
-    color: darkMode ? "#f8fafc" : "#1e293b",
-    border: `1px solid ${darkMode ? "#334155" : "#e2e8f0"}`,
-    borderRadius: "16px",
-    cursor: "pointer",
-    fontSize: "1.05rem",
-    fontWeight: "500",
-    transition: "all 0.2s ease",
-    boxShadow: "0 2px 4px rgba(0,0,0,0.02)",
-  };
-
   const fetchReportHistory = async () => {
     if (!selectedProfile) return;
 
@@ -163,7 +149,7 @@ const ParentPage: React.FC = () => {
     let key = "Other";
 
     if (reportViewMode === "type") {
-      key = item.type || "Other";
+      key = item.type ?? "Other";
     } else {
       key = new Date(item.answeredAt).toLocaleDateString();
     }
@@ -172,6 +158,48 @@ const ParentPage: React.FC = () => {
     acc[key].push(item);
     return acc;
   }, {});
+  const filterByDate = (items: any[]) => {
+  const now = new Date();
+
+  return items.filter((item) => {
+    const answered = new Date(item.answeredAt);
+
+    if (dateFilter === "today") {
+      return answered.toDateString() === now.toDateString();
+    }
+
+    if (dateFilter === "7days") {
+      return now.getTime() - answered.getTime() <= 7 * 24 * 60 * 60 * 1000;
+    }
+
+    if (dateFilter === "30days") {
+      return now.getTime() - answered.getTime() <= 30 * 24 * 60 * 60 * 1000;
+    }
+
+    return true; // all
+  });
+};
+
+
+  const actionRowStyle = {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
+    padding: "18px 25px",
+    marginBottom: "12px",
+    backgroundColor: darkMode ? "#1e293b" : "#ffffff",
+    color: darkMode ? "#f8fafc" : "#1e293b",
+    border: `1px solid ${darkMode ? "#334155" : "#e2e8f0"}`,
+    borderRadius: "16px",
+    cursor: "pointer",
+    fontSize: "1.05rem",
+    fontWeight: "500",
+    transition: "all 0.2s ease",
+    boxShadow: "0 2px 4px rgba(0,0,0,0.02)",
+  };
+ 
+
 
   return (
     <MainLayout>
@@ -277,110 +305,231 @@ const ParentPage: React.FC = () => {
             </div>
           </div>
         )}
-       {isReportModalOpen && (
-  <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.7)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 }}>
-    <div style={{
-      background: darkMode ? "#0f172a" : "#fff",
-      width: "90%", maxWidth: "900px", maxHeight: "85vh", overflowY: "auto",
-      borderRadius: "28px", padding: "30px", border: `1px solid ${darkMode ? "#334155" : "#e2e8f0"}`
-    }}>
-      
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "25px", flexWrap: "wrap", gap: "15px" }}>
-        <h2 style={{ color: "#86e07f", margin: 0 }}>
-          📜 Report History – {selectedProfile?.profileName}
-        </h2>
+            {isReportModalOpen && (
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          backgroundColor: "rgba(0,0,0,0.7)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          zIndex: 1000,
+        }}
+      >
+        <div
+          style={{
+            background: darkMode ? "#0f172a" : "#fff",
+            width: "90%",
+            maxWidth: "900px",
+            maxHeight: "85vh",
+            overflowY: "auto",
+            borderRadius: "28px",
+            padding: "30px",
+          }}
+        >
+   <div
+  style={{
+    display: "grid",
+    gridTemplateColumns: "repeat(3, minmax(120px, 1fr))",
+    gap: "12px",
+    marginBottom: "25px",
+  }}
+>
+  {[
+    { key: "all", label: "All" },
+    { key: "today", label: "Today" },
+    { key: "7days", label: "Last 7 Days" },
+  ].map((btn: any) => (
+    <button
+      key={btn.key}
+      onClick={() => setDateFilter(btn.key)}
+      style={{
+        padding: "14px",
+        borderRadius: "14px",
+        border: `1px solid ${
+          dateFilter === btn.key
+            ? "#86e07f"
+            : darkMode
+            ? "#334155"
+            : "#e2e8f0"
+        }`,
+        cursor: "pointer",
+        fontWeight: "700",
+        backgroundColor:
+          dateFilter === btn.key
+            ? "#86e07f"
+            : darkMode
+            ? "#1e293b"
+            : "#f8fafc",
+        color:
+          dateFilter === btn.key
+            ? "#fff"
+            : darkMode
+            ? "#e5e7eb"
+            : "#1e293b",
+        transition: "all 0.2s ease",
+      }}
+    >
+      📅 {btn.label}
+    </button>
+  ))}
+</div>
 
-        {/* 🔘 כפתורי סינון (Filter Tabs) */}
-        <div style={{ display: "flex", backgroundColor: darkMode ? "#1e293b" : "#f1f5f9", padding: "5px", borderRadius: "12px" }}>
-          <button 
-            onClick={() => setReportViewMode("type")}
+
+          {Object.entries(groupedReports).map(([groupTitle, items]: any) => (
+            <div key={groupTitle} style={{ marginBottom: "35px" }}>
+<h3
+  style={{
+    marginBottom: "16px",
+    paddingLeft: "10px",
+    fontSize: "1.3rem",
+    fontWeight: "700",
+    textTransform: "capitalize",
+    color: darkMode ? "#e5e7eb" : "#1e293b",
+    borderLeft: "4px solid #86e07f",
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+  }}
+>
+  <span>
+    {groupTitle === "talking" && "🗣️"}
+    {groupTitle === "translate" && "🌍"}
+    {groupTitle === "listening" && "🎧"}
+    {groupTitle === "reading" && "📖"}
+    {groupTitle === "complete" && "✍️"}
+  </span>
+  <span>{groupTitle}</span>
+</h3>
+
+              {filterByDate(items).map((item: any, idx: number) => {
+
+                const typeStyles: Record<
+                  string,
+                  { bg: string; border: string; icon: string }
+                > = {
+                  talking: {
+                    bg: "linear-gradient(135deg, #ede9fe, #f5f3ff)",
+                    border: "#c7d2fe",
+                    icon: "🗣️",
+                  },
+                  translate: {
+                    bg: "linear-gradient(135deg, #ecfeff, #f0fdf4)",
+                    border: "#99f6e4",
+                    icon: "🌍",
+                  },
+                  listening: {
+                    bg: "linear-gradient(135deg, #f0f9ff, #e0f2fe)",
+                    border: "#bae6fd",
+                    icon: "🎧",
+                  },
+                  reading: {
+                    bg: "linear-gradient(135deg, #fff7ed, #ffedd5)",
+                    border: "#fed7aa",
+                    icon: "📖",
+                  },
+                  complete: {
+                    bg: "linear-gradient(135deg, #fefce8, #fef9c3)",
+                    border: "#fde68a",
+                    icon: "✍️",
+                  },
+                };
+
+                const style = typeStyles[item.type] || {
+                  bg: darkMode ? "#1e293b" : "#f8fafc",
+                  border: darkMode ? "#334155" : "#e2e8f0",
+                  icon: "🧩",
+                };
+
+                return (
+                  <div
+                    key={idx}
+                    style={{
+                      padding: "22px",
+                      marginBottom: "18px",
+                      borderRadius: "20px",
+                      background: style.bg,
+                      border: `1px solid ${style.border}`,
+                    }}
+                  >
+                  <h4
+  style={{
+    marginBottom: "10px",
+    fontSize: "1.05rem",
+    fontWeight: "600",
+    color: darkMode ? "#1e293b" : "#1e293b",
+  }}
+>
+  {item.exercise?.prompt ?? "Question not found"}
+</h4>
+
+
+
+                    <p style={{ color: darkMode ? "#334155" : "#475569" }}><b>Topic:</b> {item.topic}</p>
+                    <p style={{ color: darkMode ? "#334155" : "#475569" }}><b>Level:</b> {item.level}</p>
+                    <p style={{ color: darkMode ? "#334155" : "#475569" }}><b>Time Spent:</b> {(item.timeSpentMs / 1000).toFixed(1)}s</p>
+                  
+<p style={{ color: darkMode ? "#334155" : "#475569" }}>
+  <b>Date:</b>{" "}
+  {new Date(item.answeredAt).toLocaleDateString()}{" "}
+  <span style={{ opacity: 0.7 }}>
+    ({new Date(item.answeredAt).toLocaleTimeString()})
+  </span>
+</p>
+
+
+
+                    <p style={{ color: darkMode ? "#334155" : "#475569" }}>
+                      <b>Result:</b>{" "}
+                      <span
+                        style={{
+                          padding: "4px 10px",
+                          borderRadius: "999px",
+                          fontWeight: "700",
+                          fontSize: "0.85rem",
+                          backgroundColor: item.correct ? "#dcfce7" : "#fee2e2",
+                          color: item.correct ? "#166534" : "#991b1b",
+                        }}
+                      >
+                        {item.correct ? "Correct ✅" : "Wrong ❌"}
+                      </span>
+                    </p>
+
+                    {item.exercise?.answer && (
+                      <p style={{ color: darkMode ? "#334155" : "#475569"  }}>
+                        <b>Correct Answer:</b>{" "}
+                        <span style={{ color: "#16a34a" }}>
+                          {item.exercise.answer}
+                        </span>
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+
+          <button
+            onClick={() => setIsReportModalOpen(false)}
             style={{
-              padding: "8px 16px", borderRadius: "8px", border: "none", cursor: "pointer",
-              backgroundColor: reportViewMode === "type" ? "#86e07f" : "transparent",
-              color: reportViewMode === "type" ? "#fff" : (darkMode ? "#94a3b8" : "#64748b"),
-              fontWeight: "600", transition: "all 0.2s"
-            }}>
-            By Exercise Type
-          </button>
-          <button 
-            onClick={() => setReportViewMode("date")}
-            style={{
-              padding: "8px 16px", borderRadius: "8px", border: "none", cursor: "pointer",
-              backgroundColor: reportViewMode === "date" ? "#86e07f" : "transparent",
-              color: reportViewMode === "date" ? "#fff" : (darkMode ? "#94a3b8" : "#64748b"),
-              fontWeight: "600", transition: "all 0.2s"
-            }}>
-            By Date
+              width: "100%",
+              padding: "14px",
+              borderRadius: "12px",
+              backgroundColor: "#86e07f",
+              color: "#fff",
+              border: "none",
+              cursor: "pointer",
+              fontWeight: "700",
+            }}
+          >
+            Close
           </button>
         </div>
       </div>
+    )}
 
-      {isLoadingReport ? (
-        <p style={{ color: darkMode ? "#fff" : "#000" }}>Loading records...</p>
-      ) : Object.keys(groupedReports).length === 0 ? (
-        <p style={{ color: darkMode ? "#94a3b8" : "#64748b" }}>No solved questions yet.</p>
-      ) : (
-        Object.entries(groupedReports).map(([groupTitle, items]: any) => (
-          <div key={groupTitle} style={{ marginBottom: "35px" }}>
-            
-            {/* כותרת הקבוצה (התאריך או סוג התרגיל) */}
-            <h3 style={{
-              marginBottom: "15px",
-              color: "#38bdf8",
-              textTransform: "capitalize",
-              borderBottom: `1px solid ${darkMode ? "#1e293b" : "#f1f5f9"}`,
-              paddingBottom: "8px"
-            }}>
-              {reportViewMode === "type" ? `🧩 ${groupTitle} Exercises` : `📅 ${groupTitle}`}
-            </h3>
 
-            {items.map((item: any, idx: number) => (
-              <div key={idx} style={{
-                padding: "20px", marginBottom: "15px", borderRadius: "18px",
-                backgroundColor: darkMode ? "#1e293b" : "#f8fafc",
-                border: `1px solid ${darkMode ? "#334155" : "#e2e8f0"}`
-              }}>
-                <h4 style={{ marginBottom: "10px", color: darkMode ? "#f8fafc" : "#1e293b" }}>
-                  🧠 {item.exercise.prompt}
-                </h4>
-
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", fontSize: "0.9rem", color: darkMode ? "#cbd5e1" : "#475569" }}>
-                  <p><b>Topic:</b> {item.topic}</p>
-                  <p><b>Level:</b> {item.level}</p>
-                  <p><b>Type:</b> {item.type}</p>
-                  <p>
-                    <b>Result:</b>{" "}
-                    <span style={{ 
-                      backgroundColor: item.correct ? "rgba(34, 197, 94, 0.1)" : "rgba(239, 68, 68, 0.1)",
-                      color: item.correct ? "#22c55e" : "#ef4444",
-                      padding: "2px 8px", borderRadius: "6px", fontWeight: "bold"
-                    }}>
-                      {item.correct ? "Correct" : "Wrong"}
-                    </span>
-                  </p>
-                  <p><b>Time Spent:</b> {(item.timeSpentMs / 1000).toFixed(1)}s</p>
-                  <p><b>Answered:</b> {new Date(item.answeredAt).toLocaleTimeString()}</p>
-                </div>
-                <div style={{ marginTop: "10px", paddingTop: "10px", borderTop: `1px dashed ${darkMode ? "#334155" : "#cbd5e1"}` }}>
-                   <p style={{ margin: 0 }}><b>Correct Answer:</b> <span style={{ color: "#86e07f" }}>{item.exercise.answer}</span></p>
-                </div>
-              </div>
-            ))}
-          </div>
-        ))
-      )}
-
-      <button
-        onClick={() => setIsReportModalOpen(false)}
-        style={{
-          width: "100%", marginTop: "15px", padding: "14px", borderRadius: "12px",
-          backgroundColor: "#86e07f", color: "#fff", border: "none", cursor: "pointer", fontWeight: "700"
-        }}>
-        Close
-      </button>
-    </div>
-  </div>
-)}
       </div>
     </MainLayout>
   );
