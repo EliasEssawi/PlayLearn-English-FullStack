@@ -1,176 +1,189 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import TopicCard, { TopicLevel } from "./TopicCard";
 import FillBlankGame from "./FillBlankGame";
 import ListeningGame from "./ListeningGame";
 import SpeakingGame from "./SpeakingGame";
-import { getProfileQuestions, Question, saveProgress, getProgress  } from "../../utils/questionService";
+import { getProfileQuestions, Question, saveProgress, getProgress } from "../../utils/questionService";
 
 type Props = {
   exercisesType: string;
   darkMode: boolean;
 };
 
+const normType = (t: string) => (t === "Fill the blank" ? "complete" : t.toLowerCase());
+
 export default function TopicsPage({ exercisesType, darkMode }: Props) {
   const savingRef = useRef(false);
+
   const [topic, setTopic] = useState("");
   const [level, setLevel] = useState(1);
-  const [showExe, setShowExe] = useState<boolean>(false);
+  const [showExe, setShowExe] = useState(false);
+
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  const [progress, setProgress] = useState<Record<string, number>>({});
+  const [remaining, setRemaining] = useState<number | null>(null);
+  
   const questionStartRef = useRef<number>(Date.now());
-  const [completed, setCompleted] = useState<Record<string, number>>({});
-  const savedUserRaw = localStorage.getItem("loggedInUser");
+
   const profileStr = localStorage.getItem("activeProfile");
+  if (!profileStr) return null;
 
-  if (!savedUserRaw || !profileStr) return null;
+  const profileObj = JSON.parse(profileStr);
 
- const profileObj = JSON.parse(profileStr);
+  const profileName: string =
+    profileObj?.profileName ??
+    profileObj?.email?.profileName ??
+    profileObj?.email?.profileName?.profileName;
 
-const profileName =
-  profileObj.profileName ?? profileObj.email?.profileName;
+  if (!profileName) return null;
 
-if (!profileName) return null;
+  const typeNorm = useMemo(() => normType(exercisesType), [exercisesType]);
+  const keyFor = (topicName: string) => `${topicName}|${typeNorm}`;
 
-  // Reset state when exercisesType changes
+  // reset when type changes
   useEffect(() => {
     setShowExe(false);
     setTopic("");
     setLevel(1);
     setQuestions([]);
     setCurrentIndex(0);
+    setRemaining(null);
   }, [exercisesType]);
 
   useEffect(() => {
     questionStartRef.current = Date.now();
   }, [currentIndex]);
 
+  // load unlocked levels
   useEffect(() => {
-  const load = async () => {
-    try {
-      
-      const res = await getProgress(profileName);
-      if (res.success) {
-        setProgress(res.unlocked || {});
-        console.log("GET PROGRESS RES:", res);
+    const load = async () => {
+      try {
+        const res = await getProgress(profileName);
+        if (res?.success) setProgress(res.unlocked || {});
+      } catch (e) {
+        console.error("Failed to load progress", e);
       }
-    } catch (e) {
-      console.error("Failed to load progress", e);
+    };
+    load();
+  }, [profileName]);
+
+  const safeSaveAttempt = async (payload: any) => {
+    if (savingRef.current) return null;
+    savingRef.current = true;
+    try {
+      return await saveProgress(payload);
+    } finally {
+      savingRef.current = false;
     }
   };
-  load();
-}, [profileName]);
 
-  const [progress, setProgress] = useState<Record<string, number>>({});
+  const fetchQuestions = async (topicParam: string, levelParam: number) => {
+    try {
+      const res = await getProfileQuestions(profileName, levelParam, topicParam, typeNorm, 10);
 
-  const normalizeType = (t: string) => {
-    if (t === "Fill the blank") return "complete";
-    return t.toLowerCase(); // Talking -> talking, Listening -> listening, etc.
+      if (!res.success) {
+        console.error(res.message);
+        return;
+      }
+
+      // debug logs (keep for now)
+      console.log("FETCH:", (res.questions || []).map(q => ({ id: q._id, prompt: q.prompt })));
+      console.log("REMAINING:", res.remaining);
+      console.log("REQUESTED:", res.requested, "AVAILABLE:", res.available);
+
+      setRemaining(typeof res.remaining === "number" ? res.remaining : null);
+      setQuestions(res.questions || []);
+      setCurrentIndex(0);
+
+      // if nothing left => go back
+      if ((res.questions || []).length === 0) {
+        setShowExe(false);
+      }
+    } catch (err) {
+      console.error("Error fetching questions:", err);
+    }
   };
 
-  const keyFor = (topicName: string) => `${topicName}|${normalizeType(exercisesType)}`;
+  const handleLevelClick = (topicName: string, levelId: number) => {
+    const unlocked = progress[keyFor(topicName)] ?? 1;
+    if (levelId > unlocked) return;
 
-  
-const handleLevelClick = (topicName: string, levelId: number) => {
-  const key = keyFor(topicName);
-  const unlocked = progress[key] ?? 1;
-
-  if (levelId > unlocked) return; //  don't allow opening locked level
-
-  setTopic(topicName);
-  setLevel(levelId);
-  setShowExe(true);
-
-  const exeType = normalizeType(exercisesType);
-  fetchQuestions(profileName, topicName, levelId, exeType, 10);
-};
-const fetchQuestions = async (
-  profileName: string,
-  topicParam: string,
-  levelParam: number,
-  type: string,
-  numberOfQuestions: number
-) => {
-  try {
-    const data = await getProfileQuestions(
-      profileName,
-      levelParam,
-      topicParam,
-      type,
-      numberOfQuestions
-    );
-
-    if (!data.success) {
-      console.error(data.message);
-      return;
-    }
-
-    setQuestions(data.questions ?? []);
-    setCurrentIndex(0);
-
-    // ✅ THIS is where isCompleted is USED
-    if (data.isCompleted === true) {
-      const key = `${topicParam}|${type}`;
-      setCompleted((prev) => ({
-        ...prev,
-        [key]: Math.max(prev[key] ?? 0, levelParam),
-      }));
-    }
-  } catch (err) {
-    console.error("Error fetching questions:", err);
-  }
-};
-
-
-
-  const animalsLevels: TopicLevel[] = [
-    { id: 1, icon: "⭐" },
-    { id: 2, icon: "🐶" },
-    { id: 3, icon: "🐱" },
-    { id: 4, icon: "🐘" },
-    { id: 5, icon: "🏆" },
-  ];
-
-  const weatherLevels: TopicLevel[] = [
-    { id: 1, icon: "☀️" },
-    { id: 2, icon: "🌤" },
-    { id: 3, icon: "🌧" },
-    { id: 4, icon: "⛈" },
-    { id: 5, icon: "❄️" },
-  ];
-
-  const transportationLevels: TopicLevel[] = [
-    { id: 1, icon: "🚶" },
-    { id: 2, icon: "🚲" },
-    { id: 3, icon: "🚗" },
-    { id: 4, icon: "🚌" },
-    { id: 5, icon: "✈️" },
-  ];
-
-  const jobsLevels: TopicLevel[] = [
-    { id: 1, icon: "🧑‍🎓" },
-    { id: 2, icon: "🧑‍🍳" },
-    { id: 3, icon: "🧑‍🔧" },
-    { id: 4, icon: "🧑‍🏫" },
-    { id: 5, icon: "🧑‍💼" },
-  ];
-
-  const furnitureLevels: TopicLevel[] = [
-    { id: 1, icon: "🪑" },
-    { id: 2, icon: "🛋" },
-    { id: 3, icon: "🛏" },
-    { id: 4, icon: "🪟" },
-    { id: 5, icon: "🚪" },
-  ];
-
-  const colorsLevels: TopicLevel[] = [
-    { id: 1, icon: "🔴" },
-    { id: 2, icon: "🟡" },
-    { id: 3, icon: "🔵" },
-    { id: 4, icon: "🟢" },
-    { id: 5, icon: "🟣" },
-  ];
+    setTopic(topicName);
+    setLevel(levelId);
+    setShowExe(true);
+    fetchQuestions(topicName, levelId);
+  };
 
   const currentQuestion = questions[currentIndex];
+
+  const handleAnswered = async (isCorrect: boolean) => {
+    if (!currentQuestion) return;
+
+    const timeSpentMs = Date.now() - questionStartRef.current;
+
+    // 1) save EVERY attempt (correct + wrong)
+    try {
+      const res = await safeSaveAttempt({
+        profileName,
+        questionId: String(currentQuestion._id), // exercise id
+        topic,
+        level,
+        type: typeNorm,
+        correct: isCorrect,
+        answeredAt: new Date().toISOString(),
+        timeSpentMs,
+      });
+
+      // unlock only if correct and saved
+      if (res?.saved && isCorrect === true) {
+        const key = `${topic}|${typeNorm}`;
+        setProgress(prev => ({ ...prev, [key]: res.unlockedLevel }));
+      }
+    } catch (err) {
+      console.error("Failed to save progress", err);
+    }
+
+    // 2) UI flow that prevents “same question feeling”
+    if (isCorrect) {
+      // remove solved question immediately from local list
+      setQuestions(prev => prev.filter(q => q._id !== currentQuestion._id));
+      // keep currentIndex as-is (next item shifts into this position)
+    } else {
+      // wrong -> move forward in current round
+      if (currentIndex + 1 < questions.length) {
+        setCurrentIndex(i => i + 1);
+        return;
+      }
+    }
+
+    // 3) if we reached end OR list became short, refresh the pool
+    // (after correct, backend should now exclude it)
+    if (questions.length <= 1 || currentIndex >= questions.length - 1) {
+      await fetchQuestions(topic, level);
+    }
+  };
+
+  // ---- Levels UI ----
+  const animalsLevels: TopicLevel[] = [
+    { id: 1, icon: "⭐" }, { id: 2, icon: "🐶" }, { id: 3, icon: "🐱" }, { id: 4, icon: "🐘" }, { id: 5, icon: "🏆" },
+  ];
+  const weatherLevels: TopicLevel[] = [
+    { id: 1, icon: "☀️" }, { id: 2, icon: "🌤" }, { id: 3, icon: "🌧" }, { id: 4, icon: "⛈" }, { id: 5, icon: "❄️" },
+  ];
+  const transportationLevels: TopicLevel[] = [
+    { id: 1, icon: "🚶" }, { id: 2, icon: "🚲" }, { id: 3, icon: "🚗" }, { id: 4, icon: "🚌" }, { id: 5, icon: "✈️" },
+  ];
+  const jobsLevels: TopicLevel[] = [
+    { id: 1, icon: "🧑‍🎓" }, { id: 2, icon: "🧑‍🍳" }, { id: 3, icon: "🧑‍🔧" }, { id: 4, icon: "🧑‍🏫" }, { id: 5, icon: "🧑‍💼" },
+  ];
+  const furnitureLevels: TopicLevel[] = [
+    { id: 1, icon: "🪑" }, { id: 2, icon: "🛋" }, { id: 3, icon: "🛏" }, { id: 4, icon: "🪟" }, { id: 5, icon: "🚪" },
+  ];
+  const colorsLevels: TopicLevel[] = [
+    { id: 1, icon: "🔴" }, { id: 2, icon: "🟡" }, { id: 3, icon: "🔵" }, { id: 4, icon: "🟢" }, { id: 5, icon: "🟣" },
+  ];
 
   return (
     <div
@@ -180,66 +193,17 @@ const fetchQuestions = async (
         color: darkMode ? "#f8fafc" : "#0f172a",
       }}
     >
-      {/* Topics selection */}
       {!showExe && (
         <div className="space-y-6">
-          <TopicCard
-            title="Animals"
-            emoji="🐾"
-            levels={animalsLevels}
-            unlockedLevel={progress[keyFor("animals")] ?? 1}
-            onLevelClick={(id) => handleLevelClick("animals", id)}
-            darkMode={darkMode}
-          />
-
-          <TopicCard
-            title="Weather"
-            emoji="🌦"
-            levels={weatherLevels}
-            unlockedLevel={progress[keyFor("weather")] ?? 1}
-            onLevelClick={(id) => handleLevelClick("weather", id)}
-            darkMode={darkMode}
-          />
-
-          <TopicCard
-            title="Transportation"
-            emoji="🚗"
-            levels={transportationLevels}
-            unlockedLevel={progress[keyFor("transportation")] ?? 1}
-            onLevelClick={(id) => handleLevelClick("transportation", id)}
-            darkMode={darkMode}
-          />
-
-          <TopicCard
-            title="Jobs"
-            emoji="🧑‍🍳"
-            levels={jobsLevels}
-            unlockedLevel={progress[keyFor("jobs")] ?? 1}
-            onLevelClick={(id) => handleLevelClick("jobs", id)}
-            darkMode={darkMode}
-          />
-
-          <TopicCard
-            title="Furniture"
-            emoji="🚪"
-            levels={furnitureLevels}
-            unlockedLevel={progress[keyFor("furniture")] ?? 1}
-            onLevelClick={(id) => handleLevelClick("furniture", id)}
-            darkMode={darkMode}
-          />
-
-          <TopicCard
-            title="Colors"
-            emoji="🎨"
-            levels={colorsLevels}
-            unlockedLevel={progress[keyFor("colors")] ?? 1}
-            onLevelClick={(id) => handleLevelClick("colors", id)}
-            darkMode={darkMode}
-          />
+          <TopicCard title="Animals" emoji="🐾" levels={animalsLevels} unlockedLevel={progress[keyFor("animals")] ?? 1} onLevelClick={(id) => handleLevelClick("animals", id)} darkMode={darkMode} />
+          <TopicCard title="Weather" emoji="🌦" levels={weatherLevels} unlockedLevel={progress[keyFor("weather")] ?? 1} onLevelClick={(id) => handleLevelClick("weather", id)} darkMode={darkMode} />
+          <TopicCard title="Transportation" emoji="🚗" levels={transportationLevels} unlockedLevel={progress[keyFor("transportation")] ?? 1} onLevelClick={(id) => handleLevelClick("transportation", id)} darkMode={darkMode} />
+          <TopicCard title="Jobs" emoji="🧑‍🍳" levels={jobsLevels} unlockedLevel={progress[keyFor("jobs")] ?? 1} onLevelClick={(id) => handleLevelClick("jobs", id)} darkMode={darkMode} />
+          <TopicCard title="Furniture" emoji="🚪" levels={furnitureLevels} unlockedLevel={progress[keyFor("furniture")] ?? 1} onLevelClick={(id) => handleLevelClick("furniture", id)} darkMode={darkMode} />
+          <TopicCard title="Colors" emoji="🎨" levels={colorsLevels} unlockedLevel={progress[keyFor("colors")] ?? 1} onLevelClick={(id) => handleLevelClick("colors", id)} darkMode={darkMode} />
         </div>
       )}
 
-      {/* Exercise */}
       {showExe && (
         <div className="max-w-2xl mx-auto">
           <button
@@ -250,55 +214,24 @@ const fetchQuestions = async (
             Back to Topics
           </button>
 
-          {/* Fill in the blank / Translate / Reading */}
-          {(exercisesType === "Translate" ||
-            exercisesType === "Fill the blank" ||
-            exercisesType === "Reading") &&
-            currentQuestion && (
-              <FillBlankGame
-                title={`Question ${currentIndex + 1} / ${questions.length}`}
-                question={currentQuestion.prompt}
-                correctAnswer={currentQuestion.answer}
-                options={currentQuestion.options}
-                darkMode={darkMode}
-                onContinue={async (isCorrect) => {
-                  
-                  const timeSpentMs = Date.now() - questionStartRef.current;
+          {/* optional: show remaining */}
+          {typeof remaining === "number" && (
+            <div className="mb-3 text-sm opacity-80">
+              Remaining (not solved yet): <b>{remaining}</b>
+            </div>
+          )}
 
-                  try {
-                    const res = await saveProgress({
-                      profileName: profileName,
-                      questionId: currentQuestion._id,
-                      topic,
-                      level,
-                      type: normalizeType(exercisesType),
-                      correct: isCorrect,
-                      answeredAt: new Date().toISOString(),
-                      timeSpentMs,
-                    });
+          {(exercisesType === "Translate" || exercisesType === "Fill the blank" || exercisesType === "Reading") && currentQuestion && (
+            <FillBlankGame
+              title={`Question ${currentIndex + 1} / ${questions.length}`}
+              question={currentQuestion.prompt}
+              correctAnswer={currentQuestion.answer}
+              options={currentQuestion.options}
+              darkMode={darkMode}
+              onContinue={handleAnswered}
+            />
+          )}
 
-                    const key = `${topic}|${normalizeType(exercisesType)}`;
-                   if (res.saved&& isCorrect === true) {
-                  setProgress((prev) => ({
-                    ...prev,
-                    [key]: res.unlockedLevel,
-                  }));
-                }
-                  } 
-                  catch (err) {
-                    console.error("Failed to save progress", err);
-                  }
-
-                  if (currentIndex + 1 < questions.length) {
-                    setCurrentIndex((i) => i + 1);
-                  } else {
-                    setShowExe(false);
-                  }
-                }}
-              />
-            )}
-
-          {/* Listening */}
           {exercisesType === "Listening" && currentQuestion && (
             <ListeningGame
               title={`Question ${currentIndex + 1} / ${questions.length}`}
@@ -306,79 +239,15 @@ const fetchQuestions = async (
               correctAnswer={currentQuestion.prompt}
               options={currentQuestion.options}
               darkMode={darkMode}
-              onContinue={async (isCorrect) => {
-                const timeSpentMs = Date.now() - questionStartRef.current;
-
-                try {
-                  const res = await saveProgress({
-                    profileName: profileName,
-                    questionId: currentQuestion._id,
-                    topic,
-                    level,
-                    type: normalizeType(exercisesType), // "listening"
-                    correct: isCorrect,
-                    answeredAt: new Date().toISOString(),
-                    timeSpentMs,
-                  });
-
-                  const key = `${topic}|${normalizeType(exercisesType)}`;
-                if (res.saved&& isCorrect === true) {
-  setProgress((prev) => ({
-    ...prev,
-    [key]: res.unlockedLevel,
-  }));
-}
-                } catch (err) {
-                  console.error("Failed to save progress", err);
-                }
-
-                if (currentIndex + 1 < questions.length) {
-                  setCurrentIndex((prev) => prev + 1);
-                } else {
-                  setShowExe(false);
-                }
-              }}
+              onContinue={handleAnswered}
             />
           )}
 
-          {/* Talking */}
           {exercisesType === "Talking" && currentQuestion && (
             <SpeakingGame
               title={`Question ${currentIndex + 1} / ${questions.length}`}
               answer={currentQuestion.prompt}
-              onContinue={async (isCorrect, spokenText) => {
-                const timeSpentMs = Date.now() - questionStartRef.current;
-
-                try {
-                  const res = await saveProgress({
-                    profileName: profileName,
-                    questionId: currentQuestion._id,
-                    topic,
-                    level,
-                    type: normalizeType(exercisesType), // "talking"
-                    correct: isCorrect,
-                    answeredAt: new Date().toISOString(),
-                    timeSpentMs,
-                    // אם תרצה לשמור spokenText בעתיד, אפשר להוסיף לשדה נוסף בשרת
-                  });
-
-                  const key = `${topic}|${normalizeType(exercisesType)}`;
-                 if (res.saved&& isCorrect === true) {
-  setProgress((prev) => ({
-    ...prev,
-    [key]: res.unlockedLevel,
-  }));
-}
-                } catch (err) {
-                  console.error("Failed to save progress", err);
-                }
-
-                if (currentIndex + 1 < questions.length) {
-                  setCurrentIndex((prev) => prev + 1);
-                } else {
-                  setShowExe(false);
-                }
-              }}
+              onContinue={handleAnswered}
               darkMode={darkMode}
             />
           )}

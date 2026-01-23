@@ -58,6 +58,14 @@ export const getProfileQuestions = async (req: AuthRequest, res: Response) => {
       },
       { $sample: { size } },
     ]);
+    console.log("FILTER CHECK", {
+  profileName,
+  lvl,
+  tTopic,
+  tType,
+  solvedCount: solvedIds.length,
+  firstSolved: solvedIds[0]?.toString(),
+});
 
     const totalRemaining = await Exercise.countDocuments({
       level: lvl,
@@ -121,7 +129,7 @@ export const SetProfileAnswer = async (req: AuthRequest, res: Response) => {
     // ✅ rule:
     // - if alreadyCorrect and current attempt is correct => do not save
     // - otherwise save (wrong attempts can be saved)
-    const shouldSave = !(alreadyCorrect && correct === true);
+    const shouldSave =  true;
 
     const answerDoc = {
       questionId: exercise._id,

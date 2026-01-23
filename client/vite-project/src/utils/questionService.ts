@@ -1,7 +1,7 @@
 // services/questionService.ts
 import axios from "axios";
 const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
-   
+
 export interface Question {
   _id: string;
   level: number;
@@ -16,9 +16,11 @@ export interface GetQuestionsResponse {
   success: boolean;
   message: string;
   questions: Question[];
-  total?: number;
-  correctUnique?: number;
-  isCompleted?: boolean;
+
+  
+  available?: number;
+  requested?: number;
+  remaining?: number;
 }
 
 export const getProfileQuestions = async (
@@ -26,21 +28,13 @@ export const getProfileQuestions = async (
   level: number,
   topic: string,
   type: string,
-  numberOfQuestions: number = 5
+  numberOfQuestions: number = 10
 ): Promise<GetQuestionsResponse> => {
- const response = await axios.post<GetQuestionsResponse>(
-  `${API_BASE}/profiles/getQuestions`,
-  {
-    profileName,
-    level,
-    topic,
-    type,
-    numberOfQuestions,
-  },
-  { withCredentials: true }
-);
-
-
+  const response = await axios.post<GetQuestionsResponse>(
+    `${API_BASE}/profiles/getQuestions`,
+    { profileName, level, topic, type, numberOfQuestions },
+    { withCredentials: true }
+  );
   return response.data;
 };
 
@@ -56,14 +50,9 @@ type SaveProgressPayload = {
 };
 
 export const saveProgress = async (payload: SaveProgressPayload) => {
-  const res = await axios.post(
-    `${API_BASE}/profiles/saveAnswer`,
-    payload,
-    {
-      withCredentials: true, // ✅ for cookies auth
-    }
-  );
-
+  const res = await axios.post(`${API_BASE}/profiles/saveAnswer`, payload, {
+    withCredentials: true,
+  });
   return res.data;
 };
 
@@ -73,6 +62,5 @@ export const getProgress = async (profileName: string) => {
     { profileName },
     { withCredentials: true }
   );
-  return res.data; // { success, unlocked }
+  return res.data;
 };
-
