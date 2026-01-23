@@ -127,18 +127,55 @@ export async function getProfileProgressSummary(req: Request, res: Response) {
     if (qTopic) match.topic = qTopic;
     if (qType) match.type = qType;
 
-    const totalsLT = (await Exercise.aggregate([
-      { $match: match },
-      { $group: { _id: { level: "$level", type: "$type" }, total: { $sum: 1 } } },
-    ])) as TotalRowLT[];
+const dupes = await Exercise.aggregate([
+  { $match: { level: 3, topic: "furniture" } },
+  { $group: { _id: { type: "$type", prompt: "$prompt" }, c: { $sum: 1 } } },
+  { $match: { c: { $gt: 1 } } },
+  { $limit: 20 },
+]);
 
+console.log("DUPES sample:", dupes);
+//end check
+
+  const totalsLT = (await Exercise.aggregate([
+  { $match: match },
+
+  // dedupe questions first (same prompt counted once per level+type)
+  {
+    $group: {
+      _id: { level: "$level", type: "$type", prompt: "$prompt" },
+    },
+  },
+
+  // now count unique prompts per level+type
+  {
+    $group: {
+      _id: { level: "$_id.level", type: "$_id.type" },
+      total: { $sum: 1 },
+    },
+  },
+])) as TotalRowLT[];
     const totalMapLT = new Map<string, number>();
     for (const t of totalsLT) totalMapLT.set(`${t._id.level}:${lower(t._id.type)}`, t.total);
 
     const totalsLTT = (await Exercise.aggregate([
-      { $match: match },
-      { $group: { _id: { level: "$level", topic: "$topic", type: "$type" }, total: { $sum: 1 } } },
-    ])) as TotalRowLTT[];
+  { $match: match },
+
+  // dedupe questions first (same prompt counted once per level+topic+type)
+  {
+    $group: {
+      _id: { level: "$level", topic: "$topic", type: "$type", prompt: "$prompt" },
+    },
+  },
+
+  //  now count unique prompts per level+topic+type
+  {
+    $group: {
+      _id: { level: "$_id.level", topic: "$_id.topic", type: "$_id.type" },
+      total: { $sum: 1 },
+    },
+  },
+])) as TotalRowLTT[];
 
     const totalsByLevelTopicType: Record<string, Record<string, Record<string, number>>> = {};
     for (const row of totalsLTT) {
