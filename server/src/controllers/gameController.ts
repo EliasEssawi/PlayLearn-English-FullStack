@@ -12,156 +12,187 @@ interface AnsweredQuestion {
   type: string;
 }
 
+const norm = (x: any) => String(x ?? "").trim().toLowerCase();
+
 export const getProfileQuestions = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!.userId;
-    const { profileName, level, topic, type, numberOfQuestions = 5 } = req.body;
+    const { profileName, level, topic, type, numberOfQuestions = 10 } = req.body;
 
     if (!profileName || !level || !topic || !type) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing required fields",
-      });
+      return res.status(400).json({ success: false, message: "Missing required fields" });
     }
 
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
-    }
+    const user = await User.findById(req.user!.userId).lean();
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
-    const profile = user.profiles.find((p) => p.profileName === profileName);
-    if (!profile) {
-      return res.status(404).json({ success: false, message: "There is no profile with this name" });
-    }
+    const profile: any = (user.profiles || []).find((p: any) => p.profileName === profileName);
+    if (!profile) return res.status(404).json({ success: false, message: "Profile not found" });
 
-    const answeredCorrectlyIds =
-      profile.progress?.answers
-        ?.filter(
-          (a: any) =>
-            a.correct === true &&
-            a.topic === topic &&
-            a.type === type &&
-            a.level === level
-        )
-        .map((a: any) => new mongoose.Types.ObjectId(a.questionId)) || [];
+    const norm = (x: any) => String(x ?? "").trim().toLowerCase();
 
-    let questions = await Exercise.aggregate([
+    const tTopic = norm(topic);
+    const tType = norm(type);
+    const lvl = Number(level);
+    const size = Number(numberOfQuestions) || 10;
+
+    // ✅ solved correct IDs for this lvl/topic/type
+    const solvedIds = (profile.progress?.answers || [])
+      .filter((a: any) =>
+        a.correct === true &&
+        norm(a.topic) === tTopic &&
+        norm(a.type) === tType &&
+        Number(a.level) === lvl
+      )
+      .map((a: any) => String(a.questionId))
+      .filter((id: string) => mongoose.Types.ObjectId.isValid(id))
+      .map((id: string) => new mongoose.Types.ObjectId(id));
+
+    const questions = await Exercise.aggregate([
       {
         $match: {
-          level,
-          topic,
-          type,
-          _id: { $nin: answeredCorrectlyIds },
+          level: lvl,
+          topic: tTopic,
+          type: tType,
+          ...(solvedIds.length ? { _id: { $nin: solvedIds } } : {}),
         },
       },
-      { $sample: { size: numberOfQuestions } },
+      { $sample: { size } },
     ]);
 
-    if (questions.length < numberOfQuestions) {
-      const remaining = numberOfQuestions - questions.length;
-
-      const extraQuestions = await Exercise.aggregate([
-        {
-          $match: {
-            level,
-            topic,
-            type,
-            _id: { $in: answeredCorrectlyIds },
-          },
-        },
-        { $sample: { size: remaining } },
-      ]);
-
-      questions = questions.concat(extraQuestions);
-    }
+    const totalRemaining = await Exercise.countDocuments({
+      level: lvl,
+      topic: tTopic,
+      type: tType,
+      ...(solvedIds.length ? { _id: { $nin: solvedIds } } : {}),
+    });
 
     return res.status(200).json({
       success: true,
       message: "Questions sent successfully",
       questions,
+      available: questions.length,
+      requested: size,
+      remaining: totalRemaining, // 
     });
   } catch (err) {
-    console.error(err);
+    console.error("getProfileQuestions ERROR:", err);
     return res.status(500).json({ success: false, message: "Database error" });
   }
 };
+
+
+
+const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 
 export const SetProfileAnswer = async (req: AuthRequest, res: Response) => {
   try {
     const { profileName, questionId, topic, level, correct, answeredAt, timeSpentMs } = req.body;
 
-    const exercise = await Exercise.findById(questionId);
-    if (!exercise) {
-      return res.status(404).json({ success: false, message: "Exercise not found" });
+    if (!profileName || !questionId || !topic || !level) {
+      return res.status(400).json({ success: false, message: "Missing required fields" });
     }
 
-    await User.updateOne(
-      { _id: req.user!.userId, "profiles.profileName": profileName },
-      {
-        $push: {
-          "profiles.$.progress.answers": {
-            questionId: exercise._id,
-            topic,
-            level,
-            type: exercise.type,
-            correct,
-            answeredAt: answeredAt ? new Date(answeredAt) : new Date(),
-            timeSpentMs: timeSpentMs ?? 0,
-          },
-        },
-      }
+    const exercise = await Exercise.findById(questionId).lean();
+    if (!exercise) return res.status(404).json({ success: false, message: "Exercise not found" });
+
+    const user = await User.findById(req.user!.userId).lean();
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+    const profile: any = (user.profiles || []).find((p: any) => p.profileName === profileName);
+    if (!profile) return res.status(404).json({ success: false, message: "Profile not found" });
+
+    const tTopic = norm(topic);
+    const tType = norm(exercise.type); // source of truth from DB
+    const lvl = Number(level);
+    const qidStr = String(exercise._id);
+
+    const answers: any[] = Array.isArray(profile.progress?.answers) ? profile.progress.answers : [];
+    const unlockedObj: Record<string, number> = { ...(profile.progress?.unlocked || {}) };
+
+    // ✅ do not save duplicate "correct" for same question in same lvl/topic/type
+    const alreadyCorrect = answers.some((a: any) =>
+      String(a.questionId) === qidStr &&
+      norm(a.topic) === tTopic &&
+      norm(a.type) === tType &&
+      Number(a.level) === lvl &&
+      a.correct === true
     );
 
-    const user = await User.findById(req.user!.userId);
-    if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
-    }
+    // ✅ rule:
+    // - if alreadyCorrect and current attempt is correct => do not save
+    // - otherwise save (wrong attempts can be saved)
+    const shouldSave = !(alreadyCorrect && correct === true);
 
-    const profile = user.profiles.find((p) => p.profileName === profileName);
-    if (!profile) {
-      return res.status(404).json({ success: false, message: "Profile not found" });
-    }
+    const answerDoc = {
+      questionId: exercise._id,
+      topic: tTopic,
+      level: lvl,
+      type: tType,
+      correct: !!correct,
+      answeredAt: answeredAt ? new Date(answeredAt) : new Date(),
+      timeSpentMs: Number(timeSpentMs) || 0,
+    };
 
-    const t = exercise.type;
-    const key = `${String(topic)}|${String(t)}`;
-
-    // ✅ count UNIQUE correct questionIds for this topic+type+level (safe casts)
-    const correctSet = new Set(
-      (profile.progress?.answers || [])
+    // ✅ recompute correctUnique (unique correct IDs for this lvl/topic/type)
+    const correctSet = new Set<string>(
+      answers
         .filter((a: any) =>
-          String(a.topic) === String(topic) &&
-          String(a.type) === String(t) &&
-          Number(a.level) === Number(level) &&
-          a.correct === true
+          a.correct === true &&
+          norm(a.topic) === tTopic &&
+          norm(a.type) === tType &&
+          Number(a.level) === lvl
         )
         .map((a: any) => String(a.questionId))
     );
 
+    // if we are saving a new correct now, add it to set (avoid waiting for DB)
+    if (shouldSave && correct === true) correctSet.add(qidStr);
+
     const correctUnique = correctSet.size;
 
-    // ✅ IMPORTANT: store unlocked as PLAIN OBJECT, not Map
-    if (!profile.progress) profile.progress = {};
-    if (!profile.progress.unlocked) profile.progress.unlocked = {};
+    // ✅ unlock logic
+    const key = `${tTopic}|${tType}`;
+    const base = clamp(Number(profile.rate) || 1, 1, 5);
+    let unlockedLevel = Math.max(Number(unlockedObj[key] ?? 1), base);
 
-    let unlockedLevel = Number(profile.progress.unlocked[key] ?? 1);
-
+    const next = clamp(lvl + 1, 1, 5);
     let justUnlocked = false;
-    if (correctUnique >= 8 && unlockedLevel < Number(level) + 1) {
-      unlockedLevel = Number(level) + 1;
-      profile.progress.unlocked[key] = unlockedLevel;
+
+    if (correctUnique >= 8 && unlockedLevel < next) {
+      unlockedLevel = next;
       justUnlocked = true;
-      await user.save();
     }
 
-    return res.json({ success: true, correctUnique, unlockedLevel, justUnlocked });
+    unlockedObj[key] = unlockedLevel;
+
+    // ✅ persist using updateOne (survives re-login)
+    const update: any = {
+      $set: { "profiles.$.progress.unlocked": unlockedObj },
+    };
+    if (shouldSave) {
+      update.$push = { "profiles.$.progress.answers": answerDoc };
+    }
+
+    await User.updateOne(
+      { _id: req.user!.userId, "profiles.profileName": profileName },
+      update
+    );
+
+    return res.json({
+      success: true,
+      saved: shouldSave,
+      alreadyCorrect,
+      correctUnique,
+      unlockedLevel,
+      justUnlocked,
+    });
   } catch (err) {
-    console.error(err);
+    console.error("SetProfileAnswer ERROR:", err);
     return res.status(500).json({ success: false, message: "Database error" });
   }
 };
 
 
-// ✅ NEW: load progress for frontend (persist across refresh)
 export const getProfileProgress = async (req: AuthRequest, res: Response) => {
   try {
     const { profileName } = req.body;
@@ -170,22 +201,45 @@ export const getProfileProgress = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ success: false, message: "Missing profileName" });
     }
 
-    const user = await User.findById(req.user!.userId);
-    if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+    const user = await User.findById(req.user!.userId).lean();
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+    const profile: any = (user.profiles || []).find((p: any) => p.profileName === profileName);
+    if (!profile) return res.status(404).json({ success: false, message: "Profile not found" });
+
+    const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
+    const base = clamp(Number(profile?.rate) || 1, 1, 5);
+
+    const TOPICS = ["animals", "weather", "transportation", "jobs", "furniture", "colors"];
+    const TYPES = ["translate", "complete", "listening", "talking", "reading"];
+
+    const unlocked: Record<string, number> = { ...(profile.progress?.unlocked || {}) };
+
+    let changed = false;
+    for (const topic of TOPICS) {
+      for (const type of TYPES) {
+        const key = `${topic}|${type}`;
+        const cur = Number(unlocked[key] ?? 0);
+        if (cur < base) {
+          unlocked[key] = base;
+          changed = true;
+        }
+      }
     }
 
-    const profile = user.profiles.find((p) => p.profileName === profileName);
-    if (!profile) {
-      return res.status(404).json({ success: false, message: "Profile not found" });
+    // ✅ save safely with $set (no schema/subdoc save issues)
+    if (changed) {
+      await User.updateOne(
+        { _id: req.user!.userId, "profiles.profileName": profileName },
+        { $set: { "profiles.$.progress.unlocked": unlocked } }
+      );
     }
 
-    const unlocked = profile.progress?.unlocked || {};
-
-    return res.json({ success: true, unlocked });
+    return res.json({ success: true, base, unlocked });
   } catch (err) {
-    console.error(err);
+    console.error("getProfileProgress ERROR:", err);
     return res.status(500).json({ success: false, message: "Database error" });
   }
 };
+
 

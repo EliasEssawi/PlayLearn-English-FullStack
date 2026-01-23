@@ -86,7 +86,7 @@ if (!MONGO_URI) {
 // ---------------------------
 export const buyActionLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 10,
+  max: 50,
   message: {
     success: false,
     message: "Too many attempts. Please wait 1 minute.",

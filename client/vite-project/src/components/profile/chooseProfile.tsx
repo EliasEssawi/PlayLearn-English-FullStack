@@ -36,7 +36,8 @@ const ChooseProfile: React.FC = () => {
           `${API_BASE}/profiles/${email}`,
           { withCredentials: true }
         );
-        if (res.data.success) setProfiles(res.data.profiles || []);
+        if (res.data.success) setProfiles(res.data.profiles || []); 
+        console.log(res.data.profiles);
       } catch (err) {
         console.error(err);
       }

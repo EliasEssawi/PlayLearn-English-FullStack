@@ -11,20 +11,25 @@ type Props = {
 };
 
 export default function TopicsPage({ exercisesType, darkMode }: Props) {
+  const savingRef = useRef(false);
   const [topic, setTopic] = useState("");
   const [level, setLevel] = useState(1);
   const [showExe, setShowExe] = useState<boolean>(false);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const questionStartRef = useRef<number>(Date.now());
-
+  const [completed, setCompleted] = useState<Record<string, number>>({});
   const savedUserRaw = localStorage.getItem("loggedInUser");
   const profileStr = localStorage.getItem("activeProfile");
 
   if (!savedUserRaw || !profileStr) return null;
 
-  const profile = JSON.parse(profileStr);
-  if (!profile.email.profileName) return null;
+ const profileObj = JSON.parse(profileStr);
+
+const profileName =
+  profileObj.profileName ?? profileObj.email?.profileName;
+
+if (!profileName) return null;
 
   // Reset state when exercisesType changes
   useEffect(() => {
@@ -42,16 +47,18 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
   useEffect(() => {
   const load = async () => {
     try {
-      const res = await getProgress(profile.email.profileName);
+      
+      const res = await getProgress(profileName);
       if (res.success) {
         setProgress(res.unlocked || {});
+        console.log("GET PROGRESS RES:", res);
       }
     } catch (e) {
       console.error("Failed to load progress", e);
     }
   };
   load();
-}, [profile.email.profileName]);
+}, [profileName]);
 
   const [progress, setProgress] = useState<Record<string, number>>({});
 
@@ -62,35 +69,58 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
 
   const keyFor = (topicName: string) => `${topicName}|${normalizeType(exercisesType)}`;
 
-  const handleLevelClick = (topicName: string, levelId: number) => {
-    setTopic(topicName);
-    setLevel(levelId);
-    setShowExe(true);
+  
+const handleLevelClick = (topicName: string, levelId: number) => {
+  const key = keyFor(topicName);
+  const unlocked = progress[key] ?? 1;
 
-    const exeType = normalizeType(exercisesType);
+  if (levelId > unlocked) return; //  don't allow opening locked level
 
-    fetchQuestions(profile.email.profileName, topicName, levelId, exeType, 10);
-  };
+  setTopic(topicName);
+  setLevel(levelId);
+  setShowExe(true);
 
-  const fetchQuestions = async (
-    profileName: string,
-    topicParam: string,
-    levelParam: number,
-    type: string,
-    numberOfQuestions: number
-  ) => {
-    try {
-      const res = await getProfileQuestions(profileName, levelParam, topicParam, type, numberOfQuestions);
-      if (res.success) {
-        setQuestions(res.questions);
-        setCurrentIndex(0);
-      } else {
-        console.error(res.message);
-      }
-    } catch (err) {
-      console.error("Error fetching questions:", err);
+  const exeType = normalizeType(exercisesType);
+  fetchQuestions(profileName, topicName, levelId, exeType, 10);
+};
+const fetchQuestions = async (
+  profileName: string,
+  topicParam: string,
+  levelParam: number,
+  type: string,
+  numberOfQuestions: number
+) => {
+  try {
+    const data = await getProfileQuestions(
+      profileName,
+      levelParam,
+      topicParam,
+      type,
+      numberOfQuestions
+    );
+
+    if (!data.success) {
+      console.error(data.message);
+      return;
     }
-  };
+
+    setQuestions(data.questions ?? []);
+    setCurrentIndex(0);
+
+    // ✅ THIS is where isCompleted is USED
+    if (data.isCompleted === true) {
+      const key = `${topicParam}|${type}`;
+      setCompleted((prev) => ({
+        ...prev,
+        [key]: Math.max(prev[key] ?? 0, levelParam),
+      }));
+    }
+  } catch (err) {
+    console.error("Error fetching questions:", err);
+  }
+};
+
+
 
   const animalsLevels: TopicLevel[] = [
     { id: 1, icon: "⭐" },
@@ -232,11 +262,12 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
                 options={currentQuestion.options}
                 darkMode={darkMode}
                 onContinue={async (isCorrect) => {
+                  
                   const timeSpentMs = Date.now() - questionStartRef.current;
 
                   try {
                     const res = await saveProgress({
-                      profileName: profile.email.profileName,
+                      profileName: profileName,
                       questionId: currentQuestion._id,
                       topic,
                       level,
@@ -247,11 +278,14 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
                     });
 
                     const key = `${topic}|${normalizeType(exercisesType)}`;
-                    setProgress((prev) => ({
-                      ...prev,
-                      [key]: res.unlockedLevel,
-                    }));
-                  } catch (err) {
+                   if (res.saved&& isCorrect === true) {
+                  setProgress((prev) => ({
+                    ...prev,
+                    [key]: res.unlockedLevel,
+                  }));
+                }
+                  } 
+                  catch (err) {
                     console.error("Failed to save progress", err);
                   }
 
@@ -277,7 +311,7 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
 
                 try {
                   const res = await saveProgress({
-                    profileName: profile.email.profileName,
+                    profileName: profileName,
                     questionId: currentQuestion._id,
                     topic,
                     level,
@@ -288,10 +322,12 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
                   });
 
                   const key = `${topic}|${normalizeType(exercisesType)}`;
-                  setProgress((prev) => ({
-                    ...prev,
-                    [key]: res.unlockedLevel,
-                  }));
+                if (res.saved&& isCorrect === true) {
+  setProgress((prev) => ({
+    ...prev,
+    [key]: res.unlockedLevel,
+  }));
+}
                 } catch (err) {
                   console.error("Failed to save progress", err);
                 }
@@ -315,7 +351,7 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
 
                 try {
                   const res = await saveProgress({
-                    profileName: profile.email.profileName,
+                    profileName: profileName,
                     questionId: currentQuestion._id,
                     topic,
                     level,
@@ -327,10 +363,12 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
                   });
 
                   const key = `${topic}|${normalizeType(exercisesType)}`;
-                  setProgress((prev) => ({
-                    ...prev,
-                    [key]: res.unlockedLevel,
-                  }));
+                 if (res.saved&& isCorrect === true) {
+  setProgress((prev) => ({
+    ...prev,
+    [key]: res.unlockedLevel,
+  }));
+}
                 } catch (err) {
                   console.error("Failed to save progress", err);
                 }

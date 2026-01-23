@@ -16,6 +16,9 @@ export interface GetQuestionsResponse {
   success: boolean;
   message: string;
   questions: Question[];
+  total?: number;
+  correctUnique?: number;
+  isCompleted?: boolean;
 }
 
 export const getProfileQuestions = async (

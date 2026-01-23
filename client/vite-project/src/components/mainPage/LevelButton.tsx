@@ -3,7 +3,8 @@ type LevelButtonProps = {
   locked?: boolean;
   direction?: "left" | "right";
   onClick?: () => void;
-  darkMode?: boolean; // הוספנו את הפרופ להגדרות
+  darkMode?: boolean; 
+  completed?: boolean;
 };
 
 export default function LevelButton({
