@@ -137,10 +137,14 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
       });
 
       // unlock only if correct and saved
-      if (res?.saved && isCorrect === true) {
-        const key = `${topic}|${typeNorm}`;
-        setProgress(prev => ({ ...prev, [key]: res.unlockedLevel }));
-      }
+     if (res?.saved && isCorrect === true) {
+  const key = `${topic}|${typeNorm}`;
+  setProgress(prev => ({ ...prev, [key]: res.unlockedLevel }));
+
+  // ⭐ update points immediately (no localStorage needed)
+  window.dispatchEvent(new CustomEvent("points-updated", { detail: { delta: 10 } }));
+}
+
     } catch (err) {
       console.error("Failed to save progress", err);
     }
@@ -214,13 +218,7 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
             Back to Topics
           </button>
 
-          {/* optional: show remaining */}
-          {typeof remaining === "number" && (
-            <div className="mb-3 text-sm opacity-80">
-              Remaining (not solved yet): <b>{remaining}</b>
-            </div>
-          )}
-
+        
           {(exercisesType === "Translate" || exercisesType === "Fill the blank" || exercisesType === "Reading") && currentQuestion && (
             <FillBlankGame
               title={`Question ${currentIndex + 1} / ${questions.length}`}

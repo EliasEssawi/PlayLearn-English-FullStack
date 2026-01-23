@@ -9,12 +9,10 @@ import { useNavigate } from "react-router-dom";
 import { isLoggedIn } from "../../utils/auth";
 import MainLayout from "../authintication/MainLayout";
 import TopicsPage from "./TopicsPage";
-import { useTheme } from "../context/ThemeContext"; // ✅ חדש
+import { useTheme } from "../context/ThemeContext";
 
 export default function MainPage() {
   const navigate = useNavigate();
-
-  /* 🌙 Dark Mode – מה־ThemeContext בלבד */
   const { darkMode } = useTheme();
 
   /* 🔐 Check login */
@@ -43,45 +41,55 @@ export default function MainPage() {
   const activeMenuItem =
     menuItems.find(m => m.name === activeSection) ||
     menuItemsSecondry.find(m => m.name === activeSection);
- /* 📦 localStorage */
+
+  /* 📦 localStorage */
   const activeProfileRaw = localStorage.getItem("activeProfile");
   const activeProfile = activeProfileRaw ? JSON.parse(activeProfileRaw) : null;
 
-  const parentEmail = localStorage.getItem("loggedInUser"); // 👨
-const childName = activeProfile?.email?.profileName;
+  const parentEmail = localStorage.getItem("loggedInUser");
+  const childName = activeProfile?.email?.profileName;
 
-const [points, setPoints] = useState(0);
+  const [points, setPoints] = useState(0);
 
+  // ⏱ initial load (for refresh / first entry)
+  function calculatePointsFromLocalStorage(): number {
+    const raw = localStorage.getItem("activeProfile");
+    if (!raw) return 0;
 
+    const profile = JSON.parse(raw);
+    const answers = profile?.email?.progress?.answers;
 
-function calculatePointsFromLocalStorage(): number {
-  const raw = localStorage.getItem("activeProfile");
-  if (!raw) return 0;
+    if (!Array.isArray(answers)) return 0;
 
-  const profile = JSON.parse(raw);
-  const answers = profile?.email?.progress?.answers;
-
-  if (!Array.isArray(answers)) return 0;
-
-  // נוודא שכל שאלה נספרת פעם אחת בלבד
-  const solvedIds = new Set<string>();
-
-  for (const a of answers) {
-    if (a?.correct === true && a?.questionId) {
-      solvedIds.add(String(a.questionId));
+    const solvedIds = new Set<string>();
+    for (const a of answers) {
+      if (a?.correct === true && a?.questionId) {
+        solvedIds.add(String(a.questionId));
+      }
     }
+
+    return solvedIds.size * 10;
   }
 
-  return solvedIds.size * 10;
-}
+  useEffect(() => {
+    setPoints(calculatePointsFromLocalStorage());
+  }, []);
 
-useEffect(() => {
-  const pts = calculatePointsFromLocalStorage();
-  setPoints(pts);
-}, []);
+  // ⭐⭐⭐ THIS IS THE FIX – live points update ⭐⭐⭐
+  useEffect(() => {
+    const onPointsUpdated = (e: any) => {
+      const delta = Number(e?.detail?.delta ?? 0);
+      if (delta > 0) {
+        setPoints(prev => prev + delta);
+      }
+    };
 
-
-
+    window.addEventListener("points-updated", onPointsUpdated);
+    return () => {
+      window.removeEventListener("points-updated", onPointsUpdated);
+    };
+  }, []);
+  // ⭐⭐⭐ END FIX ⭐⭐⭐
 
   const renderMainContent = () => {
     switch (activeSection) {
@@ -93,24 +101,29 @@ useEffect(() => {
             </div>
           );
         }
-        return (
-          <Progrees parentEmail={parentEmail} childName={childName} />
-        );
+        return <Progrees parentEmail={parentEmail} childName={childName} />;
 
       case "AI Chat":
         return <ChatBot darkMode={darkMode} />;
+
       case "Vocabulary":
         return <VocabularyHome />;
+
       case "Talking":
         return <TopicsPage exercisesType="Talking" darkMode={darkMode} />;
+
       case "Listening":
         return <TopicsPage exercisesType="Listening" darkMode={darkMode} />;
+
       case "Fill the blank":
         return <TopicsPage exercisesType="Fill the blank" darkMode={darkMode} />;
+
       case "Translate":
         return <TopicsPage exercisesType="Translate" darkMode={darkMode} />;
+
       case "Reading":
         return <TopicsPage exercisesType="Reading" darkMode={darkMode} />;
+
       default:
         return (
           <div style={{ color: darkMode ? "#d1d5db" : "#6b7280", fontStyle: "italic" }}>
@@ -141,12 +154,12 @@ useEffect(() => {
         />
 
         <main className="flex-1 p-8 md:p-12 overflow-y-auto flex flex-col gap-8">
-         <Header
-  title={activeMenuItem ? `${activeMenuItem.name} ${activeMenuItem.icon}` : activeSection}
-  subtitle="Welcome back! You are doing great."
-  points={points}   // ⭐ נקודות אמיתיות
-  imgUrl="https://cdn-icons-png.flaticon.com/512/2922/2922510.png"
-/>
+          <Header
+            title={activeMenuItem ? `${activeMenuItem.name} ${activeMenuItem.icon}` : activeSection}
+            subtitle="Welcome back! You are doing great."
+            points={points}
+            imgUrl="https://cdn-icons-png.flaticon.com/512/2922/2922510.png"
+          />
 
           <div className="flex-1">{renderMainContent()}</div>
         </main>
