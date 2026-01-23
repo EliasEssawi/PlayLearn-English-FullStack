@@ -113,7 +113,7 @@ const AddProfile: React.FC = () => {
                 type="password"
                 value={profileData.pin}
                 onChange={(e) => handleChange("pin", e.target.value)}
-                placeholder="1234"
+                placeholder="****"
                 required
               />
 
@@ -125,7 +125,7 @@ const AddProfile: React.FC = () => {
                 onChange={(e) =>
                   handleChange("confirmPin", e.target.value)
                 }
-                placeholder="1234"
+                placeholder="****"
                 required
               />
 

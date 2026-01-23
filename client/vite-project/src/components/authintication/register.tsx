@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios, { AxiosError } from "axios";
 import { RegisterRequest, RegisterResponse } from "../../Types/Register";
 import LoginRightPanel from "./RightPanel";
+import { useNavigate } from "react-router-dom";
 
 const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
 
@@ -19,6 +20,8 @@ type UserData = {
 };
 
 const Register: React.FC = () => {
+  const navigate = useNavigate(); // ✅ כאן בלבד
+
   const [captcha, setCaptcha] = useState<Captcha>({ question: "", answer: "" });
   const [userAnswer, setUserAnswer] = useState<string>("");
   const [message, setMessage] = useState<string>("");
@@ -122,6 +125,9 @@ if (age < 24 || age > 100) {
       setUserData(initialUserData);
       setUserAnswer(""); // If you have a CAPTCHA field
       alert("Registered successfully!");
+        // ✅ מעבר אוטומטי ל־Login
+      navigate("/login");
+      
     } catch (err) {
       const error = err as AxiosError<{ message?: string }>;
       setMessage(error.response?.data?.message || "Registration failed.");
@@ -207,7 +213,7 @@ if (age < 24 || age > 100) {
                   pattern="\d{4}"
                   inputMode="numeric"
                   className="auth-input"
-                  placeholder="1234"
+                  placeholder="****"
                 />
               </div>
 
@@ -224,7 +230,7 @@ if (age < 24 || age > 100) {
                   pattern="\d{4}"
                   inputMode="numeric"
                   className="auth-input"
-                  placeholder="1234"
+                  placeholder="****"
                 />
               </div>
 

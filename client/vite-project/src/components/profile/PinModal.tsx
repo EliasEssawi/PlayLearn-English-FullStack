@@ -63,27 +63,28 @@ const PinModal: React.FC<PinModalProps> = ({
         }}>
           {pinInputs.map((val, i) => (
             <input 
-              key={i}
-              // תיקון ה-Ref כדי למנוע את שגיאת ה-TypeScript
-              ref={(el) => { inputRefs.current[i] = el; }}
-              value={val}
-              maxLength={1}
-              inputMode="numeric"
-              autoFocus={i === 0}
-              onChange={e => handleChange(e.target.value, i)}
-              onKeyDown={e => handleKeyDown(i, e)}
-              style={{ 
-                width: '50px', 
-                height: '65px', 
-                textAlign: 'center', 
-                fontSize: '2rem', 
-                background: 'transparent', 
-                color: 'inherit', 
-                border: '2px solid #86e07f', 
-                borderRadius: '12px', 
-                outline: 'none'
-              }}
-            />
+  key={i}
+  ref={(el) => { inputRefs.current[i] = el; }}
+  type="password"          // ⭐ זה מה שמסתיר את הספרות
+  value={val}
+  maxLength={1}
+  inputMode="numeric"
+  autoFocus={i === 0}
+  onChange={e => handleChange(e.target.value, i)}
+  onKeyDown={e => handleKeyDown(i, e)}
+  style={{ 
+    width: '50px', 
+    height: '65px', 
+    textAlign: 'center', 
+    fontSize: '2rem', 
+    background: 'transparent', 
+    color: 'inherit', 
+    border: '2px solid #86e07f', 
+    borderRadius: '12px', 
+    outline: 'none'
+  }}
+/>
+
           ))}
         </div>
         

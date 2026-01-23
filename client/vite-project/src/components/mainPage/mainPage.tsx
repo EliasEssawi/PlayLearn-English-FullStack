@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Sidebar from "../mainPage/Sidebar";
 import Header from "../mainPage/Header";
-import Progrees from "../mainPage/Progress";
+import Progrees from "../mainPage/ProgressChild";
 import ChatBot from "../mainPage/chatbot";
 import VocabularyHome from "../vocabulary/vocabularyHome";
 import { MenuItem } from "../../Types/Section";
@@ -43,15 +43,60 @@ export default function MainPage() {
   const activeMenuItem =
     menuItems.find(m => m.name === activeSection) ||
     menuItemsSecondry.find(m => m.name === activeSection);
-const activeProfileRaw = localStorage.getItem("activeProfile");
-const activeProfile = activeProfileRaw ? JSON.parse(activeProfileRaw) : null;
+ /* 📦 localStorage */
+  const activeProfileRaw = localStorage.getItem("activeProfile");
+  const activeProfile = activeProfileRaw ? JSON.parse(activeProfileRaw) : null;
 
-const email = activeProfile?.email;
-const profileName = activeProfile?.profileName;
+  const parentEmail = localStorage.getItem("loggedInUser"); // 👨
+const childName = activeProfile?.email?.profileName;
+
+const [points, setPoints] = useState(0);
+
+
+
+function calculatePointsFromLocalStorage(): number {
+  const raw = localStorage.getItem("activeProfile");
+  if (!raw) return 0;
+
+  const profile = JSON.parse(raw);
+  const answers = profile?.email?.progress?.answers;
+
+  if (!Array.isArray(answers)) return 0;
+
+  // נוודא שכל שאלה נספרת פעם אחת בלבד
+  const solvedIds = new Set<string>();
+
+  for (const a of answers) {
+    if (a?.correct === true && a?.questionId) {
+      solvedIds.add(String(a.questionId));
+    }
+  }
+
+  return solvedIds.size * 10;
+}
+
+useEffect(() => {
+  const pts = calculatePointsFromLocalStorage();
+  setPoints(pts);
+}, []);
+
+
+
+
   const renderMainContent = () => {
     switch (activeSection) {
       case "View Progress":
-       return <Progrees email={email} profileName={profileName} />;
+        if (!parentEmail || !childName) {
+          return (
+            <div style={{ color: "#6b7280", fontStyle: "italic" }}>
+              Please select a child profile first 👶
+            </div>
+          );
+        }
+        return (
+          <Progrees parentEmail={parentEmail} childName={childName} />
+        );
+
       case "AI Chat":
         return <ChatBot darkMode={darkMode} />;
       case "Vocabulary":
@@ -96,12 +141,13 @@ const profileName = activeProfile?.profileName;
         />
 
         <main className="flex-1 p-8 md:p-12 overflow-y-auto flex flex-col gap-8">
-          <Header
-            title={activeMenuItem ? `${activeMenuItem.name} ${activeMenuItem.icon}` : activeSection}
-            subtitle="Welcome back! You are doing great."
-            points={120}
-            imgUrl="https://cdn-icons-png.flaticon.com/512/2922/2922510.png"
-          />
+         <Header
+  title={activeMenuItem ? `${activeMenuItem.name} ${activeMenuItem.icon}` : activeSection}
+  subtitle="Welcome back! You are doing great."
+  points={points}   // ⭐ נקודות אמיתיות
+  imgUrl="https://cdn-icons-png.flaticon.com/512/2922/2922510.png"
+/>
+
           <div className="flex-1">{renderMainContent()}</div>
         </main>
       </div>
