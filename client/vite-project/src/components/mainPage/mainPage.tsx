@@ -9,8 +9,9 @@ import { useNavigate } from "react-router-dom";
 import { isLoggedIn } from "../../utils/auth";
 import MainLayout from "../authintication/MainLayout";
 import TopicsPage from "./TopicsPage";
-import { useTheme } from "../context/ThemeContext";
-
+import { useTheme } from "../context/ThemeContext"; 
+import OnlineChatWidget from "../mainPage/onlinechatwidget";
+import Online from "../mainPage/Online";
 export default function MainPage() {
   const navigate = useNavigate();
   const { darkMode } = useTheme();
@@ -29,11 +30,12 @@ export default function MainPage() {
     { name: "Translate", icon: "🔤" },
     { name: "Fill the blank", icon: "🔤" },
     { name: "AI Chat", icon: "🤖" },
+     { name: "Play Online", icon: "👤" },
   ];
 
   const menuItemsSecondry: MenuItem[] = [
     { name: "View Progress", icon: "📊" },
-    { name: "Profile", icon: "👤" },
+   
   ];
 
   const [activeSection, setActiveSection] = useState("Talking");
@@ -123,8 +125,10 @@ export default function MainPage() {
 
       case "Reading":
         return <TopicsPage exercisesType="Reading" darkMode={darkMode} />;
-
+      case "Play Online":
+        return <Online darkMode={darkMode} />;
       default:
+        
         return (
           <div style={{ color: darkMode ? "#d1d5db" : "#6b7280", fontStyle: "italic" }}>
             This section is coming soon 🚧
@@ -133,7 +137,7 @@ export default function MainPage() {
     }
   };
 
-  return (
+    return (
     <MainLayout>
       <div
         className="flex w-full max-w-7xl h-[85vh] mx-auto rounded-3xl overflow-hidden shadow-2xl"
@@ -149,7 +153,6 @@ export default function MainPage() {
           activeSection={activeSection}
           onSelect={setActiveSection}
           secondaryMenu={menuItemsSecondry}
-          bottomAction={{ section: "Shop", label: "Go to Shop", icon: "🛒" }}
           darkMode={darkMode}
         />
 
@@ -164,6 +167,9 @@ export default function MainPage() {
           <div className="flex-1">{renderMainContent()}</div>
         </main>
       </div>
+
+      {/*  Show the floating online chat ONLY in Play Online section */}
+      {activeSection === "Play Online"  && <OnlineChatWidget darkMode={darkMode} />}
     </MainLayout>
   );
 }

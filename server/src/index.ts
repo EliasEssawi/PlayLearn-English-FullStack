@@ -1,6 +1,5 @@
 /**
- * Project: Exclusive Drop API
- * Developer: Ilya ZeldnerBahaaElias
+ * Developer: Elias Essawi & PlayLearn Team
  */
 
 import dotenv from "dotenv";
@@ -11,17 +10,23 @@ import helmet from "helmet";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
+import http from "http";
+import { Server as SocketIOServer } from "socket.io";
 
 import { User } from "./models/User";
 import { Exercise } from "./models/Exercise";
+
+// ✅ sockets (controllers)
+import { onlineSocket } from "./controllers/onlinesocket";
+import { gameSocket } from "./controllers/gamesocket"; // if you have it
 
 dotenv.config({
   path: process.env.NODE_ENV === "production" ? ".env.production" : ".env.development",
 });
 
-
 const app = express();
 app.set("trust proxy", 1);
+
 // --------------------
 // Middleware
 // --------------------
@@ -35,18 +40,13 @@ app.use(
       // allow server-to-server / curl / render health checks
       if (!origin) return cb(null, true);
 
-      // ✅ Allowed exact origins (NO path here!)
       const allowedExact = new Set<string>([
         "http://localhost:5173",
         "http://localhost:3005",
-        "https://webproject-coral.vercel.app"
-        // add your main production client here if you have it
+        "https://webproject-coral.vercel.app",
       ]);
-      
 
-      // ✅ allow all your Vercel preview deployments
       const isVercelPreview = /^https:\/\/webproject-.*\.vercel\.app$/.test(origin);
-
       const allowed = allowedExact.has(origin) || isVercelPreview;
 
       return cb(null, allowed);
@@ -57,8 +57,6 @@ app.use(
   })
 );
 
-
-
 app.use(express.json());
 app.use(cookieParser());
 
@@ -66,7 +64,6 @@ app.use((_req: Request, res: Response, next: NextFunction) => {
   res.setHeader("Cache-Control", "no-store");
   next();
 });
-
 
 // --------------------
 // Database
@@ -81,6 +78,7 @@ if (!MONGO_URI) {
     .then(() => console.log("✅ DB STATUS: Connected Successfully"))
     .catch((err: Error) => console.error("❌ DB CONNECTION ERROR:", err.message));
 }
+
 // ---------------------------
 // Rate limiter (buy actions)
 // ---------------------------
@@ -94,6 +92,7 @@ export const buyActionLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
 // --------------------
 // Routes (CommonJS style)
 // --------------------
@@ -113,8 +112,7 @@ app.use("/api/chatbot", chatbotRouter);
 app.get("/api/getAllUsers", async (_req, res) => {
   try {
     const users = await User.find();
-    console.log(users);
-    return res.status(200).json(users); 
+    return res.status(200).json(users);
   } catch {
     return res.status(500).json({ error: "Failed to fetch users" });
   }
@@ -132,11 +130,40 @@ app.get("/api/getAllQuestions", async (_req, res) => {
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
 // --------------------
-// Server
+// ✅ Server + Socket.IO (FIX 404 HANDSHAKE)
+// --------------------
+const server = http.createServer(app);
+
+const io = new SocketIOServer(server, {
+  cors: {
+    origin: (origin, cb) => {
+      if (!origin) return cb(null, true);
+
+      const allowedExact = new Set<string>([
+        "http://localhost:5173",
+        "http://localhost:3005",
+        "https://webproject-coral.vercel.app",
+      ]);
+
+      const isVercelPreview = /^https:\/\/webproject-.*\.vercel\.app$/.test(origin);
+      return cb(null, allowedExact.has(origin) || isVercelPreview);
+    },
+    credentials: true,
+  },
+  transports: ["websocket", "polling"],
+});
+
+// ✅ ONE connection handler that registers BOTH features
+io.on("connection", (socket) => {
+  onlineSocket(io, socket); // global floating chat
+  gameSocket(io, socket);   // 1v1 rooms + questions (remove if you don't have it yet)
+});
+
+// --------------------
+// Listen (IMPORTANT: server.listen, NOT app.listen)
 // --------------------
 const PORT = process.env.PORT || 5001;
 
-app.listen(Number(PORT), "0.0.0.0", () => {
+server.listen(Number(PORT), "0.0.0.0", () => {
   console.log(`BACKEND ACTIVE: http://0.0.0.0:${PORT}`);
 });
-
