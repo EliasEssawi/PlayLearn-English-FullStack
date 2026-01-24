@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import io, { Socket } from "socket.io-client";
 
 type OnlineProps = { darkMode: boolean };
@@ -30,9 +30,6 @@ function readProfileFromLS(): { username: string; rate: number } {
   try {
     const p = JSON.parse(raw);
 
-    // ✅ Support both shapes:
-    // 1) { profileName, rate, ... }
-    // 2) { email: { profileName, rate, ... } }
     const name =
       (typeof p?.profileName === "string" && p.profileName.trim()) ||
       (typeof p?.email?.profileName === "string" && p.email.profileName.trim()) ||
@@ -45,6 +42,24 @@ function readProfileFromLS(): { username: string; rate: number } {
   } catch {
     return { username: "Player", rate: 1 };
   }
+}
+
+/** remove duplicate players by socketId */
+function dedupePlayers(list: any): Player[] {
+  const arr: Player[] = Array.isArray(list) ? list : [];
+  const map = new Map<string, Player>();
+  for (const p of arr) {
+    const id = String(p?.socketId || "");
+    if (!id) continue;
+    if (!map.has(id)) {
+      map.set(id, {
+        name: String(p?.name || "Player"),
+        socketId: id,
+        rate: clampRate(p?.rate),
+      });
+    }
+  }
+  return Array.from(map.values());
 }
 
 export default function Online({ darkMode }: OnlineProps) {
@@ -92,10 +107,12 @@ export default function Online({ darkMode }: OnlineProps) {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  // connect once
+  // connect once (safe with StrictMode)
   useEffect(() => {
+    if (socketRef.current) return; // ✅ prevent double-connect in dev/StrictMode
+
     const socket = io(SOCKET_URL, {
-      transports: ["websocket", "polling"],
+      transports: ["polling", "websocket"],
       withCredentials: false,
     });
 
@@ -123,7 +140,7 @@ export default function Online({ darkMode }: OnlineProps) {
 
     socket.on("match_found", (p: any) => {
       setRoomId(String(p?.roomId || ""));
-      setPlayers(Array.isArray(p?.players) ? p.players : []);
+      setPlayers(dedupePlayers(p?.players));
       setStatus(`Match found! Rate=${Number(p?.rate) || rate}`);
       setNotify("🎮 Match started!");
       setScores({});
@@ -153,12 +170,13 @@ export default function Online({ darkMode }: OnlineProps) {
       setEndsAt(Number(p?.endsAt || 0));
       setLocked(false);
       setNotify("");
+      if (Array.isArray(p?.players)) setPlayers(dedupePlayers(p.players));
     });
 
     socket.on("game_state", (p: any) => {
       if (p?.scores) setScores(p.scores);
       if (p?.endsAt) setEndsAt(Number(p.endsAt));
-      if (Array.isArray(p?.players)) setPlayers(p.players);
+      if (Array.isArray(p?.players)) setPlayers(dedupePlayers(p.players));
     });
 
     socket.on("notify", (p: any) => setNotify(String(p?.text || "")));
@@ -191,6 +209,7 @@ export default function Online({ darkMode }: OnlineProps) {
     });
 
     return () => {
+      // ✅ cleanup
       socket.removeAllListeners();
       socket.disconnect();
       socketRef.current = null;
@@ -243,120 +262,131 @@ export default function Online({ darkMode }: OnlineProps) {
   const sub = darkMode ? "#94a3b8" : "#475569";
 
   const myScore = scores[mySocketId] ?? 0;
-  const opponent = players.find((p) => p.socketId !== mySocketId);
+
+  // opponent is "any other socketId"
+  const opponent = useMemo(() => {
+    return players.find((p) => p.socketId && p.socketId !== mySocketId);
+  }, [players, mySocketId]);
+
   const oppScore = opponent ? (scores[opponent.socketId] ?? 0) : 0;
-
   const hasOpponent = !!opponent?.socketId;
+  const opponentLabel = hasOpponent ? `${opponent!.name}` : "Waiting opponent...";
 
-return (
-  <div className="max-w-3xl mx-auto space-y-4">
-    {/* Header / Matchmaking */}
-    <div style={{ border, background: bg, borderRadius: 16, padding: 14 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
-        <div>
-          <div style={{ color: textColor, fontWeight: 900, fontSize: 22 }}>Online 1v1</div>
-          <div style={{ color: sub, fontSize: 13 }}>
-            You: <b>{username}</b> • Rate: <b>{rate}</b> • {connected ? "✅ Connected" : "❌ Offline"}
+  return (
+    <div className="max-w-3xl mx-auto space-y-4">
+      {/* Header / Matchmaking */}
+      <div style={{ border, background: bg, borderRadius: 16, padding: 14 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
+          <div>
+            <div style={{ color: textColor, fontWeight: 900, fontSize: 22 }}>Online 1v1</div>
+            <div style={{ color: sub, fontSize: 13 }}>
+              You: <b>{username}</b> • Rate: <b>{rate}</b> • {connected ? "✅ Connected" : "❌ Offline"}
+            </div>
+            <div style={{ color: sub, fontSize: 13, marginTop: 4 }}>{status}</div>
           </div>
-          <div style={{ color: sub, fontSize: 13, marginTop: 4 }}>{status}</div>
+
+          <button
+            onClick={join}
+            disabled={!connected || !!roomId}
+            style={{
+              padding: "10px 16px",
+              borderRadius: 12,
+              border: "none",
+              fontWeight: 900,
+              background: darkMode ? "#1e293b" : "#86e07f",
+              color: darkMode ? "#f8fafc" : "#0f172a",
+              opacity: !connected || !!roomId ? 0.6 : 1,
+              cursor: !connected || !!roomId ? "not-allowed" : "pointer",
+            }}
+          >
+            {roomId ? "In Match" : "Find Match"}
+          </button>
         </div>
 
-        <button
-          onClick={join}
-          disabled={!connected || !!roomId}
-          style={{
-            padding: "10px 16px",
-            borderRadius: 12,
-            border: "none",
-            fontWeight: 900,
-            background: darkMode ? "#1e293b" : "#86e07f",
-            color: darkMode ? "#f8fafc" : "#0f172a",
-            opacity: !connected || !!roomId ? 0.6 : 1,
-            cursor: !connected || !!roomId ? "not-allowed" : "pointer",
-          }}
-        >
-          {roomId ? "In Match" : "Find Match"}
-        </button>
+        {notify && (
+          <div
+            style={{
+              marginTop: 10,
+              color: textColor,
+              background: darkMode ? "#0b1220" : "#f1f5f9",
+              border,
+              borderRadius: 12,
+              padding: 10,
+            }}
+          >
+            {notify}
+          </div>
+        )}
       </div>
 
-      {notify && (
-        <div
-          style={{
-            marginTop: 10,
-            color: textColor,
-            background: darkMode ? "#0b1220" : "#f1f5f9",
-            border,
-            borderRadius: 12,
-            padding: 10,
-          }}
-        >
-          {notify}
-        </div>
-      )}
-    </div>
+      {/* Game Panel */}
+      <div style={{ border, background: bg, borderRadius: 16, padding: 14 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+          <div style={{ color: textColor, fontWeight: 900 }}>
+            Round: {round}/{totalRounds}{" "}
+            {endsAt ? <span style={{ color: sub, fontWeight: 700 }}>• Time: {secondsLeft}s</span> : null}
+          </div>
 
-    {/* Game Panel */}
-    <div style={{ border, background: bg, borderRadius: 16, padding: 14 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
-        <div style={{ color: textColor, fontWeight: 900 }}>
-          Round: {round}/{totalRounds}{" "}
-          {endsAt ? <span style={{ color: sub, fontWeight: 700 }}>• Time: {secondsLeft}s</span> : null}
+          {/* ✅ FIXED HEADER LINE */}
+          <div style={{ color: textColor, fontWeight: 900 }}>
+  {username}{" "}
+  <span style={{ color: sub, fontWeight: 700 }}>
+    vs {opponent?.name ?? "Waiting opponent..."}
+  </span>
+
+            {/* keep scores shown too (so it doesn't disappear) */}
+            <span style={{ color: sub, fontWeight: 700, marginLeft: 10 }}>
+              • Score {myScore}:{oppScore}
+            </span>
+          </div>
         </div>
 
-        <div style={{ color: textColor, fontWeight: 900 }}>
-          You: {myScore}{" "}
-          <span style={{ color: sub, fontWeight: 700 }}>
-            vs {opponent?.name ? `${opponent.name}: ${oppScore}` : "Waiting opponent..."}
-          </span>
-        </div>
+        {!question ? (
+          <div style={{ marginTop: 14, color: sub, fontStyle: "italic" }}>
+            {roomId ? "Next question is loading..." : "Click “Find Match” to start."}
+          </div>
+        ) : (
+          <div style={{ marginTop: 14 }}>
+            <div style={{ color: textColor, fontWeight: 900, fontSize: 18, marginBottom: 10 }}>
+              {question.prompt}
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              {question.options.map((opt, i) => (
+                <button
+                  key={`${question._id}-${i}`}
+                  onClick={() => answer(opt)}
+                  disabled={locked || !hasOpponent}
+                  style={{
+                    padding: "12px 12px",
+                    borderRadius: 12,
+                    border,
+                    background: darkMode ? "#0b1220" : "#ffffff",
+                    color: textColor,
+                    fontWeight: 800,
+                    cursor: locked || !hasOpponent ? "not-allowed" : "pointer",
+                    opacity: locked || !hasOpponent ? 0.7 : 1,
+                  }}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+
+            {!hasOpponent && (
+              <div style={{ marginTop: 10, color: sub, fontWeight: 700 }}>
+                ⏳ Waiting for another player to join...
+              </div>
+            )}
+
+            {locked && (
+              <div style={{ marginTop: 10, color: sub, fontWeight: 700 }}>
+                ⏳ You answered wrong — wait 5 seconds, opponent can try.
+              </div>
+            )}
+          </div>
+        )}
       </div>
-
-      {!question ? (
-        <div style={{ marginTop: 14, color: sub, fontStyle: "italic" }}>
-          {roomId ? "Next question is loading..." : "Click “Find Match” to start."}
-        </div>
-      ) : (
-        <div style={{ marginTop: 14 }}>
-          <div style={{ color: textColor, fontWeight: 900, fontSize: 18, marginBottom: 10 }}>
-            {question.prompt}
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            {question.options.map((opt, i) => (
-              <button
-                key={`${question._id}-${i}`}
-                onClick={() => answer(opt)}
-                disabled={locked || !hasOpponent}
-                style={{
-                  padding: "12px 12px",
-                  borderRadius: 12,
-                  border,
-                  background: darkMode ? "#0b1220" : "#ffffff",
-                  color: textColor,
-                  fontWeight: 800,
-                  cursor: locked || !hasOpponent ? "not-allowed" : "pointer",
-                  opacity: locked || !hasOpponent ? 0.7 : 1,
-                }}
-              >
-                {opt}
-              </button>
-            ))}
-          </div>
-
-          {!hasOpponent && (
-            <div style={{ marginTop: 10, color: sub, fontWeight: 700 }}>
-              ⏳ Waiting for another player to join...
-            </div>
-          )}
-
-          {locked && (
-            <div style={{ marginTop: 10, color: sub, fontWeight: 700 }}>
-              ⏳ You answered wrong — wait 5 seconds, opponent can try.
-            </div>
-          )}
-        </div>
-      )}
     </div>
-  </div>
-);
+  );
 }

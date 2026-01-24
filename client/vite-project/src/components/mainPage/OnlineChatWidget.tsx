@@ -53,7 +53,7 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
     setConnected(false);
 
     const socket = io(SOCKET_URL, {
-      transports: ["websocket", "polling"],
+      transports: ["polling","websocket"],
       withCredentials: false,
       // IMPORTANT: don't let socket.io auto-reconnect forever if server is "full"
       reconnection: true,
@@ -72,7 +72,12 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
     const onDisconnect = () => setConnected(false);
 
     const onUsers = (u: User[]) => setUsers(Array.isArray(u) ? u : []);
-    const onConnectedUser = (u: User) => setUsers((prev) => [...prev, u]);
+    const onConnectedUser = (u: User) =>
+    setUsers((prev) => {
+      if (!u?.id) return prev;
+      return prev.some((x) => x.id === u.id) ? prev : [...prev, u];
+    });
+
     const onDisconnectedUser = (id: string) =>
       setUsers((prev) => prev.filter((x) => x.id !== id));
 
@@ -97,9 +102,6 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
     socket.on("disconnect", onDisconnect);
 
     socket.on("users", onUsers);
-    socket.on("connected", onConnectedUser);
-    socket.on("disconnected", onDisconnectedUser);
-
     // This event name matches your controller (server-full / max users)
     socket.on("room_full", onRoomFull);
 
