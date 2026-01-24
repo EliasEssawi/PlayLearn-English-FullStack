@@ -11,20 +11,32 @@ type ChatBotProps = {
   darkMode: boolean;
 };
 
+function toServerMessages(msgs: Msg[]) {
+  return msgs.map((m) => ({
+    role: m.role === "user" ? "user" : "assistant",
+    text: m.text,
+  }));
+}
+
 export default function ChatBot({ darkMode }: ChatBotProps) {
+  // ✅ NEW session each refresh (in-memory only)
+  const sessionIdRef = useRef<string>(
+    crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`
+  );
+
   const [messages, setMessages] = useState<Msg[]>([
     {
       role: "bot",
-      text: "Hi! I’m your Gemini assistant. Ask me anything, or just say hello! 😊",
+      text: "Hi! I’m your English practice assistant 😊\nNote: If you refresh this page, the chat will reset.",
       time: new Date().toLocaleTimeString(),
     },
   ]);
+
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
-  /* auto-scroll */
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
@@ -33,22 +45,38 @@ export default function ChatBot({ darkMode }: ChatBotProps) {
     const text = input.trim();
     if (!text || loading) return;
 
-    setMessages(prev => [
-      ...prev,
-      { role: "user", text, time: new Date().toLocaleTimeString() },
-    ]);
+    const now = new Date().toLocaleTimeString();
+    const nextLocal: Msg[] = [...messages, { role: "user", text, time: now }];
+
+    setMessages(nextLocal);
     setInput("");
     setLoading(true);
 
     try {
-      const { data } = await axios.post("/api/chatbot", { message: text });
+      const { data } = await axios.post("/api/chatbot", {
+        message: text,
+        sessionId: sessionIdRef.current, // ✅ refresh -> new id -> memory cleared
+        messages: toServerMessages(nextLocal),
+      });
+
       const reply = String(data?.reply ?? "").trim() || "No reply.";
-      setMessages(prev => [
-        ...prev,
-        { role: "bot", text: reply, time: new Date().toLocaleTimeString() },
-      ]);
+
+      if (Array.isArray(data?.messages)) {
+        const serverMsgs = data.messages as { role: "user" | "assistant"; text: string }[];
+        const rebuilt: Msg[] = serverMsgs.map((m) => ({
+          role: m.role === "user" ? "user" : "bot",
+          text: m.text,
+          time: new Date().toLocaleTimeString(),
+        }));
+        setMessages(rebuilt);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          { role: "bot", text: reply, time: new Date().toLocaleTimeString() },
+        ]);
+      }
     } catch {
-      setMessages(prev => [
+      setMessages((prev) => [
         ...prev,
         {
           role: "bot",
@@ -80,10 +108,13 @@ export default function ChatBot({ darkMode }: ChatBotProps) {
     >
       <h2 className="text-2xl font-bold mb-2">Chatbot</h2>
       <p style={{ color: darkMode ? "#94a3b8" : "#475569" }}>
-        Talk to the Gemini assistant. Press <b>Enter</b> to send, <b>Shift+Enter</b> for new line.
+        Talk to the English practice assistant. Press <b>Enter</b> to send,{" "}
+        <b>Shift+Enter</b> for new line.{" "}
+        <span style={{ opacity: 0.8 }}>
+          (Refreshing this page clears memory.)
+        </span>
       </p>
 
-      {/* CHAT BOX */}
       <div
         className="transition-all duration-300"
         style={{
@@ -113,11 +144,13 @@ export default function ChatBot({ darkMode }: ChatBotProps) {
                   style={{
                     padding: "10px 14px",
                     borderRadius: 14,
-                    // הודעת משתמש: ירוק ב-Light, כחול כהה ב-Dark
-                    // הודעת בוט: לבן ב-Light, שחור ב-Dark
                     background: isUser
-                      ? darkMode ? "#1e293b" : "#86e07f"
-                      : darkMode ? "#020617" : "#f1f5f9",
+                      ? darkMode
+                        ? "#1e293b"
+                        : "#86e07f"
+                      : darkMode
+                      ? "#020617"
+                      : "#f1f5f9",
                     color: isUser && !darkMode ? "#0f172a" : "inherit",
                     border: darkMode ? "1px solid #334155" : "1px solid #e2e8f0",
                     boxShadow: !darkMode && isUser ? "0 4px 0 #58a352" : "none",
@@ -150,7 +183,6 @@ export default function ChatBot({ darkMode }: ChatBotProps) {
         <div ref={bottomRef} />
       </div>
 
-      {/* INPUT AREA */}
       <div style={{ marginTop: 12 }}>
         <textarea
           value={input}
