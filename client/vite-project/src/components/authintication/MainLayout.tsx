@@ -26,9 +26,11 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         <h1 style={{ color: "white", margin: 0 }}>PlayLearn</h1>
 
         <div style={{ display: "flex", gap: "12px" }}>
-          <DarkModeToggle />
-          <LogoutButton />
           <BackButton />
+          <LogoutButton />
+
+          <DarkModeToggle />
+
         </div>
       </header>
 

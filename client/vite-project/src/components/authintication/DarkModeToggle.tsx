@@ -12,15 +12,19 @@ const DarkModeToggle: React.FC = () => {
         background: darkMode ? "#1e293b" : "#ffffff",
         color: darkMode ? "#f8fafc" : "#0f172a",
         border: "1px solid #e2e8f0",
-        borderRadius: "8px",
-        padding: "6px 12px",
+
+        /* 🔽 השינוי היחיד */
+        borderRadius: "9999px",   // צורה עגולה / pill
+        padding: "8px 16px",
+        height: "38px",
+
         display: "flex",
-        gap: "6px",
         alignItems: "center",
-        cursor: "pointer"
+        gap: "8px",
+        cursor: "pointer",
       }}
     >
-      {darkMode ? <LuSun /> : <LuMoon />}
+      {darkMode ? <LuSun size={16} /> : <LuMoon size={16} />}
       {darkMode ? "Light" : "Dark"}
     </button>
   );
