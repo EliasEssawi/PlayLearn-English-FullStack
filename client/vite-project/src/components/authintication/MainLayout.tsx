@@ -2,6 +2,7 @@ import React from "react";
 import { useTheme } from "../context/ThemeContext";
 import DarkModeToggle from "./DarkModeToggle";
 import LogoutButton from "./LogoutButton";
+import BackButton from "./BackButton";
 
 const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { darkMode } = useTheme();
@@ -27,6 +28,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         <div style={{ display: "flex", gap: "12px" }}>
           <DarkModeToggle />
           <LogoutButton />
+          <BackButton />
         </div>
       </header>
 

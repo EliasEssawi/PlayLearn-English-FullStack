@@ -7,6 +7,7 @@ import Input from "../authintication/Input";
 import Button from "../authintication/Button";
 import LoginRightPanel from "../authintication/RightPanel";
 import api from "../../api/axios";
+import BackButton from "../authintication/BackButton";
 
 
 type AddProfileData = {
@@ -26,6 +27,7 @@ const AddProfile: React.FC = () => {
 
   const [profileData, setProfileData] = useState(initialData);
   const [message, setMessage] = useState("");
+  const [msgStat, setMsgStat] = useState("error")
 
   const handleChange = (
     name: keyof AddProfileData,
@@ -45,16 +47,19 @@ const AddProfile: React.FC = () => {
     setMessage("");
 
     if (profileData.pin.length !== 4 || profileData.confirmPin.length !== 4) {
+      setMsgStat("error");
       setMessage("PIN must be exactly 4 digits.");
       return;
     }
 
     if (profileData.pin !== profileData.confirmPin) {
+      setMsgStat("error");
       setMessage("PINs do not match.");
       return;
     }
 
     if (profileData.rate < 1 || profileData.rate > 5) {
+      setMsgStat("error");
       setMessage("Level must be between 1 and 5.");
       return;
     }
@@ -66,6 +71,7 @@ const AddProfile: React.FC = () => {
         rate: profileData.rate,
       });
 
+      setMsgStat("success");
       setMessage("Profile added successfully! Redirecting...");
 
       setProfileData(initialData);
@@ -147,10 +153,12 @@ const AddProfile: React.FC = () => {
                 required
               />
 
-              {message && <div className="error">{message}</div>}
+              {message && msgStat==="error" && <div className="error">{message}</div>}
+              {message && msgStat==="success" && <div className="success">{message}</div>}
 
-              <div className="add-profile-actions">
+              <div className="add-profile-actions flex justify-between">
                 <Button>ADD PROFILE</Button>
+                <BackButton btnProp="bg-red-500 hover:bg-red-600 text-white px-5 py-3.5 rounded-xl">Cancel</BackButton>
               </div>
             </form>
           </div>
