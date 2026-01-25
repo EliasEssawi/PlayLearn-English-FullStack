@@ -10,9 +10,22 @@ import { isLoggedIn } from "../../utils/auth";
 import MainLayout from "../authintication/MainLayout";
 import TopicsPage from "./TopicsPage";
 import { useTheme } from "../context/ThemeContext"; 
-import OnlineChatWidget from "../mainPage/onlinechatwidget";
+import OnlineChatWidget from "../mainPage/OnlineChatWidget";
 import Online from "../mainPage/Online";
+import io from "socket.io-client";
+import { useMemo } from "react";
+import FloatingVideoButton from "../call/FloatingVideoButton";
 export default function MainPage() {
+  // -------------------------
+  // 🎥 Video Call Socket
+  // -------------------------
+  const SOCKET_URL =
+    import.meta.env.VITE_SOCKET_URL || "http://localhost:5001";
+
+  const socket = useMemo(
+    () => io(SOCKET_URL, { transports: ["websocket"] }),
+    []
+  );
   const navigate = useNavigate();
   const { darkMode } = useTheme();
 
@@ -47,10 +60,19 @@ export default function MainPage() {
   /* 📦 localStorage */
   const activeProfileRaw = localStorage.getItem("activeProfile");
   const activeProfile = activeProfileRaw ? JSON.parse(activeProfileRaw) : null;
+  const parentEmail = String(localStorage.getItem("loggedInUser") || "")
+    .trim()
+    .toLowerCase();
 
-  const parentEmail = localStorage.getItem("loggedInUser");
-  const childName = activeProfile?.email?.profileName;
+  const childName = String(
+  activeProfile?.profileName || activeProfile?.email?.profileName || ""
+).trim();
 
+const myUserId =
+  parentEmail && childName
+    ? `${parentEmail.toLowerCase()}::${childName.toLowerCase()}`
+    : "";
+  
   const [points, setPoints] = useState(0);
 
   // ⏱ initial load (for refresh / first entry)
@@ -168,8 +190,12 @@ export default function MainPage() {
         </main>
       </div>
 
-      {/*  Show the floating online chat ONLY in Play Online section */}
-      {activeSection === "Play Online"  && <OnlineChatWidget darkMode={darkMode} />}
-    </MainLayout>
+   {activeSection === "Play Online" && (
+  <>
+    <OnlineChatWidget darkMode={darkMode} />
+    <FloatingVideoButton socket={socket} myUserId={myUserId} darkMode={darkMode} />
+  </>
+)}
+</MainLayout>
   );
 }
