@@ -8,7 +8,7 @@ type ListeningGameProps = {
   correctAnswer: string
   options: string[]
   onContinue?: (isCorrect: boolean) => void
-  darkMode: boolean // הוספת הפרופ
+  darkMode: boolean
 }
 
 export default function ListeningGame({
@@ -17,7 +17,7 @@ export default function ListeningGame({
   correctAnswer,
   options,
   onContinue,
-  darkMode, // קבלת הפרופ
+  darkMode,
 }: ListeningGameProps) {
   const [selected, setSelected] = useState<string | null>(null)// Tracks chosen option
   const [showResult, setShowResult] = useState(false)// Controls ResultBar visibility
