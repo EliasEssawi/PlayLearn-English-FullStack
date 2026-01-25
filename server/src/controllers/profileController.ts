@@ -7,7 +7,8 @@ import { Exercise } from "../models/Exercise";
    ADD PROFILE
 ========================= */
 export const addProfile = async (req: AuthRequest, res: Response) => {
-  try {
+  try {    // Logged-in parent user id (from auth middleware)
+
     const userId = req.user!.userId;
 
     const { profileName, pin, rate } = req.body;
@@ -252,7 +253,7 @@ export const getReportHistory = async (req: Request, res: Response) => {
       });
     }
 
-    // ✅ answers array
+    // Answers history array (safe fallback)
     const answers = Array.isArray(profile.progress?.answers)
       ? profile.progress.answers
       : [];
@@ -261,20 +262,20 @@ export const getReportHistory = async (req: Request, res: Response) => {
       return res.json({ success: true, history: [] });
     }
 
-    // ✅ כל ה־IDs של השאלות
+    // Collect all exercise IDs from answers
     const questionIds = answers.map((a: any) => a.questionId);
 
-    // ✅ שליפת השאלות מה־DB
+    // Fetch all exercises in one query
     const exercises = await Exercise.find({
       _id: { $in: questionIds },
     }).lean();
 
-    // map מהיר לפי id
+    // Fast lookup map: exerciseId → exercise
     const exerciseMap = new Map(
       exercises.map((e) => [String(e._id), e])
     );
 
-    // ✅ חיבור answer + exercise
+    // Combine answer with its exercise data
     const history = answers.map((a: any) => ({
       ...a,
       exercise: exerciseMap.get(String(a.questionId)) || null,
