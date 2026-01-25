@@ -1,12 +1,16 @@
 import { Resend } from "resend";
+// Initialize Resend client using API key from environment variables
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+// Ensure a required environment variable exists
 
 function requireEnv(name: string): string {
   const v = process.env[name];
   if (!v) throw new Error(`Missing env var: ${name}`);
   return v;
 }
+// Wrap a promise with a timeout to avoid hanging requests
+
 function withTimeout<T>(promise: Promise<T>, ms = 8000): Promise<T> {
   return Promise.race([
     promise,
@@ -21,6 +25,8 @@ const FROM = requireEnv("MAIL_FROM");
 const APP_URL = requireEnv("APP_URL");
 
 type SendResult = { ok: true; id?: string } | { ok: false; error: string };
+// Send welcome email to a newly registered user
+
 export async function sendWelcomeEmail(to: string, fullName?: string): Promise<SendResult> {
   try {
     const subject = "Welcome to our app!";
@@ -31,6 +37,7 @@ export async function sendWelcomeEmail(to: string, fullName?: string): Promise<S
         <p><a href="${APP_URL}" target="_blank" rel="noreferrer">Open the app</a></p>
       </div>
     `;
+    // Send email with timeout protection
 
     const result = await withTimeout(
       resend.emails.send({ from: FROM, to, subject, html }),
@@ -48,6 +55,7 @@ export async function sendWelcomeEmail(to: string, fullName?: string): Promise<S
     return { ok: false, error: err?.message ?? "Failed to send welcome email" };
   }
 }
+// Send password reset email containing a secure reset link
 
 
 export async function sendPasswordResetEmail(to: string, resetToken: string): Promise<SendResult> {
@@ -63,6 +71,7 @@ export async function sendPasswordResetEmail(to: string, resetToken: string): Pr
         <p>If you didn’t request this, please contact us.</p>
       </div>
     `;
+    // Send email with timeout protection
 
     const result = await withTimeout(
       resend.emails.send({ from: FROM, to, subject, html }),
@@ -72,6 +81,7 @@ export async function sendPasswordResetEmail(to: string, resetToken: string): Pr
     const { data, error } = result as any;
 
     if (error) return { ok: false, error: `${error.name ?? "error"}: ${error.message ?? String(error)}` };
+    // Extract email ID if available
 
     const id = data?.id;
     return id ? { ok: true, id } : { ok: true };

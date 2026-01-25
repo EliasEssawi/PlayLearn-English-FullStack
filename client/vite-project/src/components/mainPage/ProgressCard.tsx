@@ -11,7 +11,7 @@ interface ProgressCardProps {
   onClick?: () => void;
 }
 
-export default function ProgressCard({
+export default function ProgressCard({// PROGRESS CARD COMPONENT
   title,
   level,
   progress,
@@ -20,20 +20,24 @@ export default function ProgressCard({
   solved,
   total,
   onClick,
-}: ProgressCardProps) {
+}: ProgressCardProps) {  // Animated value for smooth progress bar transition
   const [animatedProgress, setAnimatedProgress] = useState(0);
 
   useEffect(() => {
     const timeout = setTimeout(() => setAnimatedProgress(progress), 80);
     return () => clearTimeout(timeout);
   }, [progress]);
-
+ // Handle card click:
+  // 1) Use custom onClick if provided
+  // 2) Otherwise navigate using URL (if exists)
   const go = () => {
     if (onClick) return onClick();
     if (url) window.location.href = url;
   };
 
   return (
+    //{/* Decorative icon in the background */}
+
     <div
       onClick={go}
       className="
@@ -60,7 +64,7 @@ export default function ProgressCard({
             Level {level}
           </span>
         </div>
-
+        {/* Progress bar */}
         <div className="w-full bg-gray-100 dark:bg-slate-700 rounded-full h-4 mb-3">
           <div
             className="bg-green-600 h-4 rounded-full transition-all duration-700 ease-out"

@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from "mongoose";
 import { Profile, ProfileSchema } from "./Profile";  
 
-// TYPES
+// TypeScript interface representing a User document in MongoDB
 export interface IUser extends Document {
   name: string;
   email: string;
@@ -13,6 +13,7 @@ export interface IUser extends Document {
   resetCode?: string | undefined;
   resetCodeExpiresAt?: Date | undefined;
 }
+// Mongoose schema defining the structure of the User collection
 
 const UserSchema = new Schema<IUser>({
   name: { type: String, required: true, trim: true },
@@ -50,5 +51,6 @@ const UserSchema = new Schema<IUser>({
     required: false
   },
 });
+// USER MODEL
 
 export const User = mongoose.model<IUser>("User", UserSchema);

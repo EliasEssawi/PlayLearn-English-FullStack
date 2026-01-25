@@ -43,9 +43,9 @@ function roomId(rate: number) {
 }
 
 async function loadQuestions(rate: number) {
-  // ✅ your collection is "exercises" (model Exercise)
-  // ✅ filter by type + level
-  // ✅ random 10
+  //  collection is "exercises" (model Exercise)
+  // filter by type + level
+  // random 10
   const qs = await Exercise.aggregate([
     { $match: { type: "online", level: rate } },
     { $sample: { size: TOTAL_ROUNDS } },
@@ -56,7 +56,7 @@ async function loadQuestions(rate: number) {
 }
 
 function publicQuestion(q: any) {
-  // ✅ do NOT send answer to clients
+  // do NOT send answer to clients
   return {
     _id: String(q._id),
     prompt: q.prompt,

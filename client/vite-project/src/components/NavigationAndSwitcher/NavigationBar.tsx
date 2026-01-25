@@ -5,7 +5,6 @@ const NavigationBar = () => {
     { path: '/', label: 'Home' },
     { path: '/login', label: 'Login' },
     { path: '/register', label: 'register' },
-    // ... your other items
   ];
 
   return (

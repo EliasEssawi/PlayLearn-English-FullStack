@@ -12,7 +12,7 @@ export function callSocket(io: Server, socket: Socket) {
     userToSocket.set(userId, socket.id);
     socketToUser.set(socket.id, userId);
   });
-  // ✅ callee accepted the call (notify caller)
+  // callee accepted the call (notify caller)
 socket.on("call:accept", ({ toUserId }: { toUserId: string }) => {
   const fromUserId = socketToUser.get(socket.id);
   if (!fromUserId) return;
@@ -23,7 +23,7 @@ socket.on("call:accept", ({ toUserId }: { toUserId: string }) => {
   io.to(toSocketId).emit("call:accept", { fromUserId });
 });
 
-// ✅ callee declined
+// callee declined
 socket.on("call:decline", ({ toUserId }: { toUserId: string }) => {
   const fromUserId = socketToUser.get(socket.id);
   if (!fromUserId) return;

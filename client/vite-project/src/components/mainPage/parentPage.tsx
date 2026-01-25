@@ -5,10 +5,12 @@ import { getProfilesResponse, sendVerificationCodeRequest } from "../../Types/Lo
 import axios from "axios";
 import MainLayout from "../authintication/MainLayout";
 import { useTheme } from "../context/ThemeContext";
+// Simple profile type for parent view
 
 type Profile = {
   profileName: string;
 };
+// Possible actions for a selected child profile
 
 type OptionAction = "changePin" | "viewProgress" | "reportHistory";
 
@@ -17,15 +19,15 @@ const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
 const ParentPage: React.FC = () => {
   const navigate = useNavigate();
   const { darkMode } = useTheme();
-
+  // Profiles state
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
-
+  // Change PIN modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newPin, setNewPin] = useState("");
   const [pinMessage, setPinMessage] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
-
+  // Report history modal state
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [reportData, setReportData] = useState<any[]>([]);
   const [isLoadingReport, setIsLoadingReport] = useState(false);
@@ -33,13 +35,14 @@ const ParentPage: React.FC = () => {
   "all" | "today" | "7days" | "30days"
 >("all");
 
-
+  // Authentication check
+  // Redirect to login if user is not authenticated
   useEffect(() => {
     isLoggedIn().then((ok) => {
       if (!ok) navigate("/login");
     });
   }, [navigate]);
-
+  // Fetch all child profiles for the parent
   useEffect(() => {
     const fetchProfiles = async (): Promise<void> => {
       try {
@@ -65,11 +68,11 @@ const ParentPage: React.FC = () => {
     };
     fetchProfiles();
   }, []);
-
+  // Navigate to add profile page
   const goToAddProfile = (): void => {
     navigate("/addprofile");
   };
-
+  // Update PIN for selected profile
   const handleUpdatePin = async () => {
     setPinMessage("");
     if (newPin.length !== 4) {
@@ -104,7 +107,7 @@ const ParentPage: React.FC = () => {
       setIsUpdating(false);
     }
   };
-
+  // Handle selected action for a profile
   const handleOption = (action: OptionAction): void => {
     if (!selectedProfile) return;
 
@@ -118,7 +121,7 @@ const ParentPage: React.FC = () => {
 
     if (action === "reportHistory") fetchReportHistory();
   };
-
+  // Fetch report history for selected profile
   const fetchReportHistory = async () => {
     if (!selectedProfile) return;
 
@@ -142,9 +145,9 @@ const ParentPage: React.FC = () => {
       setIsLoadingReport(false);
     }
   };
-
+  // Report grouping mode (by type or by date)
   const [reportViewMode, setReportViewMode] = useState<"type" | "date">("type");
-
+  // Group reports dynamically based on selected view mode
   const groupedReports = reportData.reduce((acc: any, item: any) => {
     let key = "Other";
 
@@ -158,7 +161,7 @@ const ParentPage: React.FC = () => {
     acc[key].push(item);
     return acc;
   }, {});
-  const filterByDate = (items: any[]) => {
+  const filterByDate = (items: any[]) => {  // Filter reports by selected date range
   const now = new Date();
 
   return items.filter((item) => {
@@ -180,7 +183,7 @@ const ParentPage: React.FC = () => {
   });
 };
 
-
+  // Shared style for action buttons
   const actionRowStyle = {
     display: "flex",
     justifyContent: "space-between",
@@ -202,7 +205,9 @@ const ParentPage: React.FC = () => {
 
 
   return (
-    <MainLayout>
+    <MainLayout> 
+      
+// {/* Parent dashboard layout */}{/* Children selection */} {/* Profile actions */}{/* Change PIN modal */}{/* Report history modal */}
       <div style={{ maxWidth: "850px", margin: "0 auto", padding: "40px 20px" }}>
         
         <header style={{ marginBottom: "50px", textAlign: "left" }}>

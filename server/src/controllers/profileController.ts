@@ -12,7 +12,7 @@ export const addProfile = async (req: AuthRequest, res: Response) => {
 
     const { profileName, pin, rate } = req.body;
 
-    /* ✅ validation */
+    /*  validation */
     if (!profileName || !pin || rate === undefined) {
       return res.status(400).json({
         success: false,
@@ -57,7 +57,7 @@ export const addProfile = async (req: AuthRequest, res: Response) => {
       pin: hashedPin,
       progress: { answers: [], unlocked: {} },
       points: 0,
-      rate, // ✅ מגיע מה־frontend
+      rate, 
     });
 
     await user.save();
@@ -164,21 +164,20 @@ export const verifyProfilePin = async (req: Request, res: Response) => {
   }
 };
 
-/* =============================================
-   הוספה: פונקציה לעדכון PIN של פרופיל קיים
-   ============================================= */
+// Update the PIN of an existing profile
 export const updateProfilePin = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.userId;
     const { profileName, newPin } = req.body;
 
-    // ולידציה בסיסית
+    // Basic validation
     if (!profileName || !newPin || newPin.length !== 4) {
       return res.status(400).json({
         success: false,
         message: "Valid profile name and 4-digit PIN are required",
       });
     }
+    // Fetch user
 
     const user = await User.findById(userId);
     if (!user) {
@@ -188,7 +187,7 @@ export const updateProfilePin = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    // מציאת הפרופיל בתוך המערך של המשתמש
+    // Find profile index
     const profileIndex = user.profiles.findIndex(
       (p) => p.profileName === profileName
     );
@@ -200,11 +199,8 @@ export const updateProfilePin = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    // הצפנת ה-PIN החדש
     const hashedPin = await bcrypt.hash(newPin, 10);
     
-    // עדכון ה-PIN
-    // הוספת סימן קריאה (!) אחרי user מבטיחה ל-TS שהאובייקט קיים
 if (user && user.profiles[profileIndex]) {
     user.profiles[profileIndex].pin = hashedPin;
 }
@@ -223,12 +219,8 @@ if (user && user.profiles[profileIndex]) {
     });
   }
 };
-/* =============================================
-   סיום הוספה
-   ============================================= */
 
-
-
+// Retrieve answer and exercise history for a profile
 
 export const getReportHistory = async (req: Request, res: Response) => {
   try {

@@ -13,7 +13,7 @@ const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
 const ChooseProfile: React.FC = () => {
   const navigate = useNavigate();
 
-  // ✅ Dark Mode מה־ThemeContext (במקום state מקומי)
+  // Get dark mode state from ThemeContext
   const { darkMode } = useTheme();
 
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -26,7 +26,7 @@ const ChooseProfile: React.FC = () => {
       if (!ok) navigate("/login");
     });
   }, [navigate]);
-
+  // Fetch profiles for the logged-in user
   useEffect(() => {
     const fetchProfiles = async () => {
       const email = localStorage.getItem("loggedInUser");
@@ -44,7 +44,7 @@ const ChooseProfile: React.FC = () => {
     };
     fetchProfiles();
   }, []);
-
+  // Open PIN modal for selected profile
   const openPin = (p: Profile) => {
     setSelectedProfile(p);
     setPinInputs(["", "", "", ""]);

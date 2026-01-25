@@ -1,7 +1,4 @@
-/**
- * Project: Exclusive Drop Frontend
- * Developer: Ilya Zeldner
- */
+
 import { useState, useEffect, Component } from 'react'
 import Login from './components/authintication/login'
 import Register from './components/authintication/register'
@@ -19,6 +16,7 @@ import MainPage from './components/mainPage/mainPage';
 import Vocabulary from './components/vocabulary/vocabularyHome';
 import TranslateGame from './components/vocabulary/translate';
 import ProgressPage from './components/mainPage/progressPage'; 
+// Main application component that defines all client-side routes
 
 function App() {
   return (

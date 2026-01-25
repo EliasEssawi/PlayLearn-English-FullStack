@@ -13,6 +13,7 @@ interface AnsweredQuestion {
 }
 
 const norm = (x: any) => String(x ?? "").trim().toLowerCase();
+// Fetch unanswered questions for a profile based on level, topic, and type
 
 export const getProfileQuestions = async (req: AuthRequest, res: Response) => {
   try {
@@ -35,7 +36,7 @@ export const getProfileQuestions = async (req: AuthRequest, res: Response) => {
     const lvl = Number(level);
     const size = Number(numberOfQuestions) || 10;
 
-    // ✅ solved correct IDs for this lvl/topic/type
+    //  solved correct IDs for this lvl/topic/type
     const solvedIds = (profile.progress?.answers || [])
       .filter((a: any) =>
         a.correct === true &&
@@ -80,7 +81,7 @@ export const getProfileQuestions = async (req: AuthRequest, res: Response) => {
       questions,
       available: questions.length,
       requested: size,
-      remaining: totalRemaining, // 
+      remaining: totalRemaining, 
     });
   } catch (err) {
     console.error("getProfileQuestions ERROR:", err);
@@ -117,7 +118,7 @@ export const SetProfileAnswer = async (req: AuthRequest, res: Response) => {
     const answers: any[] = Array.isArray(profile.progress?.answers) ? profile.progress.answers : [];
     const unlockedObj: Record<string, number> = { ...(profile.progress?.unlocked || {}) };
 
-    // ✅ do not save duplicate "correct" for same question in same lvl/topic/type
+    // do not save duplicate "correct" for same question in same lvl/topic/type
     const alreadyCorrect = answers.some((a: any) =>
       String(a.questionId) === qidStr &&
       norm(a.topic) === tTopic &&
@@ -126,7 +127,7 @@ export const SetProfileAnswer = async (req: AuthRequest, res: Response) => {
       a.correct === true
     );
 
-    // ✅ rule:
+    //  rule:
     // - if alreadyCorrect and current attempt is correct => do not save
     // - otherwise save (wrong attempts can be saved)
     const shouldSave =  true;
@@ -141,7 +142,7 @@ export const SetProfileAnswer = async (req: AuthRequest, res: Response) => {
       timeSpentMs: Number(timeSpentMs) || 0,
     };
 
-    // ✅ recompute correctUnique (unique correct IDs for this lvl/topic/type)
+    //  recompute correctUnique (unique correct IDs for this lvl/topic/type)
     const correctSet = new Set<string>(
       answers
         .filter((a: any) =>
@@ -158,7 +159,7 @@ export const SetProfileAnswer = async (req: AuthRequest, res: Response) => {
 
     const correctUnique = correctSet.size;
 
-    // ✅ unlock logic
+    //  unlock logic
     const key = `${tTopic}|${tType}`;
     const base = clamp(Number(profile.rate) || 1, 1, 5);
     let unlockedLevel = Math.max(Number(unlockedObj[key] ?? 1), base);
@@ -173,7 +174,7 @@ export const SetProfileAnswer = async (req: AuthRequest, res: Response) => {
 
     unlockedObj[key] = unlockedLevel;
 
-    // ✅ persist using updateOne (survives re-login)
+    //  persist using updateOne (survives re-login)
     const update: any = {
       $set: { "profiles.$.progress.unlocked": unlockedObj },
     };
@@ -200,6 +201,7 @@ export const SetProfileAnswer = async (req: AuthRequest, res: Response) => {
   }
 };
 
+// Ensure unlocked levels are at least the profile base rate
 
 export const getProfileProgress = async (req: AuthRequest, res: Response) => {
   try {
@@ -224,6 +226,8 @@ export const getProfileProgress = async (req: AuthRequest, res: Response) => {
     const unlocked: Record<string, number> = { ...(profile.progress?.unlocked || {}) };
 
     let changed = false;
+        // Ensure all topic/type combinations respect base rate
+
     for (const topic of TOPICS) {
       for (const type of TYPES) {
         const key = `${topic}|${type}`;
@@ -235,7 +239,7 @@ export const getProfileProgress = async (req: AuthRequest, res: Response) => {
       }
     }
 
-    // ✅ save safely with $set (no schema/subdoc save issues)
+    // Persist changes if needed
     if (changed) {
       await User.updateOne(
         { _id: req.user!.userId, "profiles.profileName": profileName },

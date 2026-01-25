@@ -14,6 +14,7 @@ type TopicCardProps = {
   onLevelClick: (levelId: number) => void;
   darkMode: boolean;
 };
+// Props for TopicCard component
 
 export default function TopicCard({
   title,
@@ -31,12 +32,14 @@ export default function TopicCard({
         backgroundColor: darkMode ? "#000000" : "#86e07f",
       }}
     >
-      <h2
+      {/* Topic title */}
+      <h2     
         className="text-center text-xl font-bold mb-6"
         style={{ color: darkMode ? "#ffffff" : "#132229" }}
       >
         {emoji} {title}
       </h2>
+            {/* Levels container */}
 
       <div className="flex flex-col gap-8">
         {levels.map((level, index) => {

@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import TranslateQuestion from "./TranslateQuestion";
+// Represents a single translation question
 
 type Question = {
   word: string;
   correct: string;
   options: string[];
 };
+// Static list of translation questions
 
 const QUESTIONS: Question[] = [
   {
@@ -24,6 +26,7 @@ const QUESTIONS: Question[] = [
     options: ["עץ", "אוטו", "בית", "ספר"],
   },
 ];
+// Main translate game component
 
 const TranslateGame: React.FC = () => {
   const [index, setIndex] = useState(0);

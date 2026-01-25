@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import OpenAI from "openai";
+// Read OpenAI API key from environment variables
 
 const apiKey = process.env.OPENAI_API_KEY;
 if (!apiKey) throw new Error("Missing OPENAI_API_KEY in .env");
@@ -7,7 +8,7 @@ if (!apiKey) throw new Error("Missing OPENAI_API_KEY in .env");
 const client = new OpenAI({ apiKey });
 const MODEL = process.env.OPENAI_MODEL || "gpt-4.1-mini";
 
-// -------------------- PROMPT --------------------
+// Strict rules defining chatbot behavior for children
 const SYSTEM_RULES = `
 You are a friendly English learning assistant for children aged 6–12.
 
@@ -59,13 +60,15 @@ DIFFICULTY BY AGE (silently)
 - 12: fuller sentences
 `.trim();
 
-// -------------------- TYPES --------------------
-type ClientMsg = { role: "user" | "bot" | "assistant"; text: string };
-type NormalizedMsg = { role: "user" | "assistant"; text: string };
-type PracticeType = "translate" | "grammar" | "complete" | "fill" | "mixed";
-type ChoiceLetter = "A" | "B" | "C" | "D";
+// TYPES 
+// Message received from client
 
-// -------------------- SERVER MEMORY --------------------
+type ClientMsg = { role: "user" | "bot" | "assistant"; text: string };
+type NormalizedMsg = { role: "user" | "assistant"; text: string };// Normalized message stored on server
+type PracticeType = "translate" | "grammar" | "complete" | "fill" | "mixed";// Supported practice modes
+type ChoiceLetter = "A" | "B" | "C" | "D";// Allowed MCQ choice letters
+
+//SERVER MEMORY 
 const sessions = new Map<
   string,
   {
@@ -75,17 +78,21 @@ const sessions = new Map<
     lastCorrect: ChoiceLetter | null; // ✅ NEW
   }
 >();
-
+// NORMALIZATION HELPERS
 function normalizeRole(r: any): "user" | "assistant" {
   const x = String(r ?? "").toLowerCase();
   return x === "user" ? "user" : "assistant";
 }
+// Check if a message indicates a practice type choice
 function isPracticeTypeAnswer(single: string): boolean {
   return !!extractPracticeType(single);
 }
+// Select OpenAI content type based on role
+
 function contentTypeFor(role: "system" | "user" | "assistant") {
   return role === "assistant" ? "output_text" : "input_text";
 }
+// AGE & PRACTICE EXTRACTION
 
 function extractAge(messages: { role: string; text: string }[]): number | null {
   for (const m of messages) {
@@ -96,6 +103,7 @@ function extractAge(messages: { role: string; text: string }[]): number | null {
   }
   return null;
 }
+// Avoid duplicate user messages in history
 
 function shouldAppendSingle(single: string, history: NormalizedMsg[]): boolean {
   if (!single) return false;
@@ -103,13 +111,14 @@ function shouldAppendSingle(single: string, history: NormalizedMsg[]): boolean {
   const last = String(history[history.length - 1]?.text ?? "").trim();
   return last !== single;
 }
+// Check if age question was already asked
 
 function hasAgeQuestionAlready(history: NormalizedMsg[]): boolean {
   return history.some(
     (m) => m.role === "assistant" && /what is your age\?\s*\(6-12\)/i.test(m.text)
   );
 }
-
+// Extract practice type keyword from text
 function extractPracticeType(text: string): PracticeType | null {
   const t = text.toLowerCase();
   if (t.includes("translate")) return "translate";
@@ -119,6 +128,7 @@ function extractPracticeType(text: string): PracticeType | null {
   if (t.includes("mixed")) return "mixed";
   return null;
 }
+// Check if practice type question was already asked
 
 function hasPracticeTypeQuestion(history: NormalizedMsg[]): boolean {
   return history.some(
@@ -151,7 +161,7 @@ function softEnsureMcq(reply: string, practiceType: PracticeType | null): string
 
   if (ok) return t;
 
-  // better fallback per type (still no leaking)
+  // better fallback per type 
   if (practiceType === "translate") {
     return `Feedback: Okay! Correct: -
 Question: Translate to Hebrew: "dog"
@@ -207,6 +217,7 @@ function stripCorrectLetterWhenUserCorrect(reply: string): string {
   }
   return t;
 }
+// MAIN CHATBOT CONTROLLER
 
 export async function chatBotController(req: Request, res: Response) {
   try {
@@ -412,7 +423,7 @@ C) Happy I am.
 D) Am I happy.`;
     }
 
-    // ✅ Only show correct letter if user is wrong (if assistant says correct → hide letter)
+    // Only show correct letter if user is wrong (if assistant says correct → hide letter)
     reply = stripCorrectLetterWhenUserCorrect(reply);
 
     // If it contains "Correct: A/B/C/D" but user didn't answer A/B/C/D, remove leak
@@ -435,7 +446,7 @@ D) Am I happy.`;
     }
     updatedMessages.push({ role: "assistant", text: reply });
 
-    // ✅ Update lastCorrect from reply (if present)
+    // Update lastCorrect from reply (if present)
     const newCorrect = extractCorrectLetter(reply);
 
     if (sessionId) {

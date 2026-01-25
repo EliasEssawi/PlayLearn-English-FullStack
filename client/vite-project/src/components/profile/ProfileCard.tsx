@@ -1,18 +1,19 @@
 import React from "react";
+// Props definition for the profile card component
 
 type ProfileCardProps = {
   name: string;
   emoji: string;
   onClick: () => void;
-  isDarkMode: boolean; // הוספנו את ה-Prop הזה
+  isDarkMode: boolean; 
 };
+// Clickable profile card component
 
 const ProfileCard: React.FC<ProfileCardProps> = ({ name, emoji, onClick, isDarkMode }) => {
   return (
     <div 
       onClick={onClick}
       style={{
-        // שינוי הרקע לפי המוד
         backgroundColor: isDarkMode ? "#1e293b" : "#ffffff", 
         color: isDarkMode ? "#ffffff" : "#1e293b",
         padding: "20px",

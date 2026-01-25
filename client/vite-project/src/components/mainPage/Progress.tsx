@@ -6,10 +6,10 @@ import { useTheme } from "../context/ThemeContext"; // ✅ חדש
 
 const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
 
-const TYPES = ["translate", "complete", "listening", "talking", "reading"] as const;
+const TYPES = ["translate", "complete", "listening", "talking", "reading"] as const;// Supported exercise types
 type ExerciseType = (typeof TYPES)[number];
 
-type Card = {
+type Card = {// Card data structure returned from the backend
   title: ExerciseType | string;
   level: number;
   progress: number;
@@ -18,21 +18,22 @@ type Card = {
   solved: number;
   total: number;
 };
-
+// Nested structure: level → topic → type → stats
 type ByLevelTopicType = Record<
   string,
   Record<string, Record<string, { solved: number; total: number; percent: number }>>
 >;
 
-type ApiResponse = {
+type ApiResponse = {// API response shape
   success: boolean;
   cards: Card[];
   byLevelTopicType: ByLevelTopicType;
 };
 
-function cap(x: any) {
+function cap(x: any) {// Utility to safely display strings
   return String(x || "").trim();
 }
+// MAIN PROGRESS COMPONENT
 
 export default function Progress({ email, profileName }: { email: string; profileName: string }) {
   // ------------------------
@@ -98,6 +99,7 @@ export default function Progress({ email, profileName }: { email: string; profil
       setSummaryLoading(true);
       try {
         const params: any = {};
+        // Add filters only if selected
 
         if (selectedLevel !== "all") params.level = selectedLevel;
         if (selectedTopic !== "all") params.topic = selectedTopic;

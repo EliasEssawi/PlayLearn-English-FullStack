@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import ResultBar from "./ResultBar"
+// BROWSER SPEECH API TYPES
 
 declare global {
   interface Window {
@@ -13,7 +14,7 @@ type SpeakingGameProps = {
   answer: string
   lang?: string
   onContinue?: (isCorrect: boolean, spokenText: string) => void
-  darkMode: boolean // הוספת הפרופ
+  darkMode: boolean 
 }
 
 export default function SpeakingGame({
@@ -21,18 +22,19 @@ export default function SpeakingGame({
   answer,
   lang = "en-US",
   onContinue,
-  darkMode, // קבלת הפרופ
+  darkMode,
 }: SpeakingGameProps) {
   const recognitionRef = useRef<any>(null)
 
   const [isRecording, setIsRecording] = useState(false)
   const [spokenText, setSpokenText] = useState("")
   const [showResult, setShowResult] = useState(false)
+  // INIT SPEECH RECOGNITION
 
   useEffect(() => {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition
-
+    // If not supported, stop here
     if (!SpeechRecognition) {
       alert("Speech recognition is not supported in this browser.")
       return
@@ -44,7 +46,7 @@ export default function SpeakingGame({
     recognition.continuous = false
 
     recognition.onstart = () => setIsRecording(true)
-
+    // When speech result is received
     recognition.onresult = (event: any) => {
       const transcript = event.results[0][0].transcript
       setSpokenText(transcript)
@@ -55,16 +57,16 @@ export default function SpeakingGame({
 
     recognitionRef.current = recognition
   }, [lang])
-
+  // START RECORDING
   const startRecording = () => {
     setSpokenText("")
     setShowResult(false)
     recognitionRef.current?.start()
   }
-
+  // TEXT NORMALIZATION
   const normalize = (text: string) =>
     text.toLowerCase().replace(/[^\w\s]/g, "").trim()
-
+  // Check if spoken sentence matches expected answer
   const isCorrect = normalize(spokenText) === normalize(answer)
 
   return (
@@ -77,7 +79,7 @@ export default function SpeakingGame({
         {title}
       </h2>
 
-      {/* Answer to speak (המלבן המציג את המשפט) */}
+      {/* Answer to speak  */}
       <div 
         className="border-2 rounded-xl p-5 text-lg font-semibold transition-colors duration-300"
         style={{
@@ -89,7 +91,7 @@ export default function SpeakingGame({
         {answer}
       </div>
 
-      {/* Record button (כפתור ההקלטה) */}
+      {/* Record button */}
       <button
         onClick={startRecording}
         disabled={isRecording}

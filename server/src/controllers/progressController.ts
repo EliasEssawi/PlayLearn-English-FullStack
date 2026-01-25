@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { User } from "../models/User";
 import { Exercise } from "../models/Exercise";
+// CONSTANTS & TYPES
 
 const TYPES = ["translate", "complete", "listening", "talking", "reading"] as const;
 type ExerciseType = (typeof TYPES)[number];
@@ -38,7 +39,7 @@ function endOfDay(d?: Date) {
   x.setHours(23, 59, 59, 999);
   return x;
 }
-
+// Check whether a date value falls within an optional date range
 function inRange(dateVal: any, from?: Date, to?: Date) {
   if (!from && !to) return true;
   if (!dateVal) return false;
@@ -49,7 +50,7 @@ function inRange(dateVal: any, from?: Date, to?: Date) {
   return true;
 }
 
-// ✅ normalize ObjectId / string / {$oid}
+//  normalize ObjectId / string / {$oid}
 function normalizeQuestionId(q: any): string {
   if (!q) return "";
   if (typeof q === "string") return q;
@@ -63,6 +64,7 @@ function normalizeQuestionId(q: any): string {
   if (q?._id) return normalizeQuestionId(q._id);
   return "";
 }
+// Count unique solved questions for a given level and type with optional filters
 
 function getSolvedCount(
   answers: AnswerEvent[],
@@ -88,9 +90,12 @@ function getSolvedCount(
   }
   return solved.size;
 }
+// AGGREGATION TYPES
 
 type TotalRowLT = { _id: { level: number; type: string }; total: number };
 type TotalRowLTT = { _id: { level: number; topic: string; type: string }; total: number };
+// Determine whether a profile should upgrade its rate
+
 function shouldUpgradeRate(
   cards: { title: string; level: number; progress: number }[],
   currentRate: number
@@ -111,6 +116,7 @@ function shouldUpgradeRate(
   return true;
 }
 
+// Get summarized progress data for a specific profile
 
 export async function getProfileProgressSummary(req: Request, res: Response) {
   try {
@@ -140,7 +146,6 @@ export async function getProfileProgressSummary(req: Request, res: Response) {
 
     if (!profile) return res.status(404).json({ success: false, message: "Profile not found" });
 
-    // ✅ your DB shape: progress.answers
     const answers: AnswerEvent[] = Array.isArray(profile.progress?.answers) ? profile.progress.answers : [];
 
     // ---- totals from DB exercises (apply level/topic/type filters)
@@ -169,7 +174,7 @@ console.log("DUPES sample:", dupes);
     },
   },
 
-  // now count unique prompts per level+type
+  //  count unique prompts per level+type
   {
     $group: {
       _id: { level: "$_id.level", type: "$_id.type" },
@@ -183,14 +188,13 @@ console.log("DUPES sample:", dupes);
     const totalsLTT = (await Exercise.aggregate([
   { $match: match },
 
-  // dedupe questions first (same prompt counted once per level+topic+type)
   {
     $group: {
       _id: { level: "$level", topic: "$topic", type: "$type", prompt: "$prompt" },
     },
   },
 
-  //  now count unique prompts per level+topic+type
+  //  count unique prompts per level+topic+type
   {
     $group: {
       _id: { level: "$_id.level", topic: "$_id.topic", type: "$_id.type" },
@@ -198,6 +202,7 @@ console.log("DUPES sample:", dupes);
     },
   },
 ])) as TotalRowLTT[];
+    // Build totals lookup structure
 
     const totalsByLevelTopicType: Record<string, Record<string, Record<string, number>>> = {};
     for (const row of totalsLTT) {
@@ -209,7 +214,7 @@ console.log("DUPES sample:", dupes);
       totalsByLevelTopicType[lvl][topic][type] = row.total;
     }
 
-    // ---- cards
+    //cards
     const icons: Record<ExerciseType, string> = {
       translate: "🌍",
       complete: "✍️",
@@ -231,6 +236,7 @@ console.log("DUPES sample:", dupes);
       solved: number;
       total: number;
     }> = [];
+    // Build progress cards
 
     for (const lvl of levelsToShow) {
       for (const type of typesToShow) {
@@ -246,7 +252,7 @@ console.log("DUPES sample:", dupes);
         cards.push({ title: type, level: lvl, progress: percent, icon: icons[type], solved, total });
       }
     }
-    // ⭐ בדיקה אם הילד זכאי לעלות rate
+    // Check if profile rate should be upgraded
       if (shouldUpgradeRate(cards, currentRate)) {
         await User.updateOne(
           {
@@ -262,7 +268,7 @@ console.log("DUPES sample:", dupes);
       }
 
 
-    // ---- byLevelTopicType (baseline = totals; solved respects date)
+    // byLevelTopicType (baseline = totals; solved respects date)
     const byLevelTopicType: Record<
       string,
       Record<string, Record<string, { solved: number; total: number; percent: number }>>

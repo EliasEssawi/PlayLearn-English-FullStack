@@ -26,6 +26,7 @@ export const RegisterSchema = z.object({
 
   dateOfBirth: z.coerce.date(),
 });
+// Schema for user login validation
 
 export const LoginSchema = z.object({
   email: z
@@ -35,8 +36,11 @@ export const LoginSchema = z.object({
 
   password: z.string()
 });
+// Schema for password change validation
 
 export const ChangePassSchema = z.object({
+    // New password with strength validation
+
   newPassword: z
     .string()
     .trim()
@@ -44,11 +48,13 @@ export const ChangePassSchema = z.object({
       message:
         "Password must contain at least one uppercase letter and one lowercase letter",
     }),
+  // User email validation
 
     email: z
     .string()
     .trim()
     .regex(emailRegex, { message: "Please enter a valid email address" }),
-  
+    // Optional verification/reset code
+
     code: z.string().optional()
 });

@@ -1,4 +1,5 @@
 import React from "react";
+// Allowed navigation targets from the starter page
 
 type Page = "login" | "register";
 
@@ -7,6 +8,7 @@ const StarterPage: React.FC = () => {
     if (page === "login") window.location.href = "/login";
     if (page === "register") window.location.href = "/register";
   };
+  // Feature list displayed on the landing page
 
   const features = [
     { icon: "https://cdn-icons-png.flaticon.com/512/5293/5293973.png", title: "Choose Topic", desc: "Animals, Food, School & more" },
@@ -18,6 +20,7 @@ const StarterPage: React.FC = () => {
   ];
 
   return (
+        // Main page container
     <div className="min-h-screen w-full font-[Poppins]" style={{ background: "#f8fafc", color: "#0f172a" }}>
       
       {/* HEADER */}
