@@ -7,6 +7,14 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+node_modules/
+client/vite-project/node_modules/
+client/node_modules/
+client/vite-project/.vite/
+client/.vite/
+dist/
+.env
+
 
 dist
 dist-ssr
