@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import io, { Socket } from "socket.io-client";
-
+// Props for the chat widget (controls theme only)
 type OnlineChatWidgetProps = {
   darkMode: boolean;
 };
@@ -12,7 +12,7 @@ type ChatMessage = { text: string; date: string; user?: User };
 type RoomFullPayload = { message?: string };
 
 export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false);  // UI state
   const [connected, setConnected] = useState(false);
 
   const [users, setUsers] = useState<User[]>([]);
@@ -24,7 +24,7 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
 
   const socketRef = useRef<Socket | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
-
+  // Resolve username from localStorage
   const username = useMemo(() => {
     const raw = localStorage.getItem("activeProfile");
     if (raw) {
@@ -72,12 +72,13 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
     const onDisconnect = () => setConnected(false);
 
     const onUsers = (u: User[]) => setUsers(Array.isArray(u) ? u : []);
-    const onConnectedUser = (u: User) =>
+    const onConnectedUser = (u: User) =>    // Handle new connected user (avoid duplicates)
+
     setUsers((prev) => {
       if (!u?.id) return prev;
       return prev.some((x) => x.id === u.id) ? prev : [...prev, u];
     });
-
+    // Handle disconnected user
     const onDisconnectedUser = (id: string) =>
       setUsers((prev) => prev.filter((x) => x.id !== id));
 
@@ -117,6 +118,7 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
       setUsers([]);
     };
   }, [open, username]);
+  // Send chat message
 
   const send = (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -126,7 +128,7 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
     socketRef.current.emit("send", text);
     setMessage("");
   };
-
+  // Theme-dependent colors
   const bg = darkMode ? "#0b1220" : "#ffffff";
   const border = darkMode ? "1px solid #334155" : "1px solid #e2e8f0";
   const sub = darkMode ? "#94a3b8" : "#475569";
@@ -137,7 +139,7 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
     ? "0 10px 30px rgba(0,0,0,0.35)"
     : "0 10px 30px rgba(15,23,42,0.18)";
 
-  return (
+  return (  // RENDER
     <>
       {/* Floating Circle Button */}
      <button
@@ -145,7 +147,7 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
   title="Online Chat"
   style={{
     position: "fixed",
-    right: 22 + 60 + 12, // ✅ left of video
+    right: 22 + 60 + 12, //left of video
     bottom: 22,
     width: 60,
     height: 60,

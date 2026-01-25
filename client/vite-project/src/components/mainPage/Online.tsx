@@ -3,7 +3,7 @@ import io, { Socket } from "socket.io-client";
 
 type OnlineProps = { darkMode: boolean };
 
-// ✅ client .env: VITE_SOCKET_URL=http://localhost:5001
+//client .env: VITE_SOCKET_URL=http://localhost:5001
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:5001";
 
 type Player = { name: string; socketId: string; rate: number };
@@ -22,7 +22,10 @@ function clampRate(x: any): number {
   if (!Number.isFinite(n)) return 1;
   return Math.min(5, Math.max(1, Math.floor(n)));
 }
-
+/**
+ * Read the active profile from localStorage (saved during profile selection).
+ * Returns safe fallback if missing or corrupted.
+ */
 function readProfileFromLS(): { username: string; rate: number } {
   const raw = localStorage.getItem("activeProfile");
   if (!raw) return { username: "Player", rate: 1 };
@@ -67,7 +70,7 @@ export default function Online({ darkMode }: OnlineProps) {
 
   const [connected, setConnected] = useState(false);
 
-  // ✅ profile
+  // profile
   const [username, setUsername] = useState("Player");
   const [rate, setRate] = useState<number>(1);
 
@@ -89,7 +92,7 @@ export default function Online({ darkMode }: OnlineProps) {
   const [mySocketId, setMySocketId] = useState<string>("");
   const [locked, setLocked] = useState(false);
 
-  // ✅ load profile on mount + when localStorage changes (login/profile switch)
+  //load profile on mount + when localStorage changes (login/profile switch)
   useEffect(() => {
     const apply = () => {
       const p = readProfileFromLS();
@@ -109,7 +112,7 @@ export default function Online({ darkMode }: OnlineProps) {
 
   // connect once (safe with StrictMode)
   useEffect(() => {
-    if (socketRef.current) return; // ✅ prevent double-connect in dev/StrictMode
+    if (socketRef.current) return; // prevent double-connect in dev/StrictMode
 
     const socket = io(SOCKET_URL, {
       transports: ["polling", "websocket"],
@@ -191,12 +194,17 @@ export default function Online({ darkMode }: OnlineProps) {
       if (r === "locked") setNotify("⏳ You are locked for 5 seconds.");
       if (r === "already_answered") setNotify("✅ You already answered this round.");
     });
+    // Round ends (remove question)
 
     socket.on("round_end", () => {
       setQuestion(null);
       setEndsAt(0);
     });
-
+  /**
+     * Game over:
+     * server sends winner info or draw
+     * and we reset match state after showing notification
+     */
     socket.on("game_over", (p: any) => {
       const winner = p?.winner?.name ? `🏆 Winner: ${p.winner.name}` : "🤝 Draw!";
       setNotify(winner);
@@ -209,7 +217,7 @@ export default function Online({ darkMode }: OnlineProps) {
     });
 
     return () => {
-      // ✅ cleanup
+      // cleanup
       socket.removeAllListeners();
       socket.disconnect();
       socketRef.current = null;
@@ -233,7 +241,7 @@ export default function Online({ darkMode }: OnlineProps) {
   const join = () => {
     if (!socketRef.current || !connected) return;
 
-    // ✅ re-read profile right before joining (guaranteed correct)
+    // re-read profile right before joining (guaranteed correct)
     const p = readProfileFromLS();
     setUsername(p.username);
     setRate(p.rate);
@@ -249,7 +257,11 @@ export default function Online({ darkMode }: OnlineProps) {
 
     socketRef.current.emit("join_game", { name: p.username, rate: p.rate });
   };
-
+  /**
+   * Send answer:
+   * - only if in a room and there is an active question
+   * - lock prevents spamming when penalized
+   */
   const answer = (opt: string) => {
     if (!socketRef.current || !roomId || !question) return;
     if (locked) return;
@@ -281,9 +293,11 @@ export default function Online({ darkMode }: OnlineProps) {
             <div style={{ color: textColor, fontWeight: 900, fontSize: 22 }}>Online 1v1</div>
             <div style={{ color: sub, fontSize: 13 }}>
               You: <b>{username}</b> • Rate: <b>{rate}</b> • {connected ? "✅ Connected" : "❌ Offline"}
-            </div>
+            </div>            {/* Human-readable status message */}
+
             <div style={{ color: sub, fontSize: 13, marginTop: 4 }}>{status}</div>
           </div>
+          {/* Start matchmaking button */}
 
           <button
             onClick={join}
@@ -302,6 +316,7 @@ export default function Online({ darkMode }: OnlineProps) {
             {roomId ? "In Match" : "Find Match"}
           </button>
         </div>
+        {/* Server notifications, lock messages, winner messages, etc. */}
 
         {notify && (
           <div
@@ -327,7 +342,7 @@ export default function Online({ darkMode }: OnlineProps) {
             {endsAt ? <span style={{ color: sub, fontWeight: 700 }}>• Time: {secondsLeft}s</span> : null}
           </div>
 
-          {/* ✅ FIXED HEADER LINE */}
+          {/*FIXED HEADER LINE */}
           <div style={{ color: textColor, fontWeight: 900 }}>
   {username}{" "}
   <span style={{ color: sub, fontWeight: 700 }}>
@@ -372,13 +387,13 @@ export default function Online({ darkMode }: OnlineProps) {
                 </button>
               ))}
             </div>
-
+            {/* Waiting for opponent message */}
             {!hasOpponent && (
               <div style={{ marginTop: 10, color: sub, fontWeight: 700 }}>
                 ⏳ Waiting for another player to join...
               </div>
             )}
-
+            {/* Locked message after wrong answer */}
             {locked && (
               <div style={{ marginTop: 10, color: sub, fontWeight: 700 }}>
                 ⏳ You answered wrong — wait 5 seconds, opponent can try.
