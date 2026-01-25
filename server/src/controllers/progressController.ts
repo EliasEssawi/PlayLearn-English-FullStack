@@ -91,6 +91,26 @@ function getSolvedCount(
 
 type TotalRowLT = { _id: { level: number; type: string }; total: number };
 type TotalRowLTT = { _id: { level: number; topic: string; type: string }; total: number };
+function shouldUpgradeRate(
+  cards: { title: string; level: number; progress: number }[],
+  currentRate: number
+): boolean {
+  const TYPES = ["translate", "complete", "listening", "talking", "reading"];
+
+  for (const type of TYPES) {
+    const card = cards.find(
+      (c) =>
+        c.level === currentRate &&
+        String(c.title).toLowerCase() === type
+    );
+
+    if (!card) return false;        // אין נתונים
+    if (card.progress < 80) return false; // פחות מ־80%
+  }
+
+  return true;
+}
+
 
 export async function getProfileProgressSummary(req: Request, res: Response) {
   try {
@@ -116,6 +136,8 @@ export async function getProfileProgressSummary(req: Request, res: Response) {
 
     const profiles = (user.profiles ?? []) as any[];
     const profile = profiles.find((p) => p.profileName === profileName);
+    const currentRate = profile.rate ?? 1;
+
     if (!profile) return res.status(404).json({ success: false, message: "Profile not found" });
 
     // ✅ your DB shape: progress.answers
@@ -224,6 +246,21 @@ console.log("DUPES sample:", dupes);
         cards.push({ title: type, level: lvl, progress: percent, icon: icons[type], solved, total });
       }
     }
+    // ⭐ בדיקה אם הילד זכאי לעלות rate
+      if (shouldUpgradeRate(cards, currentRate)) {
+        await User.updateOne(
+          {
+            email,
+            "profiles.profileName": profileName,
+          },
+          {
+            $set: {
+              "profiles.$.rate": currentRate + 1,
+            },
+          }
+        );
+      }
+
 
     // ---- byLevelTopicType (baseline = totals; solved respects date)
     const byLevelTopicType: Record<

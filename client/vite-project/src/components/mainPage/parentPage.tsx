@@ -306,102 +306,128 @@ const ParentPage: React.FC = () => {
           </div>
         )}
             {isReportModalOpen && (
-      <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          backgroundColor: "rgba(0,0,0,0.7)",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          zIndex: 1000,
-        }}
-      >
-        <div
-          style={{
-            background: darkMode ? "#0f172a" : "#fff",
-            width: "90%",
-            maxWidth: "900px",
-            maxHeight: "85vh",
-            overflowY: "auto",
-            borderRadius: "28px",
-            padding: "30px",
-          }}
-        >
-   <div
-  style={{
-    display: "grid",
-    gridTemplateColumns: "repeat(3, minmax(120px, 1fr))",
-    gap: "12px",
-    marginBottom: "25px",
-  }}
->
-  {[
-    { key: "all", label: "All" },
-    { key: "today", label: "Today" },
-    { key: "7days", label: "Last 7 Days" },
-  ].map((btn: any) => (
-    <button
-      key={btn.key}
-      onClick={() => setDateFilter(btn.key)}
-      style={{
-        padding: "14px",
-        borderRadius: "14px",
-        border: `1px solid ${
-          dateFilter === btn.key
-            ? "#86e07f"
-            : darkMode
-            ? "#334155"
-            : "#e2e8f0"
-        }`,
-        cursor: "pointer",
-        fontWeight: "700",
-        backgroundColor:
-          dateFilter === btn.key
-            ? "#86e07f"
-            : darkMode
-            ? "#1e293b"
-            : "#f8fafc",
-        color:
-          dateFilter === btn.key
-            ? "#fff"
-            : darkMode
-            ? "#e5e7eb"
-            : "#1e293b",
-        transition: "all 0.2s ease",
-      }}
-    >
-      📅 {btn.label}
-    </button>
-  ))}
-</div>
+                <div
+                  style={{
+                    position: "fixed",
+                    inset: 0,
+                    backgroundColor: "rgba(0,0,0,0.7)",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    zIndex: 1000,
+                  }}
+                >
+                  <div
+                    style={{
+                      position: "relative",
+                      background: darkMode ? "#0f172a" : "#fff",
+                      width: "90%",
+                      maxWidth: "900px",
+                      maxHeight: "85vh",
+                      overflowY: "auto",
+                      borderRadius: "28px",
+                      padding: "30px",
+                    }}
+                  >
+                    <button
+                    onClick={() => setIsReportModalOpen(false)}
+                    style={{
+                      position: "absolute",
+                      top: "20px",
+                      right: "20px",
+                      width: "40px",
+                      height: "40px",
+                      borderRadius: "50%",
+                      border: "none",
+                      cursor: "pointer",
+                      fontSize: "1.4rem",
+                      fontWeight: "700",
+                      backgroundColor: darkMode ? "#1e293b" : "#e2e8f0",
+                      color: darkMode ? "#f8fafc" : "#1e293b",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      transition: "all 0.2s ease",
+                    }}
+                    aria-label="Close"
+                  >
+                    ✕
+                  </button>
+
+            <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, minmax(120px, 1fr))",
+              gap: "12px",
+              marginBottom: "25px",
+            }}
+          >
+            {[
+              { key: "all", label: "All" },
+              { key: "today", label: "Today" },
+              { key: "7days", label: "Last 7 Days" },
+            ].map((btn: any) => (
+              <button
+                key={btn.key}
+                onClick={() => setDateFilter(btn.key)}
+                style={{
+                  padding: "14px",
+                  borderRadius: "14px",
+                  border: `1px solid ${
+                    dateFilter === btn.key
+                      ? "#86e07f"
+                      : darkMode
+                      ? "#334155"
+                      : "#e2e8f0"
+                  }`,
+                  cursor: "pointer",
+                  fontWeight: "700",
+                  backgroundColor:
+                    dateFilter === btn.key
+                      ? "#86e07f"
+                      : darkMode
+                      ? "#1e293b"
+                      : "#f8fafc",
+                  color:
+                    dateFilter === btn.key
+                      ? "#fff"
+                      : darkMode
+                      ? "#e5e7eb"
+                      : "#1e293b",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                📅 {btn.label}
+              </button>
+            ))}
+          </div>
 
 
           {Object.entries(groupedReports).map(([groupTitle, items]: any) => (
             <div key={groupTitle} style={{ marginBottom: "35px" }}>
-<h3
-  style={{
-    marginBottom: "16px",
-    paddingLeft: "10px",
-    fontSize: "1.3rem",
-    fontWeight: "700",
-    textTransform: "capitalize",
-    color: darkMode ? "#e5e7eb" : "#1e293b",
-    borderLeft: "4px solid #86e07f",
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-  }}
->
-  <span>
-    {groupTitle === "talking" && "🗣️"}
-    {groupTitle === "translate" && "🌍"}
-    {groupTitle === "listening" && "🎧"}
-    {groupTitle === "reading" && "📖"}
-    {groupTitle === "complete" && "✍️"}
-  </span>
-  <span>{groupTitle}</span>
-</h3>
+            <h3
+              style={{
+                marginBottom: "16px",
+                paddingLeft: "10px",
+                fontSize: "1.3rem",
+                fontWeight: "700",
+                textTransform: "capitalize",
+                color: darkMode ? "#e5e7eb" : "#1e293b",
+                borderLeft: "4px solid #86e07f",
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+              }}
+            >
+              <span>
+                {groupTitle === "talking" && "🗣️"}
+                {groupTitle === "translate" && "🌍"}
+                {groupTitle === "listening" && "🎧"}
+                {groupTitle === "reading" && "📖"}
+                {groupTitle === "complete" && "✍️"}
+              </span>
+              <span>{groupTitle}</span>
+            </h3>
 
               {filterByDate(items).map((item: any, idx: number) => {
 
@@ -454,15 +480,15 @@ const ParentPage: React.FC = () => {
                     }}
                   >
                   <h4
-  style={{
-    marginBottom: "10px",
-    fontSize: "1.05rem",
-    fontWeight: "600",
-    color: darkMode ? "#1e293b" : "#1e293b",
-  }}
->
-  {item.exercise?.prompt ?? "Question not found"}
-</h4>
+                      style={{
+                        marginBottom: "10px",
+                        fontSize: "1.05rem",
+                        fontWeight: "600",
+                        color: darkMode ? "#1e293b" : "#1e293b",
+                      }}
+                    >
+                      {item.exercise?.prompt ?? "Question not found"}
+                    </h4>
 
 
 
@@ -470,13 +496,13 @@ const ParentPage: React.FC = () => {
                     <p style={{ color: darkMode ? "#334155" : "#475569" }}><b>Level:</b> {item.level}</p>
                     <p style={{ color: darkMode ? "#334155" : "#475569" }}><b>Time Spent:</b> {(item.timeSpentMs / 1000).toFixed(1)}s</p>
                   
-<p style={{ color: darkMode ? "#334155" : "#475569" }}>
-  <b>Date:</b>{" "}
-  {new Date(item.answeredAt).toLocaleDateString()}{" "}
-  <span style={{ opacity: 0.7 }}>
-    ({new Date(item.answeredAt).toLocaleTimeString()})
-  </span>
-</p>
+                    <p style={{ color: darkMode ? "#334155" : "#475569" }}>
+                      <b>Date:</b>{" "}
+                      {new Date(item.answeredAt).toLocaleDateString()}{" "}
+                      <span style={{ opacity: 0.7 }}>
+                        ({new Date(item.answeredAt).toLocaleTimeString()})
+                      </span>
+                    </p>
 
 
 
@@ -509,22 +535,6 @@ const ParentPage: React.FC = () => {
               })}
             </div>
           ))}
-
-          <button
-            onClick={() => setIsReportModalOpen(false)}
-            style={{
-              width: "100%",
-              padding: "14px",
-              borderRadius: "12px",
-              backgroundColor: "#86e07f",
-              color: "#fff",
-              border: "none",
-              cursor: "pointer",
-              fontWeight: "700",
-            }}
-          >
-            Close
-          </button>
         </div>
       </div>
     )}

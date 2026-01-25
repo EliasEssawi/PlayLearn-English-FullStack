@@ -140,25 +140,28 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
   return (
     <>
       {/* Floating Circle Button */}
-      <button
-        onClick={() => setOpen((v) => !v)}
-        title="Online Chat"
-        style={{
-          position: "fixed",
-          right: 22,
-          bottom: 22,
-          width: 60,
-          height: 60,
-          borderRadius: 999,
-          border: "none",
-          background: bubbleBg,
-          color: darkMode ? "#f8fafc" : "#0f172a",
-          fontWeight: 800,
-          cursor: "pointer",
-          boxShadow: bubbleShadow,
-          zIndex: 9999,
-        }}
-      >
+     <button
+  onClick={() => setOpen((v) => !v)}
+  title="Online Chat"
+  style={{
+    position: "fixed",
+    right: 22 + 60 + 12, // ✅ left of video
+    bottom: 22,
+    width: 60,
+    height: 60,
+    borderRadius: 999,
+    border: "none",
+    background: bubbleBg,
+    color: darkMode ? "#f8fafc" : "#0f172a",
+    fontWeight: 800,
+    cursor: "pointer",
+    boxShadow: bubbleShadow,
+    zIndex: 999990,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  }}
+>
         💬
       </button>
 

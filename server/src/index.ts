@@ -12,7 +12,7 @@ import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
 import http from "http";
 import { Server as SocketIOServer } from "socket.io";
-
+import { callSocket } from "./controllers/callSocket";
 import { User } from "./models/User";
 import { Exercise } from "./models/Exercise";
 
@@ -157,7 +157,9 @@ const io = new SocketIOServer(server, {
 io.on("connection", (socket) => {
   onlineSocket(io, socket); // global floating chat
   gameSocket(io, socket);   // 1v1 rooms + questions (remove if you don't have it yet)
+  callSocket(io,socket);
 });
+
 
 // --------------------
 // Listen (IMPORTANT: server.listen, NOT app.listen)
