@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-
+// Props definition for the PIN modal
 type PinModalProps = {
   profileName: string;
   pinInputs: string[];
@@ -10,19 +10,21 @@ type PinModalProps = {
   onSubmit: () => void;
   onClose: () => void;
 };
+// Modal component for entering a profile PIN
 
 const PinModal: React.FC<PinModalProps> = ({ 
   profileName, pinInputs, pinError, isDarkMode, onChange, onBackspace, onSubmit, onClose 
 }) => {
-  // תיקון שגיאת ה-TypeScript ב-Ref: מגדירים מערך של אלמנטים
+  // Store references to PIN input elements for focus control
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const handleChange = (val: string, idx: number) => {
-    if (!/^\d?$/.test(val)) return; // מקבל רק ספרה אחת או ריק
+    if (!/^\d?$/.test(val)) return;     // Allow only a single digit or empty value
+
 
     onChange(val, idx);
 
-    // מעבר אוטומטי קדימה אם הוקלד תו
+    // Automatically move focus to the next input when a digit is entered
     if (val && idx < 3) {
       inputRefs.current[idx + 1]?.focus();
     }
@@ -30,7 +32,7 @@ const PinModal: React.FC<PinModalProps> = ({
 
   const handleKeyDown = (idx: number, e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Backspace") {
-      // מעבר אוטומטי אחורה אם התא ריק
+      // Automatically move focus backward if current input is empty
       if (!pinInputs[idx] && idx > 0) {
         inputRefs.current[idx - 1]?.focus();
       }
@@ -53,7 +55,7 @@ const PinModal: React.FC<PinModalProps> = ({
         
         {pinError && <p style={{ color: '#f87171', marginBottom: '1rem' }}>Wrong PIN, try again</p>}
         
-        {/* מרכוז הריבועים - חשוב: justifyContent: 'center' */}
+        {}
         <div style={{ 
           display: 'flex', 
           gap: '12px', 
@@ -65,7 +67,7 @@ const PinModal: React.FC<PinModalProps> = ({
             <input 
   key={i}
   ref={(el) => { inputRefs.current[i] = el; }}
-  type="password"          // ⭐ זה מה שמסתיר את הספרות
+  type="password"          
   value={val}
   maxLength={1}
   inputMode="numeric"

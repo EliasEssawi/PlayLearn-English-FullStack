@@ -1,4 +1,5 @@
 import api from "../api/axios"; // or "../../api/axios" depending on your setup
+// Check whether the user is currently authenticated
 
 export async function isLoggedIn(): Promise<boolean> {
   try {
@@ -8,6 +9,7 @@ export async function isLoggedIn(): Promise<boolean> {
     return false;
   }
 }
+// Log the user out and clear local client state
 
 export async function logout(): Promise<boolean> {
   try {

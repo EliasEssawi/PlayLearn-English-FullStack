@@ -20,9 +20,7 @@ export function onlineSocket(io: Server, socket: Socket) {
     return;
   }
 
-  /* ======================
-     REGISTER USER (LOBBY)
-  ====================== */
+    // REGISTER USER (LOBBY)
   socket.on("username", (username: string) => {
     if (Object.keys(users).length >= MAX_USERS) {
       socket.emit("room_full", { message: "Server is full. Try again later." });
@@ -41,10 +39,7 @@ export function onlineSocket(io: Server, socket: Socket) {
     io.emit("connected", user);
   });
 
-  /* ======================
-     LOBBY CHAT (GLOBAL)
-     ❗ NOT AFFECTED BY ROOMS
-  ====================== */
+    // LOBBY CHAT (GLOBAL) NOT AFFECTED BY ROOMS
   socket.on("send", (message: string) => {
     const user = users[socket.id];
     if (!user) return;
@@ -56,9 +51,7 @@ export function onlineSocket(io: Server, socket: Socket) {
     });
   });
 
-  /* ======================
-     JOIN 1v1 ROOM
-  ====================== */
+     //JOIN 1v1 ROOM
   socket.on("join_room", async (roomId: string) => {
     if (!roomId) return;
 
@@ -84,10 +77,7 @@ export function onlineSocket(io: Server, socket: Socket) {
     }
   });
 
-  /* ======================
-     ROOM CHAT (OPTIONAL)
-     ❗ ROOM ONLY
-  ====================== */
+    // ROOM CHAT (OPTIONAL)
   socket.on("room_message", ({ roomId, text }) => {
     const user = users[socket.id];
     if (!user || !roomId) return;
@@ -99,17 +89,13 @@ export function onlineSocket(io: Server, socket: Socket) {
     });
   });
 
-  /* ======================
-     LEAVE ROOM
-  ====================== */
+    // LEAVE ROOM
   socket.on("leave_room", (roomId: string) => {
     socket.leave(roomId);
     socket.to(roomId).emit("room_player_left", socket.id);
   });
 
-  /* ======================
-     DISCONNECT
-  ====================== */
+     //DISCONNECT
   socket.on("disconnect", () => {
     delete users[socket.id];
 

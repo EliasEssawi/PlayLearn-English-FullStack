@@ -9,7 +9,7 @@ type Props = {
   exercisesType: string;
   darkMode: boolean;
 };
-
+// Normalize exercise type to backend-friendly format
 const normType = (t: string) => (t === "Fill the blank" ? "complete" : t.toLowerCase());
 
 export default function TopicsPage({ exercisesType, darkMode }: Props) {
@@ -26,11 +26,13 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
   const [remaining, setRemaining] = useState<number | null>(null);
   
   const questionStartRef = useRef<number>(Date.now());
+  // PROFILE EXTRACTION
 
   const profileStr = localStorage.getItem("activeProfile");
   if (!profileStr) return null;
 
   const profileObj = JSON.parse(profileStr);
+  // Support multiple stored profile formats
 
   const profileName: string =
     profileObj?.profileName ??
@@ -78,6 +80,7 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
       savingRef.current = false;
     }
   };
+  // FETCH QUESTIONS FROM BACKEND
 
   const fetchQuestions = async (topicParam: string, levelParam: number) => {
     try {
@@ -141,7 +144,7 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
   const key = `${topic}|${typeNorm}`;
   setProgress(prev => ({ ...prev, [key]: res.unlockedLevel }));
 
-  // ⭐ update points immediately (no localStorage needed)
+  // update points immediately (no localStorage needed)
   window.dispatchEvent(new CustomEvent("points-updated", { detail: { delta: 10 } }));
 }
 
@@ -169,7 +172,7 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
     }
   };
 
-  // ---- Levels UI ----
+  // Levels UI 
   const animalsLevels: TopicLevel[] = [
     { id: 1, icon: "⭐" }, { id: 2, icon: "🐶" }, { id: 3, icon: "🐱" }, { id: 4, icon: "🐘" }, { id: 5, icon: "🏆" },
   ];
@@ -188,6 +191,7 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
   const colorsLevels: TopicLevel[] = [
     { id: 1, icon: "🔴" }, { id: 2, icon: "🟡" }, { id: 3, icon: "🔵" }, { id: 4, icon: "🟢" }, { id: 5, icon: "🟣" },
   ];
+  // RENDER
 
   return (
     <div

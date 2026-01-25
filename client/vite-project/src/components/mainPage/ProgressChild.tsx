@@ -2,18 +2,21 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import ProgressCard from "./ProgressCard";
 import { useTheme } from "../context/ThemeContext";
+// Base API URL from environment
 
 const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
+// Supported exercise types
 
 const TYPES = ["translate", "complete", "listening", "talking", "reading"] as const;
 type ExerciseType = (typeof TYPES)[number];
 
-/* ---------- TYPES ---------- */
+/*TYPES */
+// Props passed to the progress page
 type ProgressProps = {
   parentEmail: string;
   childName: string;
 };
-
+// Shape of a single progress card
 type Card = {
   title: ExerciseType | string;
   level: number;
@@ -22,18 +25,18 @@ type Card = {
   solved: number;
   total: number;
 };
-
+// API response structure
 type ApiResponse = {
   success: boolean;
   cards: Card[];
 };
 
-/* ---------- COMPONENT ---------- */
+/*COMPONENT*/
 export default function ProgressChild({
   parentEmail,
   childName,
 }: ProgressProps) {
-  const { darkMode } = useTheme();
+  const { darkMode } = useTheme();  // Get dark mode state from theme context
 
   const [loading, setLoading] = useState(false);
   const [cards, setCards] = useState<Card[]>([]);
@@ -91,6 +94,7 @@ export default function ProgressChild({
             {isOpen ? "▼" : "➜"}
           </span>
         </button>
+        {/* Expanded content */}
 
         {isOpen && (
           <div className={darkMode ? "bg-slate-900 p-5" : "bg-white p-5"}>
@@ -146,10 +150,12 @@ export default function ProgressChild({
     >
       <div className="max-w-5xl mx-auto px-5 py-8">
         <h1 className="text-3xl font-extrabold mb-2">📊 Progress</h1>
+        {/* Child & parent info */}
 
         <p className={darkMode ? "text-slate-400" : "text-slate-600"}>
           👶 {childName} • 👨 {parentEmail}
         </p>
+        {/* Loading or levels */}
 
         {loading ? (
           <div className="text-slate-500 mt-6">Loading levels…</div>

@@ -6,6 +6,7 @@ type QuestionCardProps = {
   correctAnswer: string;
   onAnswer?: (isCorrect: boolean) => void;
 };
+// QUESTION CARD COMPONENT
 
 const QuestionCardWithOptions: React.FC<QuestionCardProps> = ({
   question,
@@ -13,10 +14,14 @@ const QuestionCardWithOptions: React.FC<QuestionCardProps> = ({
   correctAnswer,
   onAnswer,
 }) => {
-  const [selected, setSelected] = useState<string | null>(null);
-  const [isAnswered, setIsAnswered] = useState(false);
+  const [selected, setSelected] = useState<string | null>(null);  // Stores the option selected by the user
 
-  const handleClick = (option: string) => {
+  const [isAnswered, setIsAnswered] = useState(false);  // Indicates whether the question has already been answered
+
+
+  const handleClick = (option: string) => {  // Handle click on an answer option
+    // Prevent multiple answers
+
     if (!isAnswered) {
       setSelected(option);
       setIsAnswered(true);

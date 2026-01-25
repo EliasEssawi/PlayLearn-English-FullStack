@@ -9,6 +9,8 @@ import LoginRightPanel from "../authintication/RightPanel";
 import api from "../../api/axios";
 import BackButton from "../authintication/BackButton";
 
+// TYPES
+// Form data structure for adding a child profile
 
 type AddProfileData = {
   profileName: string;
@@ -16,6 +18,7 @@ type AddProfileData = {
   confirmPin: string;
   rate: number;
 };
+// ADD PROFILE COMPONENT
 
 const AddProfile: React.FC = () => {
   const initialData: AddProfileData = {
@@ -77,8 +80,9 @@ const AddProfile: React.FC = () => {
       setProfileData(initialData);
 
       setTimeout(() => {
-        window.history.back(); // או navigate("/parent-dashboard")
-      }, 2000); // 2 שניות
+        window.history.back(); // navigate("/parent-dashboard")
+      }, 2000); 
+      // Handle backend error
 
     } catch (err) {
       const error = err as AxiosError<{ message?: string }>;

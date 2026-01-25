@@ -1,7 +1,6 @@
 import GameCard from "./GameCard";
 import TranslateGame from "./translate";
 import { useState } from "react";
-// import SentenceGame from "./SentenceGame";
 
 type ActiveGame = "home" | "translate" | "sentence";
 

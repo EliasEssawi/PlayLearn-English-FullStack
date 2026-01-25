@@ -1,4 +1,5 @@
 import { MenuItem, SidebarAction } from "../../Types/Section";
+// PROPS INTERFACE
 
 interface SidebarProps {
   menuItems: MenuItem[];
@@ -9,7 +10,7 @@ interface SidebarProps {
   bottomAction?: SidebarAction;
   darkMode: boolean;
 }
-
+// SIDEBAR COMPONENT
 export default function Sidebar({
   menuItems,
   title,

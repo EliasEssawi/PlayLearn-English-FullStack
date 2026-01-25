@@ -1,5 +1,6 @@
 
 import React, { ReactNode } from 'react';
+// Props definition for a selectable game card
 
 type GameCardProps = {
   title: string;
@@ -7,6 +8,7 @@ type GameCardProps = {
   emoji: string;
   onClick: () => void;
 };
+// Reusable game card component
 
 const GameCard: React.FC<GameCardProps> = ({
   title,

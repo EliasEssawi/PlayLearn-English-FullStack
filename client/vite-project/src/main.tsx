@@ -4,6 +4,7 @@ import App from "./App";
 import "./style.css";
 import { ThemeProvider } from "../src/components/context/ThemeContext";
 import { BrowserRouter } from "react-router-dom";
+// Create React root and render the application
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -14,5 +15,3 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     </ThemeProvider>
   </React.StrictMode>
 );
-
-//force git push
