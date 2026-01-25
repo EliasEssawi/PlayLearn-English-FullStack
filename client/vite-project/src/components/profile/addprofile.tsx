@@ -6,7 +6,7 @@ import Card from "../authintication/Card";
 import Input from "../authintication/Input";
 import Button from "../authintication/Button";
 import LoginRightPanel from "../authintication/RightPanel";
-import api from "../../api/axios.ts";
+import api from "../../api/axios";
 
 
 type AddProfileData = {
@@ -66,9 +66,14 @@ const AddProfile: React.FC = () => {
         rate: profileData.rate,
       });
 
-      alert("Profile added successfully!");
+      setMessage("Profile added successfully! Redirecting...");
+
       setProfileData(initialData);
-      window.history.back();
+
+      setTimeout(() => {
+        window.history.back(); // או navigate("/parent-dashboard")
+      }, 2000); // 2 שניות
+
     } catch (err) {
       const error = err as AxiosError<{ message?: string }>;
       setMessage(error.response?.data?.message || "Failed to add profile.");

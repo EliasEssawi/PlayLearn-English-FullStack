@@ -1,9 +1,21 @@
+import { useEffect } from "react";
+
 type ResultBarProps = {
-  correct: boolean
-  onContinue: () => void
-}
+  correct: boolean;
+  onContinue: () => void;
+};
 
 export default function ResultBar({ correct, onContinue }: ResultBarProps) {
+
+  // ⏱️ מעבר אוטומטי אחרי 1.5 שניות
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onContinue();
+    }, 4000);
+
+    return () => clearTimeout(timer);
+  }, [onContinue]);
+
   return (
     <div
       className={`fixed bottom-0 left-0 right-0 px-6 py-4 flex items-center justify-between
@@ -21,6 +33,7 @@ export default function ResultBar({ correct, onContinue }: ResultBarProps) {
         </span>
       </div>
 
+      {/* כפתור נשאר כאופציה – לא חובה ללחוץ */}
       <button
         onClick={onContinue}
         className="bg-lime-500 text-black px-6 py-2 rounded-full font-bold hover:bg-lime-400"
@@ -28,5 +41,5 @@ export default function ResultBar({ correct, onContinue }: ResultBarProps) {
         CONTINUE
       </button>
     </div>
-  )
+  );
 }

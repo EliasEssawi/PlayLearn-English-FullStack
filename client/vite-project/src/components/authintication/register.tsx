@@ -124,9 +124,13 @@ if (age < 24 || age > 100) {
       //Reset form
       setUserData(initialUserData);
       setUserAnswer(""); // If you have a CAPTCHA field
-      alert("Registered successfully!");
-        // ✅ מעבר אוטומטי ל־Login
+      setMessage("Registered successfully! Redirecting to login...");
+
+      // מעבר אוטומטי אחרי 2.5 שניות
+      setTimeout(() => {
       navigate("/login");
+      }, 2500);
+
       
     } catch (err) {
       const error = err as AxiosError<{ message?: string }>;
