@@ -1,12 +1,15 @@
 import mongoose, { Schema } from "mongoose";
 
+// TypeScript interface representing a user profile
+
 export interface Profile {
   profileName: string;
   pin: string;
   progress: Record<string, any>;
   points: number;
-  rate: number;   // ✅ חדש
+  rate: number;   
 }
+// Schema representing a single answered question
 
 const AnswerSchema = new Schema(
   {
@@ -20,7 +23,7 @@ const AnswerSchema = new Schema(
   },
   { _id: false }
 );
-
+// Embedded schema representing a user profile inside User
 export const ProfileSchema = new Schema<Profile>(
   {
     profileName: { type: String, required: true, trim: true },
@@ -41,20 +44,8 @@ export const ProfileSchema = new Schema<Profile>(
 );
 
 
-/*export const ProfileSchema = new Schema<Profile>(
-  {
-    profileName: { type: String, required: true, trim: true },
-    pin: { type: String, required: true },
-    progress: { type: mongoose.Schema.Types.Mixed, default: {} },
-    points: { type: Number, default: 0 },
-    rate: {
-      type: Number,
-      required: true,
-      default:1,
-      min: 1,
-      max: 5,
-    },
-  },
-  { _id: false }
-);*/
+/*
+  Legacy profile schema kept for reference.
+  Uses a generic Mixed type for progress instead of structured tracking.
+*/
 

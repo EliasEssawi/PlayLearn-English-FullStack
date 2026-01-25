@@ -1,7 +1,7 @@
 /**
  * Developer: Elias Essawi & PlayLearn Team
+ * Main server entry point (Express + MongoDB + Socket.IO)
  */
-
 import dotenv from "dotenv";
 import express, { Request, Response, NextFunction } from "express";
 import mongoose from "mongoose";
@@ -16,15 +16,19 @@ import { callSocket } from "./controllers/callSocket";
 import { User } from "./models/User";
 import { Exercise } from "./models/Exercise";
 
-// ✅ sockets (controllers)
+// Socket controllers (each feature separated)
 import { onlineSocket } from "./controllers/onlinesocket";
-import { gameSocket } from "./controllers/gamesocket"; // if you have it
+import { gameSocket } from "./controllers/gamesocket"; // game socket logic (if exists)
+// Load environment variables based on environment type
 
 dotenv.config({
   path: process.env.NODE_ENV === "production" ? ".env.production" : ".env.development",
 });
+// Create Express application
 
 const app = express();
+// Enable trust proxy (required for Render / Vercel deployments)
+
 app.set("trust proxy", 1);
 
 // --------------------
@@ -39,6 +43,7 @@ app.use(
     origin: (origin, cb) => {
       // allow server-to-server / curl / render health checks
       if (!origin) return cb(null, true);
+      // Explicitly allowed origins
 
       const allowedExact = new Set<string>([
         "http://localhost:5173",
@@ -73,6 +78,8 @@ const MONGO_URI = process.env.MONGO_URI || "";
 if (!MONGO_URI) {
   console.error("CRITICAL: MONGO_URI is missing from .env!");
 } else {
+    // Connect to MongoDB
+
   mongoose
     .connect(MONGO_URI)
     .then(() => console.log("✅ DB STATUS: Connected Successfully"))
@@ -117,6 +124,7 @@ app.get("/api/getAllUsers", async (_req, res) => {
     return res.status(500).json({ error: "Failed to fetch users" });
   }
 });
+// Fetch all users (admin/testing purpose)
 
 app.get("/api/getAllQuestions", async (_req, res) => {
   try {
@@ -130,7 +138,7 @@ app.get("/api/getAllQuestions", async (_req, res) => {
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
 // --------------------
-// ✅ Server + Socket.IO (FIX 404 HANDSHAKE)
+// Server + Socket.IO (FIX 404 HANDSHAKE)
 // --------------------
 const server = http.createServer(app);
 
@@ -153,11 +161,11 @@ const io = new SocketIOServer(server, {
   transports: ["websocket", "polling"],
 });
 
-// ✅ ONE connection handler that registers BOTH features
+//  ONE connection handler that registers BOTH features
 io.on("connection", (socket) => {
   onlineSocket(io, socket); // global floating chat
-  gameSocket(io, socket);   // 1v1 rooms + questions (remove if you don't have it yet)
-  callSocket(io,socket);
+  gameSocket(io, socket);   // 1v1 rooms + questions 
+  callSocket(io, socket);   // call / real-time communication
 });
 
 

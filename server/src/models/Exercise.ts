@@ -1,6 +1,8 @@
 // models/Exercise.ts
 import mongoose, { Schema, Document } from "mongoose";
 
+// TypeScript interface representing an exercise/question document
+
 export interface IExercise extends Document {
   level: number;
   topic: string;
@@ -9,6 +11,7 @@ export interface IExercise extends Document {
   options: string[];
   answer: string;
 }
+// Mongoose schema defining the structure of an exercise
 
 const ExerciseSchema: Schema = new Schema({
   level: { type: Number, required: true },
@@ -18,5 +21,5 @@ const ExerciseSchema: Schema = new Schema({
   options: [{ type: String, required: true }],
   answer: { type: String, required: true },
 });
-
+// Export Mongoose model bound to the "excersises" collection
 export const Exercise = mongoose.model<IExercise>("Exercise", ExerciseSchema, "excersises");

@@ -15,6 +15,8 @@ const profileRouter = express.Router();
 /* =========================
    ADD PROFILE
 ========================= */
+// Create a new profile for the authenticated user
+
 profileRouter.post(
   "/",
   authMiddleware,
@@ -32,7 +34,7 @@ profileRouter.post(
   verifyProfilePin
 );
 /* =============================================
-   הוספה: נתיב לעדכון PIN
+   ADDITION: ROUTE TO UPDATE PROFILE PIN
    ============================================= */
 profileRouter.put(
   "/update-pin",
@@ -40,9 +42,8 @@ profileRouter.put(
   buyActionLimiter,
   updateProfilePin
 );
-/* =============================================
-   סיום הוספה
-   ============================================= */
+
+// Retrieve questions for a specific profile and level
 
 profileRouter.post(
   "/getQuestions",
@@ -50,6 +51,7 @@ profileRouter.post(
   buyActionLimiter,
   getProfileQuestions
 );
+// Save an answer submitted by a profile
 
 profileRouter.post(
   "/saveAnswer",
@@ -57,6 +59,8 @@ profileRouter.post(
   buyActionLimiter,
   SetProfileAnswer
 )
+// Get detailed progress data for a profile
+
 
 profileRouter.post(
   "/getProgress",

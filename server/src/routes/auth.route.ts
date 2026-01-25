@@ -3,7 +3,9 @@ import { Request, Response } from "express";
 import { Router } from "express";
 
 const authRouter = Router();
-
+// ---------------------------
+// AUTHENTICATE CURRENT USER
+// --------------------------
 authRouter.get("/authMe", authMiddleware, (req: AuthRequest, res: Response) => {
   console.log("found me");
   res.json({
@@ -14,8 +16,10 @@ authRouter.get("/authMe", authMiddleware, (req: AuthRequest, res: Response) => {
     },
   });
 });
+// LOGOUT
 
 authRouter.post("/logout", logout);
+// HEALTH CHECK
 
 authRouter.get("/", (req: Request, res: Response) => {
   res.send("Auth OK");

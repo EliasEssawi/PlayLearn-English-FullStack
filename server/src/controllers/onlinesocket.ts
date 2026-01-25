@@ -5,21 +5,15 @@ type User = {
   name: string;
 };
 
-/* ======================
-   GLOBAL (LOBBY) STATE
-====================== */
+   //GLOBAL (LOBBY) STATE
 const users: Record<string, User> = {};
 const MAX_USERS = Number(process.env.MAX_ONLINE_USERS || 20);
 
-/* ======================
-   ROOM (GAME) STATE
-====================== */
+   //ROOM (GAME) STATE
 const MAX_PER_ROOM = 2;
 
 export function onlineSocket(io: Server, socket: Socket) {
-  /* ======================
-     HARD LIMIT: TOTAL USERS
-  ====================== */
+    // HARD LIMIT: TOTAL USERS
   if (Object.keys(users).length >= MAX_USERS) {
     socket.emit("room_full", { message: "Server is full. Try again later." });
     socket.disconnect(true);

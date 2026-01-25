@@ -1,10 +1,12 @@
 import { User, IUser } from "../models/User";
 import crypto from "crypto";
+// Check if a user exists in the database by email
 
 export async function checkUserExists(email: string): Promise<boolean> {
   const exists = await User.findOne({ email });
   return exists ? true : false;
 }
+// Retrieve a user document by email
 
 export async function GetUser(email: string): Promise<IUser | null> {
   const user = await User.findOne({ email });
