@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import ProgressCard from "./ProgressCard";
 import MainLayout from "../authintication/MainLayout";
-import { useTheme } from "../context/ThemeContext"; // ✅ חדש
+import { useTheme } from "../context/ThemeContext"; 
 
 const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
 

@@ -24,5 +24,5 @@ authRouter.post("/logout", logout);
 authRouter.get("/", (req: Request, res: Response) => {
   res.send("Auth OK");
 });
-
+//
 module.exports = authRouter;
