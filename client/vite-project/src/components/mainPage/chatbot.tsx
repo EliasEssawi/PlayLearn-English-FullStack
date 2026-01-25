@@ -1,16 +1,19 @@
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 
+// Message shape used by the chatbot UI
 type Msg = {
   role: "user" | "bot";
   text: string;
   time: string;
 };
 
+// Props passed from parent (theme handling)
 type ChatBotProps = {
   darkMode: boolean;
 };
 
+// Converts local messages format to server-compatible format
 function toServerMessages(msgs: Msg[]) {
   return msgs.map((m) => ({
     role: m.role === "user" ? "user" : "assistant",
@@ -19,11 +22,12 @@ function toServerMessages(msgs: Msg[]) {
 }
 
 export default function ChatBot({ darkMode }: ChatBotProps) {
-  // ✅ NEW session each refresh (in-memory only)
+  // Unique session ID (resets on refresh → stateless chat per page load)
   const sessionIdRef = useRef<string>(
     crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`
   );
 
+  // Chat message history (client-side state)
   const [messages, setMessages] = useState<Msg[]>([
     {
       role: "bot",
@@ -32,11 +36,14 @@ export default function ChatBot({ darkMode }: ChatBotProps) {
     },
   ]);
 
+  // Current input value and loading state
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Ref for auto-scrolling to the bottom
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
+  // Auto-scroll when messages update or bot is typing
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
@@ -53,14 +60,16 @@ export default function ChatBot({ darkMode }: ChatBotProps) {
     setLoading(true);
 
     try {
+      // Send message + conversation context to the server
       const { data } = await axios.post("/api/chatbot", {
         message: text,
-        sessionId: sessionIdRef.current, // ✅ refresh -> new id -> memory cleared
+        sessionId: sessionIdRef.current,
         messages: toServerMessages(nextLocal),
       });
 
       const reply = String(data?.reply ?? "").trim() || "No reply.";
 
+      // If server returns rebuilt conversation, replace local state
       if (Array.isArray(data?.messages)) {
         const serverMsgs = data.messages as { role: "user" | "assistant"; text: string }[];
         const rebuilt: Msg[] = serverMsgs.map((m) => ({
@@ -70,12 +79,14 @@ export default function ChatBot({ darkMode }: ChatBotProps) {
         }));
         setMessages(rebuilt);
       } else {
+        // Otherwise append single bot reply
         setMessages((prev) => [
           ...prev,
           { role: "bot", text: reply, time: new Date().toLocaleTimeString() },
         ]);
       }
     } catch {
+      // Fallback error message on server failure
       setMessages((prev) => [
         ...prev,
         {
@@ -89,6 +100,7 @@ export default function ChatBot({ darkMode }: ChatBotProps) {
     }
   };
 
+  // Allows sending message with Enter (Shift+Enter for newline)
   const onKeyDown: React.KeyboardEventHandler<HTMLTextAreaElement> = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -106,7 +118,10 @@ export default function ChatBot({ darkMode }: ChatBotProps) {
         color: darkMode ? "#f8fafc" : "#0f172a",
       }}
     >
+      {/* Chat header */}
       <h2 className="text-2xl font-bold mb-2">Chatbot</h2>
+      
+      {/* Chat messages container */}
       <p style={{ color: darkMode ? "#94a3b8" : "#475569" }}>
         Talk to the English practice assistant. Press <b>Enter</b> to send,{" "}
         <b>Shift+Enter</b> for new line.{" "}
@@ -183,6 +198,7 @@ export default function ChatBot({ darkMode }: ChatBotProps) {
         <div ref={bottomRef} />
       </div>
 
+        {/* Input area */}
       <div style={{ marginTop: 12 }}>
         <textarea
           value={input}
@@ -202,6 +218,7 @@ export default function ChatBot({ darkMode }: ChatBotProps) {
           }}
         />
 
+          {/* Send button */}
         <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
           <button
             onClick={() => void sendMessage()}

@@ -15,53 +15,63 @@ import api from "../../api/axios";
 
 
 export default function Login() {
+  // Local type for storing login form data
   type UserData = {
     email: string;
     password: string;
   };
 
-  const navigate = useNavigate(); // ✅ שלב 1 – ניווט
+  // React Router navigation hook
+  const navigate = useNavigate();
 
+  // Feedback message (error/success)
   const [message, setMessage] = useState<string>("");
 
+  // Initial empty form state
   const initialUserData: UserData = {
     email: "",
     password: ""
   };
 
+  // Controlled form state
   const [userData, setUserData] = useState<UserData>(initialUserData);
 
+  // Updates form state on input change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = e.target;
     setUserData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Handles login form submission
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     setMessage("");
 
+    // Prepare login request payload
     const payload: LoginRequest = {
       email: userData.email.trim().toLowerCase(),
       password: userData.password,
     };
 
     try {
-      //send login message to server
       /*
-        { withCredentials: true } does :
-        ✔ Browser receives Set-Cookie header
-        ✔ Browser stores cookie automatically
-        ✔ Cookie is sent on every next request
-        ✔ JS cannot read it (secure)
+        withCredentials behavior:
+        - Browser receives Set-Cookie from server
+        - Cookie is stored automatically
+        - Cookie is sent on future requests
+        - Cookie is not accessible via JavaScript (security)
       */
       await api.post<LoginResponse>("/api/public/login", payload);
+
+      // Store logged-in user identifier locally
       localStorage.setItem("loggedInUser", payload.email);
 
-      //navigate — auth is now server-side
+      // Redirect user to profile selection after successful login
       navigate("/chooseProfile");
       
 
     } catch (err) {
+      // Display server-side or generic error message
       const error = err as AxiosError<{ message?: string }>;
       setMessage(error.response?.data?.message ||"Login failed.");
     }
@@ -74,6 +84,7 @@ export default function Login() {
           <LoginHeader />
 
           <form onSubmit={handleSubmit}>
+            {/* Email / username input */}
             <LoginInput
               label="Username or Email"
               placeholder="you@example.com"
@@ -82,6 +93,7 @@ export default function Login() {
               name="email"
             />
 
+            {/* Password input */}
             <LoginInput
               label="Password"
               type="password"
@@ -91,10 +103,13 @@ export default function Login() {
               name="password"
             />
 
+            {/* Submit login form */}
             <ButtonLogin />
 
+            {/* Error message display */}
             {message && <div className="error">{message}</div>}
 
+            {/* Auxiliary navigation actions */}
             <div className="flex justify-between">
               <LoginActions
                 text="Forgot password?"

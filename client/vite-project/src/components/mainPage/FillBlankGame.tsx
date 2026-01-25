@@ -2,6 +2,7 @@ import { useState } from "react"
 import AnswerButton from "./AnswerButton"
 import ResultBar from "./ResultBar"
 
+// Props for the Fill-in-the-Blank game component
 type FillBlankGameProps = {
   title?: string
   question: string
@@ -19,18 +20,21 @@ export default function FillBlankGame({
   onContinue,
   darkMode,
 }: FillBlankGameProps) {
+  // Selected answer and result visibility
   const [selected, setSelected] = useState<string | null>(null)
   const [showResult, setShowResult] = useState(false)
 
+  // Whether the selected answer is correct
   const isCorrect = selected === correctAnswer
 
+  // Handles answer selection (only once per question)
   const handleAnswer = (option: string) => {
     if (selected) return
     setSelected(option)
     setShowResult(true)
   }
 
-  // החלפת הקו התחתון בתשובה הנכונה במידה והמשתמש צדק
+  // Replaces the blank with the correct answer only if the user answered correctly
   const renderedQuestion = question.replace(
     "______",
     selected === correctAnswer ? correctAnswer : "______"
@@ -61,7 +65,7 @@ export default function FillBlankGame({
         ))}
       </div>
 
-      {/* Answers */}
+      {/* Answers Options*/}
       <div className="space-y-4">
         {options.map((opt, i) => {
           let state: "idle" | "correct" | "wrong" | "disabled" = "idle"
@@ -85,7 +89,7 @@ export default function FillBlankGame({
         })}
       </div>
 
-      {/* Continue button + Result */}
+      {/* Continue button + Result FeedBack*/}
       {showResult && (
         <ResultBar
           correct={isCorrect}

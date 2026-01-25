@@ -1,14 +1,19 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
+// Props for a reusable back navigation button
+// - children: optional custom button text
+// - btnProp: optional CSS class override
 type Props = {
   children?: React.ReactNode;
   btnProp?: string;
 };
 
+// Button component that navigates one step back in browser history
 function BackButton({ children = "Go Back", btnProp }: Props) {
   const navigate = useNavigate();
 
+  // Navigates to the previous page
   const handleBack = () => {
     navigate(-1);
   };

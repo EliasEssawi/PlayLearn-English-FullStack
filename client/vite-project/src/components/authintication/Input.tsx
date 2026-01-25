@@ -1,5 +1,7 @@
 import React from "react";
 
+// Props definition for a reusable authentication input field
+// Supports optional constraints such as min/max for validation
 type Props = {
   label: string;
   type?: string;
@@ -9,11 +11,12 @@ type Props = {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   name?: string;
 
-  /* ✅ additions only */
+  // Optional numeric constraints (used when relevant)
   min?: number;
   max?: number;
 };
 
+// Reusable input component used in authentication forms
 export default function LoginInput({
   label,
   type = "text",
@@ -27,7 +30,10 @@ export default function LoginInput({
 }: Props) {
   return (
     <div style={{ marginBottom: "1rem" }}>
+      {/* Input label */}
       <label className="auth-label">{label}</label>
+
+      {/* Controlled input field */}
       <input
         name={name}
         type={type}
@@ -36,10 +42,8 @@ export default function LoginInput({
         onChange={onChange}
         placeholder={placeholder}
         className="auth-input"
-
-        /* ✅ added – no behavior change */
-        min={min}
-        max={max}
+        min={min} // Optional minimum value constraint
+        max={max} // Optional maximum value constraint
       />
     </div>
   );

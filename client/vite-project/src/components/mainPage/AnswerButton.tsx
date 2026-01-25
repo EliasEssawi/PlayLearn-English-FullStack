@@ -16,7 +16,7 @@ export default function AnswerButton({
   const base =
     "w-full flex items-center gap-4 px-4 py-4 rounded-xl font-semibold text-lg transition-all select-none"
 
-  // הגדרת סגנונות לפי darkMode ומצב הכפתור
+  // Returns Tailwind classes depending on the button state + dark mode
   const getStylesByState = () => {
     switch (state) {
       case "correct":
@@ -39,12 +39,12 @@ export default function AnswerButton({
       disabled={state !== "idle"}
       className={`${base} ${getStylesByState()}`}
     >
-      {/* מספר זיהוי (Badge) */}
+      {/* Badge: shows the option index */}
       <div className="w-8 h-8 flex items-center justify-center rounded-md border border-current text-sm font-bold shrink-0">
         {index}
       </div>
 
-      {/* טקסט התשובה */}
+      {/* Answer text (RTL on small screens, centered on large screens) */}
       <span className="flex-1 text-right lg:text-center">{text}</span>
     </button>
   )

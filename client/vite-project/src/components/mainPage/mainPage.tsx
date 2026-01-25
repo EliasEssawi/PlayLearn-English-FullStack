@@ -15,27 +15,36 @@ import Online from "../mainPage/Online";
 import io from "socket.io-client";
 import { useMemo } from "react";
 import FloatingVideoButton from "../call/FloatingVideoButton";
+
 export default function MainPage() {
   // -------------------------
   // 🎥 Video Call Socket
   // -------------------------
+  // Socket server URL (env first, fallback to localhost for dev)
   const SOCKET_URL =
     import.meta.env.VITE_SOCKET_URL || "http://localhost:5001";
 
+  // Create the socket instance once (memoized) so it doesn't reconnect on every render
   const socket = useMemo(
     () => io(SOCKET_URL, { transports: ["websocket"] }),
     []
   );
   const navigate = useNavigate();
-  const { darkMode } = useTheme();
+  const { darkMode } = useTheme();  // Global theme state (dark/light)
 
-  /* 🔐 Check login */
+  // -------------------------
+  // 🔐 Auth Guard
+  // -------------------------
+  // On mount: verify the user is logged in; if not, redirect to login
   useEffect(() => {
     isLoggedIn().then(ok => {
       if (!ok) navigate("/login");
     });
   }, [navigate]);
 
+  // -------------------------
+  // 📌 Sidebar Menu
+  // -------------------------
   const menuItems: MenuItem[] = [
     { name: "Talking", icon: "🗣️" },
     { name: "Reading", icon: "📖" },
@@ -51,31 +60,44 @@ export default function MainPage() {
    
   ];
 
+  // Which section is currently selected in the sidebar
   const [activeSection, setActiveSection] = useState("Talking");
 
+  // Used to show the current page title + icon in the Header
   const activeMenuItem =
     menuItems.find(m => m.name === activeSection) ||
     menuItemsSecondry.find(m => m.name === activeSection);
 
-  /* 📦 localStorage */
+  // -------------------------
+  // 📦 Active Profile from localStorage
+  // -------------------------
+  // Child profile (chosen earlier) is stored locally so we can use it across refresh
   const activeProfileRaw = localStorage.getItem("activeProfile");
   const activeProfile = activeProfileRaw ? JSON.parse(activeProfileRaw) : null;
+
+  // Parent email used to build a unique user id for sockets/video calls
   const parentEmail = String(localStorage.getItem("loggedInUser") || "")
     .trim()
     .toLowerCase();
 
+  // Child profile name - supports both shapes (profileName OR email.profileName)
   const childName = String(
-  activeProfile?.profileName || activeProfile?.email?.profileName || ""
-).trim();
+    activeProfile?.profileName || activeProfile?.email?.profileName || ""
+  ).trim();
 
-const myUserId =
-  parentEmail && childName
-    ? `${parentEmail.toLowerCase()}::${childName.toLowerCase()}`
-    : "";
+  // Unique call/socket id: "parentEmail::childName"
+  const myUserId =
+    parentEmail && childName
+      ? `${parentEmail.toLowerCase()}::${childName.toLowerCase()}`
+      : "";
   
+  // -------------------------
+  // ⭐ Points
+  // -------------------------
   const [points, setPoints] = useState(0);
 
-  // ⏱ initial load (for refresh / first entry)
+  // Calculate points once based on saved progress in localStorage
+  // (counts unique correct questionIds * 10)
   function calculatePointsFromLocalStorage(): number {
     const raw = localStorage.getItem("activeProfile");
     if (!raw) return 0;
@@ -95,11 +117,12 @@ const myUserId =
     return solvedIds.size * 10;
   }
 
+  // Initial load of points (works after refresh / first entry)
   useEffect(() => {
     setPoints(calculatePointsFromLocalStorage());
   }, []);
 
-  // ⭐⭐⭐ THIS IS THE FIX – live points update ⭐⭐⭐
+  // Listen for a custom event to update points live while the user plays
   useEffect(() => {
     const onPointsUpdated = (e: any) => {
       const delta = Number(e?.detail?.delta ?? 0);
@@ -113,11 +136,15 @@ const myUserId =
       window.removeEventListener("points-updated", onPointsUpdated);
     };
   }, []);
-  // ⭐⭐⭐ END FIX ⭐⭐⭐
 
+
+  // -------------------------
+  // 🧩 Main content switch
+  // -------------------------
   const renderMainContent = () => {
     switch (activeSection) {
       case "View Progress":
+        // Require profile selected to view progress page
         if (!parentEmail || !childName) {
           return (
             <div style={{ color: "#6b7280", fontStyle: "italic" }}>
@@ -133,6 +160,7 @@ const myUserId =
       case "Vocabulary":
         return <VocabularyHome />;
 
+      // Each exercise type loads the same TopicsPage component but with different prop
       case "Talking":
         return <TopicsPage exercisesType="Talking" darkMode={darkMode} />;
 
@@ -150,7 +178,7 @@ const myUserId =
       case "Play Online":
         return <Online darkMode={darkMode} />;
       default:
-        
+        // Fallback for any future/unknown sections
         return (
           <div style={{ color: darkMode ? "#d1d5db" : "#6b7280", fontStyle: "italic" }}>
             This section is coming soon 🚧
@@ -186,16 +214,18 @@ const myUserId =
             imgUrl="https://cdn-icons-png.flaticon.com/512/2922/2922510.png"
           />
 
+          {/* Render the selected page */}
           <div className="flex-1">{renderMainContent()}</div>
         </main>
       </div>
 
-   {activeSection === "Play Online" && (
-  <>
-    <OnlineChatWidget darkMode={darkMode} />
-    <FloatingVideoButton socket={socket} myUserId={myUserId} darkMode={darkMode} />
-  </>
-)}
-</MainLayout>
+      {/* Only show online widgets while in "Play Online" section */}
+      {activeSection === "Play Online" && (
+        <>
+          <OnlineChatWidget darkMode={darkMode} />
+          <FloatingVideoButton socket={socket} myUserId={myUserId} darkMode={darkMode} />
+        </>
+      )}
+    </MainLayout>
   );
 }

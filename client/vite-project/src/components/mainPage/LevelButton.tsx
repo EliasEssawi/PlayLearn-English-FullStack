@@ -15,7 +15,7 @@ export default function LevelButton({
   darkMode = false,
 }: LevelButtonProps) {
   
-  // לוגיקת הצבעים: ב-Dark Mode העיגול לבן והאייקון שחור
+  // Returns Tailwind styles based on lock state and theme
   const getDynamicStyles = () => {
     if (locked) {
       return "bg-gray-600 text-gray-300 shadow-[0_6px_0_#374151] cursor-not-allowed";

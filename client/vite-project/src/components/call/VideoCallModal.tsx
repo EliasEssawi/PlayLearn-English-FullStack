@@ -10,10 +10,12 @@ type Props = {
 
 type Status = "idle" | "ringing" | "calling" | "connecting" | "in_call";
 
+// WebRTC config: uses Google's public STUN server for ICE candidate discovery
 const rtcConfig: RTCConfiguration = {
   iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
 };
 
+// Normalize string inputs for consistent IDs (trim + lowercase)
 function norm(x: any) {
   return String(x ?? "").trim().toLowerCase();
 }
@@ -22,33 +24,49 @@ function norm(x: any) {
 function buildUserId(input: string) {
   const raw = String(input ?? "").trim();
   if (!raw) return "";
-  // if user pasted email::profile
+
+  // If user pasted a combined id: email::profile
   if (raw.includes("::")) {
     const [email, profile] = raw.split("::");
     if (!email || !profile) return "";
     return `${norm(email)}::${norm(profile)}`;
   }
-  return ""; // invalid for single-field (we use 2 inputs below)
+
+  // Invalid for single-field usage in this component (we use 2 inputs below)
+  return "";
 }
 
 export default function VideoCallModal({ socket, myUserId, open, onClose }: Props) {
+  // Refs for attaching MediaStreams to <video> elements
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
+
+  // Keeps the RTCPeerConnection alive across renders
   const pcRef = useRef<RTCPeerConnection | null>(null);
+
+  // Keeps local media stream alive across renders
   const localStreamRef = useRef<MediaStream | null>(null);
 
+  // Incoming call (who is calling me)
   const [incomingFrom, setIncomingFrom] = useState<string | null>(null);
+
+  // Who I'm currently calling / connected with
   const [callWith, setCallWith] = useState<string | null>(null);
+
+  // Ref mirror for callWith (useful inside callbacks without stale state)
   const callWithRef = useRef<string | null>(null);
 
+  // Call status for UI and behavior
   const [status, setStatus] = useState<Status>("idle");
+
+  // UI message line (errors, "connected", etc.)
   const [notice, setNotice] = useState<string>("");
 
-  // ✅ nicer UX: user enters email + profile separately
+  // nicer UX: user enters email + profile separately
   const [emailInput, setEmailInput] = useState("");
   const [profileInput, setProfileInput] = useState("");
 
-  // optional: still allow paste full id
+  // Optional: allow paste full id (email::profile)
   const [toIdPaste, setToIdPaste] = useState("");
 
   const isConnecting = status === "connecting";
@@ -57,6 +75,8 @@ export default function VideoCallModal({ socket, myUserId, open, onClose }: Prop
   // ---------------------------
   // Helpers
   // ---------------------------
+
+  // Starts camera+mic and shows local preview
   async function startLocalStream() {
     if (localStreamRef.current) return;
 
@@ -69,7 +89,7 @@ export default function VideoCallModal({ socket, myUserId, open, onClose }: Prop
       localStreamRef.current = stream;
       if (localVideoRef.current) localVideoRef.current.srcObject = stream;
     } catch (err: any) {
-      // ✅ NotReadableError = camera already in use (common when testing from same PC / 2 browsers)
+      // NotReadableError = camera already in use (common during testing)
       const name = String(err?.name || "");
       if (name === "NotReadableError") {
         setNotice(
@@ -84,12 +104,14 @@ export default function VideoCallModal({ socket, myUserId, open, onClose }: Prop
     }
   }
 
+  // Creates (or returns existing) peer connection and wires events
   function createPeer(toUserId: string) {
     if (pcRef.current) return pcRef.current;
 
     const pc = new RTCPeerConnection(rtcConfig);
     pcRef.current = pc;
 
+    // When remote track arrives, attach it to the remote video
     pc.ontrack = (e) => {
       const remoteStream = e.streams?.[0];
       if (remoteStream && remoteVideoRef.current) {
@@ -97,12 +119,14 @@ export default function VideoCallModal({ socket, myUserId, open, onClose }: Prop
       }
     };
 
+    // Send ICE candidates to the other user via socket signaling
     pc.onicecandidate = (e) => {
       if (e.candidate) {
         socket.emit("call:ice", { toUserId, candidate: e.candidate });
       }
     };
 
+    // Track connection state for UI + auto cleanup on failure/disconnect
     pc.onconnectionstatechange = () => {
       if (pc.connectionState === "connected") {
         setStatus("in_call");
@@ -116,6 +140,7 @@ export default function VideoCallModal({ socket, myUserId, open, onClose }: Prop
     return pc;
   }
 
+  // Stops everything locally (peer + streams + UI state)
   function cleanup() {
     try {
       pcRef.current?.close();
@@ -134,6 +159,7 @@ export default function VideoCallModal({ socket, myUserId, open, onClose }: Prop
     setStatus("idle");
   }
 
+  // Ends call (optionally notify other side)
   function hangUp(notify: boolean) {
     const other = callWithRef.current;
     if (notify && other) socket.emit("call:end", { toUserId: other });
@@ -141,6 +167,7 @@ export default function VideoCallModal({ socket, myUserId, open, onClose }: Prop
     cleanup();
   }
 
+  // Keeps callWith state + ref in sync
   function setOther(userId: string | null) {
     setCallWith(userId);
     callWithRef.current = userId;
@@ -152,13 +179,18 @@ export default function VideoCallModal({ socket, myUserId, open, onClose }: Prop
   useEffect(() => {
     if (!open) return;
 
-    const me = buildUserId(myUserId) || norm(myUserId); // in case you already pass normalized "email::name"
+    // If parent passes already-normalized id, this fallback keeps it usable
+    const me = buildUserId(myUserId) || norm(myUserId);
+    
+    // Helps catch mis-config where myUserId isn't in "email::profile" format
     if (!me.includes("::")) {
       setNotice("⚠️ Your Call ID is missing. Make sure parentEmail + profileName exist.");
     }
 
+    // Let server know this user is online (for routing calls)
     socket.emit("user:online", { userId: me });
 
+    // Someone is calling me
     const onIncoming = ({ fromUserId }: { fromUserId: string }) => {
       const from = buildUserId(fromUserId) || norm(fromUserId);
       setIncomingFrom(from);
@@ -166,6 +198,7 @@ export default function VideoCallModal({ socket, myUserId, open, onClose }: Prop
       setStatus("ringing");
     };
 
+    // Other side accepted my call request -> I create offer
     const onAccept = async ({ fromUserId }: { fromUserId: string }) => {
       const from = buildUserId(fromUserId) || norm(fromUserId);
 
@@ -176,21 +209,25 @@ export default function VideoCallModal({ socket, myUserId, open, onClose }: Prop
       await startLocalStream();
       const pc = createPeer(from);
 
+      // Add local tracks to peer connection
       localStreamRef.current!.getTracks().forEach((t) => {
         pc.addTrack(t, localStreamRef.current!);
       });
 
+      // Create and send offe
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
       socket.emit("call:offer", { toUserId: from, offer });
     };
 
+    // Other side declined my request
     const onDecline = () => {
       setNotice("❌ Declined");
       hangUp(false);
     };
 
+    // I received an offer -> I answer
     const onOffer = async ({ fromUserId, offer }: { fromUserId: string; offer: any }) => {
       const from = buildUserId(fromUserId) || norm(fromUserId);
 
@@ -201,10 +238,12 @@ export default function VideoCallModal({ socket, myUserId, open, onClose }: Prop
       await startLocalStream();
       const pc = createPeer(from);
 
+      // Add my local tracks
       localStreamRef.current!.getTracks().forEach((t) => {
         pc.addTrack(t, localStreamRef.current!);
       });
 
+      // Set remote offer, create answer, send back
       await pc.setRemoteDescription(new RTCSessionDescription(offer));
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
@@ -212,12 +251,14 @@ export default function VideoCallModal({ socket, myUserId, open, onClose }: Prop
       socket.emit("call:answer", { toUserId: from, answer });
     };
 
+    // I received an answer to my offer
     const onAnswer = async ({ answer }: { answer: any }) => {
       const pc = pcRef.current;
       if (!pc) return;
       await pc.setRemoteDescription(new RTCSessionDescription(answer));
     };
 
+    // ICE candidate from other side
     const onIce = async ({ candidate }: { candidate: any }) => {
       const pc = pcRef.current;
       if (!pc) return;
@@ -226,17 +267,20 @@ export default function VideoCallModal({ socket, myUserId, open, onClose }: Prop
       } catch {}
     };
 
+    // Other side ended call
     const onEnd = () => {
       setNotice("📴 Other side ended call");
       hangUp(false);
     };
 
+    // Generic server-side signaling error
     const onError = ({ message }: { message: string }) => {
       setNotice(`⚠️ ${message}`);
       setStatus("idle");
       setOther(null);
     };
 
+    // Register socket handlers
     socket.on("call:incoming", onIncoming);
     socket.on("call:accept", onAccept);
     socket.on("call:decline", onDecline);
@@ -246,6 +290,7 @@ export default function VideoCallModal({ socket, myUserId, open, onClose }: Prop
     socket.on("call:end", onEnd);
     socket.on("call:error", onError);
 
+    // Cleanup handlers on unmount / when modal closes
     return () => {
       socket.off("call:incoming", onIncoming);
       socket.off("call:accept", onAccept);
@@ -261,6 +306,8 @@ export default function VideoCallModal({ socket, myUserId, open, onClose }: Prop
   // ---------------------------
   // Actions
   // ---------------------------
+
+  // Starts a call by entering email + profile (builds id as email::profile)
   async function startCallByEmailProfile() {
     const email = norm(emailInput);
     const profile = norm(profileInput);
@@ -274,9 +321,11 @@ export default function VideoCallModal({ socket, myUserId, open, onClose }: Prop
     setNotice(`📞 Calling ${toUserId}...`);
     setStatus("calling");
 
+    // Ask server to route call request to the target user
     socket.emit("call:request", { toUserId });
   }
 
+  // Starts a call by pasting a full id
   async function startCallByPaste() {
     const toUserId = buildUserId(toIdPaste);
     if (!toUserId) {
@@ -291,6 +340,7 @@ export default function VideoCallModal({ socket, myUserId, open, onClose }: Prop
     socket.emit("call:request", { toUserId });
   }
 
+  // Accepts an incoming call request (server will trigger onAccept on caller)
   function acceptIncoming() {
     if (!incomingFrom) return;
     const from = incomingFrom;
@@ -301,6 +351,7 @@ export default function VideoCallModal({ socket, myUserId, open, onClose }: Prop
     socket.emit("call:accept", { toUserId: from });
   }
 
+  // Declines an incoming request
   function declineIncoming() {
     if (!incomingFrom) return;
     const from = incomingFrom;
@@ -321,6 +372,7 @@ export default function VideoCallModal({ socket, myUserId, open, onClose }: Prop
   // ---------------------------
   if (!open) return null;
 
+   // For display: prefer normalized id if possible
   const myIdNormalized = buildUserId(myUserId) || myUserId;
 
   return (
@@ -334,6 +386,7 @@ export default function VideoCallModal({ socket, myUserId, open, onClose }: Prop
           Video Call <span className="opacity-70 text-sm">({status})</span>
         </h2>
 
+        {/* Notice banner for status/errors */}
         {notice ? (
           <div className="mb-2 p-2 rounded bg-white/5 border border-white/10 text-sm">
             {notice}
@@ -341,7 +394,7 @@ export default function VideoCallModal({ socket, myUserId, open, onClose }: Prop
         ) : null}
 
         <div className="relative mt-2">
-          {/* Remote big */}
+          {/* Remote video (main) */}
           <video
             ref={remoteVideoRef}
             autoPlay
@@ -359,7 +412,7 @@ export default function VideoCallModal({ socket, myUserId, open, onClose }: Prop
           />
         </div>
 
-        {/* My ID + how to call */}
+        {/* Caller inputs / call actions */}
         {(status === "idle" || status === "calling") ? (
           <div className="mt-3 p-3 rounded bg-white/5 border border-white/10 space-y-3">
             <div className="text-xs opacity-80">
@@ -367,7 +420,7 @@ export default function VideoCallModal({ socket, myUserId, open, onClose }: Prop
               <span className="ml-2 font-semibold select-all">{myIdNormalized}</span>
             </div>
 
-            {/* ✅ best UX: email + profile separately */}
+            {/* Email + profile input (recommended) */}
             <div>
               <div className="text-xs opacity-70 mb-2">
                 Call a friend by entering their <b>Parent Email</b> + <b>Profile Name</b>.
@@ -432,7 +485,7 @@ export default function VideoCallModal({ socket, myUserId, open, onClose }: Prop
           </div>
         ) : null}
 
-        {/* Incoming call */}
+        {/* Incoming call UI*/}
         {status === "ringing" && incomingFrom && (
           <div className="mt-3 flex gap-3 items-center">
             <span>
@@ -455,7 +508,7 @@ export default function VideoCallModal({ socket, myUserId, open, onClose }: Prop
           </div>
         )}
 
-        {/* Controls */}
+        {/* Call Controls */}
         <div className="mt-4 flex gap-3 items-center">
           <button
             onClick={() => hangUp(true)}

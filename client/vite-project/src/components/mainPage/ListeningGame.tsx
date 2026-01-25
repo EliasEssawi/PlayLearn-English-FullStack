@@ -19,35 +19,43 @@ export default function ListeningGame({
   onContinue,
   darkMode, // קבלת הפרופ
 }: ListeningGameProps) {
-  const [selected, setSelected] = useState<string | null>(null)
-  const [showResult, setShowResult] = useState(false)
-  const [isSpeaking, setIsSpeaking] = useState(false)
+  const [selected, setSelected] = useState<string | null>(null)// Tracks chosen option
+  const [showResult, setShowResult] = useState(false)// Controls ResultBar visibility
+  const [isSpeaking, setIsSpeaking] = useState(false)// Indicates if TTS is currently playing
 
-  const isCorrect = selected === correctAnswer
+  const isCorrect = selected === correctAnswer// True if user picked the right answer
 
   const speak = () => {
+    // Guard: browser must support Text-to-Speech API
     if (!("speechSynthesis" in window)) {
       alert("Text-to-speech is not supported in this browser.")
       return
     }
 
+    // Stop any previous speech before starting a new one
     window.speechSynthesis.cancel()
 
+    // Create TTS utterance from the provided text
     const utterance = new SpeechSynthesisUtterance(textToRead)
     utterance.lang = "en-US"
     utterance.rate = 0.9
     utterance.pitch = 1
 
+    // Update UI state while speaking
     utterance.onstart = () => setIsSpeaking(true)
     utterance.onend = () => setIsSpeaking(false)
 
+    // Start speaking
     window.speechSynthesis.speak(utterance)
   }
 
   const handleAnswer = (option: string) => {
+    // Prevent changing answer after the first selection
     if (selected) return
     setSelected(option)
     setShowResult(true)
+
+    // Stop audio after user answers (so it doesn't keep playing)
     window.speechSynthesis.cancel()
   }
 
@@ -71,7 +79,6 @@ export default function ListeningGame({
           border-2
         "
         style={{
-          // שינוי צבע הכפתור: ירוק ב-Light, שחור ב-Dark
           backgroundColor: darkMode ? "#1f2d33" : "#ec407a",
           borderColor: darkMode ? "#2f3f46" : "#ec407a",
           color: darkMode ? "#ffffff" : "#0f172a",
@@ -101,7 +108,7 @@ export default function ListeningGame({
               text={opt}
               state={state}
               onClick={() => handleAnswer(opt)}
-              darkMode={darkMode} // העברת darkMode ל-AnswerButton
+              darkMode={darkMode}// Pass theme down to the option button
             />
           )
         })}
