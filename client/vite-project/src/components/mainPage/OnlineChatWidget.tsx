@@ -30,9 +30,6 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
   // ✅ avoid stale "open" inside socket callback
   const openRef = useRef(open);
 
-  // ✅ responsive
-  const [isMobile, setIsMobile] = useState(false);
-
   // Resolve username from localStorage
   const username = useMemo(() => {
     const raw = localStorage.getItem("activeProfile");
@@ -57,27 +54,6 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
     if (!open) return;
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [open, messages]);
-
-  // ✅ detect mobile + handle dynamic viewport
-  useEffect(() => {
-    const check = () => {
-      const w = window.innerWidth;
-      setIsMobile(w <= 560);
-    };
-    check();
-    window.addEventListener("resize", check);
-    window.addEventListener("orientationchange", check);
-
-    // optional: prevent background scroll when open on mobile
-    const prevOverflow = document.body.style.overflow;
-    if (open && window.innerWidth <= 560) document.body.style.overflow = "hidden";
-
-    return () => {
-      window.removeEventListener("resize", check);
-      window.removeEventListener("orientationchange", check);
-      document.body.style.overflow = prevOverflow;
-    };
-  }, [open]);
 
   // ✅ Connect ONCE on mount (so unread works even when closed)
   useEffect(() => {
@@ -119,6 +95,8 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
 
     const onMessage = (m: ChatMessage) => {
       setMessages((prev) => [...prev, m]);
+
+      // ✅ if widget is closed -> count unread
       if (!openRef.current) setUnread((u) => u + 1);
     };
 
@@ -158,41 +136,6 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
     ? "0 10px 30px rgba(0,0,0,0.35)"
     : "0 10px 30px rgba(15,23,42,0.18)";
 
-  // ✅ responsive sizing for popup
-  const popupStyle: React.CSSProperties = isMobile
-    ? {
-        position: "fixed",
-        left: 0,
-        right: 0,
-        top: 0,
-        bottom: 0,
-        width: "100%",
-        height: "100dvh", // better than 100vh on mobile
-        borderRadius: 0,
-        background: bg,
-        border: "none",
-        boxShadow: "none",
-        overflow: "hidden",
-        zIndex: 999999,
-        display: "flex",
-        flexDirection: "column",
-      }
-    : {
-        position: "fixed",
-        right: 22,
-        bottom: 95,
-        width: 360,
-        height: 480,
-        borderRadius: 16,
-        background: bg,
-        border,
-        boxShadow: bubbleShadow,
-        overflow: "hidden",
-        zIndex: 9999,
-        display: "flex",
-        flexDirection: "column",
-      };
-
   return (
     <>
       {/* Floating Circle Button + unread badge */}
@@ -201,8 +144,8 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
         title="Online Chat"
         style={{
           position: "fixed",
-          right: isMobile ? 16 : 22 + 60 + 12, // on mobile keep it simpler
-          bottom: 16,
+          right: 22 + 60 + 12, // left of video
+          bottom: 22,
           width: 60,
           height: 60,
           borderRadius: 999,
@@ -249,7 +192,23 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
 
       {/* Popup Window */}
       {open && (
-        <div style={popupStyle}>
+        <div
+          style={{
+            position: "fixed",
+            right: 22,
+            bottom: 95,
+            width: 360,
+            height: 480,
+            borderRadius: 16,
+            background: bg,
+            border,
+            boxShadow: bubbleShadow,
+            overflow: "hidden",
+            zIndex: 9999,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
           {/* Header */}
           <div
             style={{
@@ -261,7 +220,7 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
               gap: 10,
             }}
           >
-            <div style={{ minWidth: 0 }}>
+            <div>
               <div style={{ color: textColor, fontWeight: 800 }}>Online Chat</div>
               <div style={{ color: sub, fontSize: 12 }}>
                 You: <b>{username}</b> •{" "}
@@ -285,7 +244,7 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
                 color: sub,
                 fontSize: 18,
                 cursor: "pointer",
-                padding: 10,
+                padding: 6,
               }}
               aria-label="Close"
             >
@@ -294,22 +253,14 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
           </div>
 
           {/* Body */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: isMobile ? "1fr" : "1fr 120px",
-              gridTemplateRows: isMobile ? "1fr auto" : undefined,
-              flex: 1,
-              minHeight: 0,
-            }}
-          >
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 120px", flex: 1, minHeight: 0 }}>
             {/* Messages */}
             <div
               style={{
                 padding: 12,
                 overflowY: "auto",
                 minHeight: 0,
-                borderRight: isMobile ? "none" : border,
+                borderRight: border,
               }}
             >
               {messages.map((m, idx) => {
@@ -323,7 +274,7 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
                       marginBottom: 10,
                     }}
                   >
-                    <div style={{ maxWidth: isMobile ? "92%" : "85%" }}>
+                    <div style={{ maxWidth: "85%" }}>
                       <div
                         style={{
                           padding: "8px 10px",
@@ -338,7 +289,6 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
                           color: isMe && !darkMode ? "#0f172a" : textColor,
                           border,
                           whiteSpace: "pre-wrap",
-                          wordBreak: "break-word",
                         }}
                       >
                         <div style={{ fontSize: 11, opacity: 0.8, marginBottom: 3 }}>
@@ -364,15 +314,7 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
             </div>
 
             {/* Users */}
-            <div
-              style={{
-                padding: 12,
-                overflowY: "auto",
-                minHeight: 0,
-                borderTop: isMobile ? border : "none",
-                maxHeight: isMobile ? 140 : undefined, // ✅ small drawer on mobile
-              }}
-            >
+            <div style={{ padding: 12, overflowY: "auto", minHeight: 0 }}>
               <div style={{ color: sub, fontSize: 12, fontWeight: 800, marginBottom: 10 }}>
                 Users ({users.length})
               </div>
@@ -387,9 +329,6 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
                       color: textColor,
                       background: darkMode ? "#0b1220" : "#f8fafc",
                       fontSize: 13,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
                     }}
                   >
                     {u.name}
@@ -400,16 +339,7 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
           </div>
 
           {/* Input */}
-          <form
-            onSubmit={send}
-            style={{
-              padding: 12,
-              borderTop: border,
-              display: "flex",
-              gap: 8,
-              paddingBottom: isMobile ? 16 : 12,
-            }}
-          >
+          <form onSubmit={send} style={{ padding: 12, borderTop: border, display: "flex", gap: 8 }}>
             <input
               value={message}
               onChange={(e) => setMessage(e.target.value)}
@@ -423,7 +353,6 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
                 background: darkMode ? "#020617" : "#ffffff",
                 color: textColor,
                 outline: "none",
-                fontSize: isMobile ? 16 : 14, // ✅ prevent iOS zoom
               }}
             />
             <button
@@ -438,7 +367,6 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
                 fontWeight: 800,
                 cursor: !connected || !!serverFullMsg || !message.trim() ? "not-allowed" : "pointer",
                 opacity: !connected || !!serverFullMsg || !message.trim() ? 0.6 : 1,
-                whiteSpace: "nowrap",
               }}
             >
               Send
