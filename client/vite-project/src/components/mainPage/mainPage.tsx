@@ -31,7 +31,7 @@ export default function MainPage() {
   );
   const navigate = useNavigate();
   const { darkMode } = useTheme();  // Global theme state (dark/light)
-
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   // -------------------------
   // 🔐 Auth Guard
   // -------------------------
@@ -188,7 +188,7 @@ export default function MainPage() {
   };
 
     return (
-    <MainLayout>
+  <MainLayout>
   <div
     className="flex flex-col md:flex-row w-full max-w-7xl md:h-[85vh] mx-auto rounded-3xl overflow-hidden shadow-2xl"
     style={{
@@ -225,6 +225,7 @@ export default function MainPage() {
     </>
   )}
 </MainLayout>
+
 
   );
 }
