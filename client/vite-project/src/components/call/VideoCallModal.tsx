@@ -58,8 +58,7 @@ export default function VideoCallModal({
 
   const [emailInput, setEmailInput] = useState("");
   const [profileInput, setProfileInput] = useState("");
-  const [toIdPaste, setToIdPaste] = useState("");
-
+ 
   const isConnecting = status === "connecting";
   const isInCall = status === "in_call";
 
@@ -196,19 +195,7 @@ export default function VideoCallModal({
     socket.emit("call:request", { toUserId });
   }
 
-  async function startCallByPaste() {
-    const toUserId = buildUserId(toIdPaste);
-    if (!toUserId) {
-      setNotice("⚠️ Paste must be in format: email::profileName");
-      return;
-    }
 
-    setOther(toUserId);
-    setNotice(`📞 Calling ${toUserId}...`);
-    setStatus("calling");
-
-    socket.emit("call:request", { toUserId });
-  }
 
   function acceptIncoming() {
     if (!incomingFrom) return;
@@ -445,38 +432,9 @@ export default function VideoCallModal({
                 Call
               </button>
 
-              <div className="text-xs opacity-60 mt-2">
-                Will call as:{" "}
-                <b>
-                  {emailInput.trim() && profileInput.trim()
-                    ? `${norm(emailInput)}::${norm(profileInput)}`
-                    : "email::profile"}
-                </b>
-              </div>
+             
             </div>
 
-            <div className="pt-2 border-t border-white/10">
-              <div className="text-xs opacity-70 mb-2">
-                Or paste full ID (format <b>email::profileName</b>):
-              </div>
-
-              <div className="flex gap-2 items-center">
-                <input
-                  value={toIdPaste}
-                  onChange={(e) => setToIdPaste(e.target.value)}
-                  placeholder="Paste friend ID (email::profileName)"
-                  className="flex-1 px-3 py-2 rounded bg-black/40 border border-white/10 outline-none"
-                />
-
-                <button
-                  onClick={startCallByPaste}
-                  disabled={!toIdPaste.trim() || isConnecting || isInCall}
-                  className="px-3 py-2 rounded bg-slate-700 hover:bg-slate-600 disabled:opacity-40"
-                >
-                  Call
-                </button>
-              </div>
-            </div>
           </div>
         ) : null}
 
