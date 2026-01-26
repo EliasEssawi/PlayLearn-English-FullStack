@@ -375,42 +375,44 @@ export default function VideoCallModal({ socket, myUserId, open, onClose }: Prop
    // For display: prefer normalized id if possible
   const myIdNormalized = buildUserId(myUserId) || myUserId;
 
-  return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center">
-      <div className="bg-neutral-900 text-white rounded-xl w-[900px] p-4 relative">
-        <button onClick={closeOnly} className="absolute right-3 top-3 text-lg">
-          ✕
-        </button>
+return (
+  <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-3">
+    <div className="bg-neutral-900 text-white rounded-xl w-[95vw] max-w-[900px] max-h-[90vh] overflow-y-auto p-4 relative">
+      <button
+        onClick={closeOnly}
+        className="absolute right-3 top-3 text-lg z-10 bg-black/40 hover:bg-black/60 rounded px-2"
+      >
+        ✕
+      </button>
 
-        <h2 className="text-xl mb-2">
-          Video Call <span className="opacity-70 text-sm">({status})</span>
-        </h2>
+      <h2 className="text-xl mb-2 pr-10">
+        Video Call <span className="opacity-70 text-sm">({status})</span>
+      </h2>
 
-        {/* Notice banner for status/errors */}
-        {notice ? (
-          <div className="mb-2 p-2 rounded bg-white/5 border border-white/10 text-sm">
-            {notice}
-          </div>
-        ) : null}
-
-        <div className="relative mt-2">
-          {/* Remote video (main) */}
-          <video
-            ref={remoteVideoRef}
-            autoPlay
-            playsInline
-            className="rounded bg-black w-full h-[420px] object-cover"
-          />
-
-          {/* Local small overlay */}
-          <video
-            ref={localVideoRef}
-            autoPlay
-            muted
-            playsInline
-            className="absolute right-3 bottom-3 rounded bg-black w-[180px] h-[120px] object-cover border border-white/20"
-          />
+      {notice ? (
+        <div className="mb-2 p-2 rounded bg-white/5 border border-white/10 text-sm">
+          {notice}
         </div>
+      ) : null}
+
+      <div className="relative mt-2">
+        {/* Remote video (main) */}
+        <video
+          ref={remoteVideoRef}
+          autoPlay
+          playsInline
+          className="rounded bg-black w-full h-[320px] sm:h-[360px] md:h-[420px] object-cover"
+        />
+
+        {/* Local small overlay */}
+        <video
+          ref={localVideoRef}
+          autoPlay
+          muted
+          playsInline
+          className="absolute right-3 bottom-3 rounded bg-black w-[140px] h-[96px] sm:w-[160px] sm:h-[110px] md:w-[180px] md:h-[120px] object-cover border border-white/20"
+        />
+      </div>
 
         {/* Caller inputs / call actions */}
         {(status === "idle" || status === "calling") ? (
