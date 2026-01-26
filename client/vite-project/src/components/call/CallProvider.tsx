@@ -194,6 +194,7 @@ export default function CallProvider({ socket, children }: Props) {
         open={callModalOpen}
         onClose={closeCallModal}
         autoAcceptFrom={autoAcceptFrom}
+         incomingFromExternal={incomingFrom}
         onAutoAccepted={() => {
           setIncomingFrom(null);
           setAutoAcceptFrom(null);

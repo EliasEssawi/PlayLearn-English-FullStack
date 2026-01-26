@@ -8,11 +8,11 @@ type Props = {
   onClose: () => void; // X closes modal only
   autoAcceptFrom?: string | null;
   onAutoAccepted?: () => void;
+  incomingFromExternal?: string | null;
 };
 
 type Status = "idle" | "ringing" | "calling" | "connecting" | "in_call";
 
-// WebRTC config: uses Google's public STUN server for ICE candidate discovery
 const rtcConfig: RTCConfiguration = {
   iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
 };
@@ -42,12 +42,16 @@ export default function VideoCallModal({
   onClose,
   autoAcceptFrom = null,
   onAutoAccepted,
+  incomingFromExternal = null,
 }: Props) {
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
+
+  // ✅ ICE queue to prevent "stuck connecting"
+  const pendingIceRef = useRef<any[]>([]);
 
   const [incomingFrom, setIncomingFrom] = useState<string | null>(null);
   const [callWith, setCallWith] = useState<string | null>(null);
@@ -58,7 +62,7 @@ export default function VideoCallModal({
 
   const [emailInput, setEmailInput] = useState("");
   const [profileInput, setProfileInput] = useState("");
- 
+
   const isConnecting = status === "connecting";
   const isInCall = status === "in_call";
 
@@ -121,8 +125,7 @@ export default function VideoCallModal({
         hangUp(false, "📴 Call ended");
         return;
       }
-
-      // ✅ don't auto-end on "disconnected" immediately
+      // don't auto-end on "disconnected" immediately
     };
 
     return pc;
@@ -145,6 +148,8 @@ export default function VideoCallModal({
     if (localVideoRef.current) localVideoRef.current.srcObject = null;
     if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
 
+    pendingIceRef.current = [];
+
     setIncomingFrom(null);
     setOther(null);
     setStatus("idle");
@@ -159,22 +164,31 @@ export default function VideoCallModal({
     cleanup();
   }
 
+  function closeOnly() {
+    cleanup();
+    setNotice("");
+    onClose();
+  }
+
   // ---------------------------
-  // 🔥 IMPORTANT FIX:
-  // Clear stale "Call ended" when modal opens (because component returns null, it stays mounted)
+  // ✅ ONE EFFECT ONLY:
+  // Reset + seed incoming from provider when modal opens
   // ---------------------------
   useEffect(() => {
     if (!open) return;
 
-    // Reset ONLY UI state that causes the "Call ended" bug.
     setNotice("");
     setStatus("idle");
-    setIncomingFrom(null);
     setOther(null);
 
-    // optional: clear input fields on open
-    // setEmailInput(""); setProfileInput(""); setToIdPaste("");
-  }, [open]);
+    if (incomingFromExternal) {
+      setIncomingFrom(incomingFromExternal);
+      setNotice(`📲 Incoming call from ${incomingFromExternal}`);
+      setStatus("ringing");
+    } else {
+      setIncomingFrom(null);
+    }
+  }, [open, incomingFromExternal]);
 
   // ---------------------------
   // Actions
@@ -195,11 +209,9 @@ export default function VideoCallModal({
     socket.emit("call:request", { toUserId });
   }
 
-
-
-  function acceptIncoming() {
-    if (!incomingFrom) return;
-    const from = incomingFrom;
+  function acceptIncoming(fromArg?: string) {
+    const from = fromArg || incomingFrom;
+    if (!from) return;
 
     setIncomingFrom(null);
     setOther(from);
@@ -219,30 +231,28 @@ export default function VideoCallModal({
     setStatus("idle");
   }
 
-  function closeOnly() {
-    // close modal UI; also cleanup any streams/pc
-    cleanup();
-    setNotice(""); // ✅ so it doesn't show "Call ended" next time
-    onClose();
-  }
-
   // ---------------------------
-  // Auto-accept (ONLY ONCE) - TOP LEVEL HOOK ✅
+  // ✅ Auto-accept from bar: works with provider incoming OR modal incoming
   // ---------------------------
   useEffect(() => {
     if (!open) return;
-    if (!incomingFrom) return;
     if (!autoAcceptFrom) return;
 
-    if (incomingFrom === autoAcceptFrom) {
-      acceptIncoming();
+    const from = incomingFrom || incomingFromExternal;
+    if (!from) return;
+
+    if (from === autoAcceptFrom) {
+      // align state then accept
+      setIncomingFrom(from);
+      setStatus("ringing");
+      acceptIncoming(from);
       onAutoAccepted?.();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, incomingFrom, autoAcceptFrom]);
+  }, [open, autoAcceptFrom, incomingFrom, incomingFromExternal]);
 
   // ---------------------------
-  // Socket events (NO NESTED HOOKS ✅)
+  // Socket events
   // ---------------------------
   useEffect(() => {
     if (!open) return;
@@ -301,6 +311,15 @@ export default function VideoCallModal({
       });
 
       await pc.setRemoteDescription(new RTCSessionDescription(offer));
+
+      // ✅ flush queued ICE after remote description exists
+      for (const c of pendingIceRef.current) {
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(c));
+        } catch {}
+      }
+      pendingIceRef.current = [];
+
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
 
@@ -310,19 +329,33 @@ export default function VideoCallModal({
     const onAnswer = async ({ answer }: { answer: any }) => {
       const pc = pcRef.current;
       if (!pc) return;
+
       await pc.setRemoteDescription(new RTCSessionDescription(answer));
+
+      // ✅ flush queued ICE after remote description exists
+      for (const c of pendingIceRef.current) {
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(c));
+        } catch {}
+      }
+      pendingIceRef.current = [];
     };
 
     const onIce = async ({ candidate }: { candidate: any }) => {
+      if (!candidate) return;
+
       const pc = pcRef.current;
-      if (!pc) return;
+      if (!pc) {
+        pendingIceRef.current.push(candidate); // ✅ queue
+        return;
+      }
+
       try {
         await pc.addIceCandidate(new RTCIceCandidate(candidate));
       } catch {}
     };
 
     const onEnd = () => {
-      // ✅ don't set notice then call hangUp that overwrites; just hangUp with message
       hangUp(false, "📴 Other side ended call");
     };
 
@@ -431,10 +464,7 @@ export default function VideoCallModal({
               >
                 Call
               </button>
-
-             
             </div>
-
           </div>
         ) : null}
 
@@ -445,7 +475,7 @@ export default function VideoCallModal({
             </span>
 
             <button
-              onClick={acceptIncoming}
+              onClick={() => acceptIncoming(incomingFrom)}
               className="px-3 py-2 rounded bg-green-600 hover:bg-green-700"
             >
               Accept
