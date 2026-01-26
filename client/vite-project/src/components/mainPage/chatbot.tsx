@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
+import api from "../../api/axios";
 
 // Message shape used by the chatbot UI
 type Msg = {
@@ -61,7 +62,7 @@ export default function ChatBot({ darkMode }: ChatBotProps) {
 
     try {
       // Send message + conversation context to the server
-      const { data } = await axios.post("/api/chatbot", {
+       const { data } = await api.post("/api/chatbot", {
         message: text,
         sessionId: sessionIdRef.current,
         messages: toServerMessages(nextLocal),
