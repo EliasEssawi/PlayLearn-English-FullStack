@@ -112,20 +112,19 @@ export default function VideoCallModal({
     };
 
     pc.onconnectionstatechange = () => {
-  if (pc.connectionState === "connected") {
-    setStatus("in_call");
-    setNotice("🟢 Connected");
-    return;
-  }
+      if (pc.connectionState === "connected") {
+        setStatus("in_call");
+        setNotice("🟢 Connected");
+        return;
+      }
 
-  if (pc.connectionState === "failed" || pc.connectionState === "closed") {
-    hangUp(false);
-    return;
-  }
+      if (pc.connectionState === "failed" || pc.connectionState === "closed") {
+        hangUp(false, "📴 Call ended");
+        return;
+      }
 
-  // ✅ don't auto-end on "disconnected" immediately
-};
-
+      // ✅ don't auto-end on "disconnected" immediately
+    };
 
     return pc;
   }
@@ -152,12 +151,31 @@ export default function VideoCallModal({
     setStatus("idle");
   }
 
-  function hangUp(notify: boolean) {
+  /** hang up and optionally notify other side */
+  function hangUp(notify: boolean, msg = "📴 Call ended") {
     const other = callWithRef.current;
     if (notify && other) socket.emit("call:end", { toUserId: other });
-    setNotice("📴 Call ended");
+
+    setNotice(msg);
     cleanup();
   }
+
+  // ---------------------------
+  // 🔥 IMPORTANT FIX:
+  // Clear stale "Call ended" when modal opens (because component returns null, it stays mounted)
+  // ---------------------------
+  useEffect(() => {
+    if (!open) return;
+
+    // Reset ONLY UI state that causes the "Call ended" bug.
+    setNotice("");
+    setStatus("idle");
+    setIncomingFrom(null);
+    setOther(null);
+
+    // optional: clear input fields on open
+    // setEmailInput(""); setProfileInput(""); setToIdPaste("");
+  }, [open]);
 
   // ---------------------------
   // Actions
@@ -215,25 +233,26 @@ export default function VideoCallModal({
   }
 
   function closeOnly() {
+    // close modal UI; also cleanup any streams/pc
     cleanup();
+    setNotice(""); // ✅ so it doesn't show "Call ended" next time
     onClose();
   }
 
   // ---------------------------
   // Auto-accept (ONLY ONCE) - TOP LEVEL HOOK ✅
   // ---------------------------
- useEffect(() => {
-  if (!open) return;
-  if (!incomingFrom) return;
-  if (!autoAcceptFrom) return;
+  useEffect(() => {
+    if (!open) return;
+    if (!incomingFrom) return;
+    if (!autoAcceptFrom) return;
 
-  //  auto accept once modal opens if the caller matches
-  if (incomingFrom === autoAcceptFrom) {
-    acceptIncoming();
-    onAutoAccepted?.();
-  }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [open, incomingFrom, autoAcceptFrom]);
+    if (incomingFrom === autoAcceptFrom) {
+      acceptIncoming();
+      onAutoAccepted?.();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, incomingFrom, autoAcceptFrom]);
 
   // ---------------------------
   // Socket events (NO NESTED HOOKS ✅)
@@ -277,8 +296,7 @@ export default function VideoCallModal({
     };
 
     const onDecline = () => {
-      setNotice("❌ Declined");
-      hangUp(false);
+      hangUp(false, "❌ Declined");
     };
 
     const onOffer = async ({ fromUserId, offer }: { fromUserId: string; offer: any }) => {
@@ -317,8 +335,8 @@ export default function VideoCallModal({
     };
 
     const onEnd = () => {
-      setNotice("📴 Other side ended call");
-      hangUp(false);
+      // ✅ don't set notice then call hangUp that overwrites; just hangUp with message
+      hangUp(false, "📴 Other side ended call");
     };
 
     const onError = ({ message }: { message: string }) => {
