@@ -1,33 +1,11 @@
 import React from "react";
 
-// Props definition for a reusable authentication input field
-// Supports optional constraints such as min/max for validation
-type Props = {
+// Accept all normal <input> props + our required label
+type Props = React.InputHTMLAttributes<HTMLInputElement> & {
   label: string;
-  type?: string;
-  placeholder?: string;
-  required?: boolean;
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  name?: string;
-
-  // Optional numeric constraints (used when relevant)
-  min?: number;
-  max?: number;
 };
 
-// Reusable input component used in authentication forms
-export default function LoginInput({
-  label,
-  type = "text",
-  placeholder,
-  required = true,
-  value,
-  onChange,
-  name,
-  min,
-  max,
-}: Props) {
+export default function LoginInput({ label, required = true, ...inputProps }: Props) {
   return (
     <div style={{ marginBottom: "1rem" }}>
       {/* Input label */}
@@ -35,15 +13,9 @@ export default function LoginInput({
 
       {/* Controlled input field */}
       <input
-        name={name}
-        type={type}
+        {...inputProps}
         required={required}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        className="auth-input"
-        min={min} // Optional minimum value constraint
-        max={max} // Optional maximum value constraint
+        className={`auth-input ${inputProps.className ?? ""}`.trim()}
       />
     </div>
   );

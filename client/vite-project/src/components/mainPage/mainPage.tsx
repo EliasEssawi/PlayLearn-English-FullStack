@@ -189,43 +189,42 @@ export default function MainPage() {
 
     return (
     <MainLayout>
-      <div
-        className="flex w-full max-w-7xl h-[85vh] mx-auto rounded-3xl overflow-hidden shadow-2xl"
-        style={{
-          background: darkMode ? "#020617" : "#ffffff",
-          border: darkMode ? "1px solid #334155" : "1px solid #e2e8f0",
-          marginTop: "20px",
-        }}
-      >
-        <Sidebar
-          menuItems={menuItems}
-          title="Menu"
-          activeSection={activeSection}
-          onSelect={setActiveSection}
-          secondaryMenu={menuItemsSecondry}
-          darkMode={darkMode}
-        />
+  <div
+    className="flex flex-col md:flex-row w-full max-w-7xl md:h-[85vh] mx-auto rounded-3xl overflow-hidden shadow-2xl"
+    style={{
+      background: darkMode ? "#020617" : "#ffffff",
+      border: darkMode ? "1px solid #334155" : "1px solid #e2e8f0",
+      marginTop: "20px",
+    }}
+  >
+    <Sidebar
+      menuItems={menuItems}
+      title="Menu"
+      activeSection={activeSection}
+      onSelect={setActiveSection}
+      secondaryMenu={menuItemsSecondry}
+      darkMode={darkMode}
+    />
 
-        <main className="flex-1 p-8 md:p-12 overflow-y-auto flex flex-col gap-8">
-          <Header
-            title={activeMenuItem ? `${activeMenuItem.name} ${activeMenuItem.icon}` : activeSection}
-            subtitle="Welcome back! You are doing great."
-            points={points}
-            imgUrl="https://cdn-icons-png.flaticon.com/512/2922/2922510.png"
-          />
+    <main className="flex-1 p-3 sm:p-6 md:p-12 overflow-y-auto flex flex-col gap-6 md:gap-8">
+      <Header
+        title={activeMenuItem ? `${activeMenuItem.name} ${activeMenuItem.icon}` : activeSection}
+        subtitle="Welcome back! You are doing great."
+        points={points}
+        imgUrl="https://cdn-icons-png.flaticon.com/512/2922/2922510.png"
+      />
 
-          {/* Render the selected page */}
-          <div className="flex-1">{renderMainContent()}</div>
-        </main>
-      </div>
+      <div className="flex-1">{renderMainContent()}</div>
+    </main>
+  </div>
 
-      {/* Only show online widgets while in "Play Online" section */}
-      {activeSection === "Play Online" && (
-        <>
-          <OnlineChatWidget darkMode={darkMode} />
-          <FloatingVideoButton socket={socket} myUserId={myUserId} darkMode={darkMode} />
-        </>
-      )}
-    </MainLayout>
+  {activeSection === "Play Online" && (
+    <>
+      <OnlineChatWidget darkMode={darkMode} />
+      <FloatingVideoButton socket={socket} myUserId={myUserId} darkMode={darkMode} />
+    </>
+  )}
+</MainLayout>
+
   );
 }

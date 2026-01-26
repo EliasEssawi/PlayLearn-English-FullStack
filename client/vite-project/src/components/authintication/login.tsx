@@ -85,23 +85,31 @@ export default function Login() {
 
           <form onSubmit={handleSubmit}>
             {/* Email / username input */}
-            <LoginInput
-              label="Username or Email"
-              placeholder="you@example.com"
-              value={userData.email}
-              onChange={handleChange}
-              name="email"
-            />
+            
 
-            {/* Password input */}
-            <LoginInput
-              label="Password"
-              type="password"
-              placeholder="••••••••"
-              value={userData.password}
-              onChange={handleChange}
-              name="password"
-            />
+                  
+                    <LoginInput
+          label="Username or Email"
+          placeholder="you@example.com"
+          value={userData.email}
+          onChange={handleChange}
+          name="email"
+          autoComplete="username"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+        />
+        {/* Password input */}
+        <LoginInput
+          label="Password"
+          type="password"
+          placeholder="••••••••"
+          value={userData.password}
+          onChange={handleChange}
+          name="password"
+          autoComplete="current-password"
+        />
+
 
             {/* Submit login form */}
             <ButtonLogin />
