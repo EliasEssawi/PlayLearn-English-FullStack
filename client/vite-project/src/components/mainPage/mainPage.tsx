@@ -207,13 +207,10 @@ export default function MainPage() {
         </div>
       </div>
 
-      {/* ✅ Only show these on Play Online */}
-      {activeSection === "Play Online" && (
-        <>
+      
           <OnlineChatWidget darkMode={darkMode} />
           <FloatingCallButton darkMode={darkMode} />
-        </>
-      )}
+  
     </MainLayout>
   );
 }
