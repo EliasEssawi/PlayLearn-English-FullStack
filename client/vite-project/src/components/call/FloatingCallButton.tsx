@@ -1,10 +1,8 @@
 import { useCall } from "./CallProvider";
 
-type Props = {
-  darkMode: boolean;
-};
+type Props = { darkMode: boolean };
 
-export default function FloatingVideoButton({ darkMode }: Props) {
+export default function FloatingCallButton({ darkMode }: Props) {
   const { openCallModal } = useCall();
 
   const bubbleBg = darkMode ? "#1e293b" : "#86e07f";

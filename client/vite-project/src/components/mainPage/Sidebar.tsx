@@ -1,5 +1,4 @@
 import { MenuItem, SidebarAction } from "../../Types/Section";
-// PROPS INTERFACE
 
 interface SidebarProps {
   menuItems: MenuItem[];
@@ -9,8 +8,12 @@ interface SidebarProps {
   secondaryMenu?: MenuItem[];
   bottomAction?: SidebarAction;
   darkMode: boolean;
+
+  // ✅ NEW (for mobile drawer)
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
 }
-// SIDEBAR COMPONENT
+
 export default function Sidebar({
   menuItems,
   title,
@@ -19,11 +22,18 @@ export default function Sidebar({
   onSelect,
   activeSection,
   darkMode,
+  mobileOpen = false,
+  onMobileClose,
 }: SidebarProps) {
-  return (
+  const handleSelect = (name: string) => {
+    onSelect(name);
+    onMobileClose?.(); // ✅ close drawer after choosing
+  };
+
+  const content = (
     <aside
       className={`
-        w-72 flex flex-col shrink-0
+        w-72 h-full flex flex-col shrink-0
         ${darkMode ? "bg-black text-white" : "bg-[#1A7822] text-white"}
       `}
     >
@@ -42,7 +52,7 @@ export default function Sidebar({
           return (
             <button
               key={item.name}
-              onClick={() => onSelect(item.name)}
+              onClick={() => handleSelect(item.name)}
               className={`
                 flex w-full items-center gap-4 px-4 py-3 rounded-xl transition
                 ${
@@ -65,32 +75,31 @@ export default function Sidebar({
         <div className="my-4 border-t border-white/20" />
 
         {/* SECONDARY MENU */}
-        {secondaryMenu &&
-          secondaryMenu.map((item) => {
-            const isActive = activeSection === item.name;
+        {secondaryMenu?.map((item) => {
+          const isActive = activeSection === item.name;
 
-            return (
-              <button
-                key={item.name}
-                onClick={() => onSelect(item.name)}
-                className={`
-                  flex w-full items-center gap-4 px-4 py-3 rounded-xl transition
-                  ${
-                    isActive
-                      ? darkMode
-                        ? "bg-white text-black font-bold"
-                        : "bg-white text-[#1A7822] font-bold"
-                      : darkMode
-                      ? "hover:bg-white/10 text-white"
-                      : "hover:bg-white/20 text-white"
-                  }
-                `}
-              >
-                <span className="text-xl">{item.icon}</span>
-                <span className="font-medium">{item.name}</span>
-              </button>
-            );
-          })}
+          return (
+            <button
+              key={item.name}
+              onClick={() => handleSelect(item.name)}
+              className={`
+                flex w-full items-center gap-4 px-4 py-3 rounded-xl transition
+                ${
+                  isActive
+                    ? darkMode
+                      ? "bg-white text-black font-bold"
+                      : "bg-white text-[#1A7822] font-bold"
+                    : darkMode
+                    ? "hover:bg-white/10 text-white"
+                    : "hover:bg-white/20 text-white"
+                }
+              `}
+            >
+              <span className="text-xl">{item.icon}</span>
+              <span className="font-medium">{item.name}</span>
+            </button>
+          );
+        })}
       </nav>
 
       {/* BOTTOM ACTION */}
@@ -102,7 +111,7 @@ export default function Sidebar({
           `}
         >
           <button
-            onClick={() => onSelect(bottomAction.section)}
+            onClick={() => handleSelect(bottomAction.section)}
             className="hover:scale-105 w-full flex justify-center items-center gap-2 bg-white-400 text-white-900 font-bold py-3 rounded-xl hover:bg-green-300 transition"
           >
             <span className="text-xl">{bottomAction.icon}</span>
@@ -111,5 +120,28 @@ export default function Sidebar({
         </div>
       )}
     </aside>
+  );
+
+  return (
+    <>
+      {/* ✅ Desktop sidebar only */}
+      <div className="hidden md:block h-full">{content}</div>
+
+      {/* ✅ Mobile drawer */}
+      {mobileOpen && (
+        <div className="md:hidden fixed inset-0 z-50">
+          {/* backdrop */}
+          <button
+            aria-label="Close menu"
+            className="absolute inset-0 bg-black/50"
+            onClick={onMobileClose}
+          />
+          {/* panel */}
+          <div className="absolute left-0 top-0 h-full w-72 shadow-2xl">
+            {content}
+          </div>
+        </div>
+      )}
+    </>
   );
 }

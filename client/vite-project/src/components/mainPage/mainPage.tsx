@@ -9,42 +9,24 @@ import { useNavigate } from "react-router-dom";
 import { isLoggedIn } from "../../utils/auth";
 import MainLayout from "../authintication/MainLayout";
 import TopicsPage from "./TopicsPage";
-import { useTheme } from "../context/ThemeContext"; 
+import { useTheme } from "../context/ThemeContext";
 import OnlineChatWidget from "../mainPage/OnlineChatWidget";
 import Online from "../mainPage/Online";
-import io from "socket.io-client";
-import { useMemo } from "react";
-import FloatingVideoButton from "../call/FloatingVideoButton";
+import FloatingCallButton from "../call/FloatingCallButton";
 
 export default function MainPage() {
-  // -------------------------
-  // 🎥 Video Call Socket
-  // -------------------------
-  // Socket server URL (env first, fallback to localhost for dev)
-  const SOCKET_URL =
-    import.meta.env.VITE_SOCKET_URL || "http://localhost:5001";
-
-  // Create the socket instance once (memoized) so it doesn't reconnect on every render
-  const socket = useMemo(
-    () => io(SOCKET_URL, { transports: ["websocket"] }),
-    []
-  );
   const navigate = useNavigate();
-  const { darkMode } = useTheme();  // Global theme state (dark/light)
+  const { darkMode } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  // -------------------------
+
   // 🔐 Auth Guard
-  // -------------------------
-  // On mount: verify the user is logged in; if not, redirect to login
   useEffect(() => {
-    isLoggedIn().then(ok => {
+    isLoggedIn().then((ok) => {
       if (!ok) navigate("/login");
     });
   }, [navigate]);
 
-  // -------------------------
-  // 📌 Sidebar Menu
-  // -------------------------
+  // Sidebar Menu
   const menuItems: MenuItem[] = [
     { name: "Talking", icon: "🗣️" },
     { name: "Reading", icon: "📖" },
@@ -52,59 +34,38 @@ export default function MainPage() {
     { name: "Translate", icon: "🔤" },
     { name: "Fill the blank", icon: "🔤" },
     { name: "AI Chat", icon: "🤖" },
-     { name: "Play Online", icon: "👤" },
+    { name: "Play Online", icon: "👤" },
   ];
 
-  const menuItemsSecondry: MenuItem[] = [
-    { name: "View Progress", icon: "📊" },
-   
-  ];
+  const menuItemsSecondry: MenuItem[] = [{ name: "View Progress", icon: "📊" }];
 
-  // Which section is currently selected in the sidebar
   const [activeSection, setActiveSection] = useState("Talking");
 
-  // Used to show the current page title + icon in the Header
   const activeMenuItem =
-    menuItems.find(m => m.name === activeSection) ||
-    menuItemsSecondry.find(m => m.name === activeSection);
+    menuItems.find((m) => m.name === activeSection) ||
+    menuItemsSecondry.find((m) => m.name === activeSection);
 
-  // -------------------------
-  // 📦 Active Profile from localStorage
-  // -------------------------
-  // Child profile (chosen earlier) is stored locally so we can use it across refresh
+  // Active Profile from localStorage
   const activeProfileRaw = localStorage.getItem("activeProfile");
   const activeProfile = activeProfileRaw ? JSON.parse(activeProfileRaw) : null;
 
-  // Parent email used to build a unique user id for sockets/video calls
   const parentEmail = String(localStorage.getItem("loggedInUser") || "")
     .trim()
     .toLowerCase();
 
-  // Child profile name - supports both shapes (profileName OR email.profileName)
   const childName = String(
     activeProfile?.profileName || activeProfile?.email?.profileName || ""
   ).trim();
 
-  // Unique call/socket id: "parentEmail::childName"
-  const myUserId =
-    parentEmail && childName
-      ? `${parentEmail.toLowerCase()}::${childName.toLowerCase()}`
-      : "";
-  
-  // -------------------------
   // ⭐ Points
-  // -------------------------
   const [points, setPoints] = useState(0);
 
-  // Calculate points once based on saved progress in localStorage
-  // (counts unique correct questionIds * 10)
   function calculatePointsFromLocalStorage(): number {
     const raw = localStorage.getItem("activeProfile");
     if (!raw) return 0;
 
     const profile = JSON.parse(raw);
     const answers = profile?.email?.progress?.answers;
-
     if (!Array.isArray(answers)) return 0;
 
     const solvedIds = new Set<string>();
@@ -113,38 +74,26 @@ export default function MainPage() {
         solvedIds.add(String(a.questionId));
       }
     }
-
     return solvedIds.size * 10;
   }
 
-  // Initial load of points (works after refresh / first entry)
   useEffect(() => {
     setPoints(calculatePointsFromLocalStorage());
   }, []);
 
-  // Listen for a custom event to update points live while the user plays
   useEffect(() => {
     const onPointsUpdated = (e: any) => {
       const delta = Number(e?.detail?.delta ?? 0);
-      if (delta > 0) {
-        setPoints(prev => prev + delta);
-      }
+      if (delta > 0) setPoints((prev) => prev + delta);
     };
-
     window.addEventListener("points-updated", onPointsUpdated);
-    return () => {
-      window.removeEventListener("points-updated", onPointsUpdated);
-    };
+    return () => window.removeEventListener("points-updated", onPointsUpdated);
   }, []);
 
-
-  // -------------------------
-  // 🧩 Main content switch
-  // -------------------------
+  // Main content switch
   const renderMainContent = () => {
     switch (activeSection) {
       case "View Progress":
-        // Require profile selected to view progress page
         if (!parentEmail || !childName) {
           return (
             <div style={{ color: "#6b7280", fontStyle: "italic" }}>
@@ -160,7 +109,6 @@ export default function MainPage() {
       case "Vocabulary":
         return <VocabularyHome />;
 
-      // Each exercise type loads the same TopicsPage component but with different prop
       case "Talking":
         return <TopicsPage exercisesType="Talking" darkMode={darkMode} />;
 
@@ -175,57 +123,97 @@ export default function MainPage() {
 
       case "Reading":
         return <TopicsPage exercisesType="Reading" darkMode={darkMode} />;
+
       case "Play Online":
+        //  NO socket prop. Online should use useCall() to access socket.
         return <Online darkMode={darkMode} />;
+
       default:
-        // Fallback for any future/unknown sections
         return (
-          <div style={{ color: darkMode ? "#d1d5db" : "#6b7280", fontStyle: "italic" }}>
+          <div
+            style={{
+              color: darkMode ? "#d1d5db" : "#6b7280",
+              fontStyle: "italic",
+            }}
+          >
             This section is coming soon 🚧
           </div>
         );
     }
   };
 
-    return (
-  <MainLayout>
-  <div
-    className="flex flex-col md:flex-row w-full max-w-7xl md:h-[85vh] mx-auto rounded-3xl overflow-hidden shadow-2xl"
-    style={{
-      background: darkMode ? "#020617" : "#ffffff",
-      border: darkMode ? "1px solid #334155" : "1px solid #e2e8f0",
-      marginTop: "20px",
-    }}
-  >
-    <Sidebar
-      menuItems={menuItems}
-      title="Menu"
-      activeSection={activeSection}
-      onSelect={setActiveSection}
-      secondaryMenu={menuItemsSecondry}
-      darkMode={darkMode}
-    />
+  return (
+    <MainLayout>
+      <div
+        className="
+          w-full max-w-7xl mx-auto rounded-3xl shadow-2xl
+          overflow-visible md:overflow-hidden
+          md:h-[85vh]
+        "
+        style={{
+          background: darkMode ? "#020617" : "#ffffff",
+          border: darkMode ? "1px solid #334155" : "1px solid #e2e8f0",
+          marginTop: "20px",
+        }}
+      >
+        {/* Mobile top bar */}
+        <div
+          className="md:hidden flex items-center justify-between px-4 py-3 border-b"
+          style={{ borderColor: darkMode ? "#334155" : "#e2e8f0" }}
+        >
+          <button
+            onClick={() => setMobileMenuOpen(true)}
+            className={`px-3 py-2 rounded-xl ${
+              darkMode ? "bg-white/10 text-white" : "bg-black/10 text-black"
+            }`}
+          >
+            ☰ Menu
+          </button>
 
-    <main className="flex-1 p-3 sm:p-6 md:p-12 overflow-y-auto flex flex-col gap-6 md:gap-8">
-      <Header
-        title={activeMenuItem ? `${activeMenuItem.name} ${activeMenuItem.icon}` : activeSection}
-        subtitle="Welcome back! You are doing great."
-        points={points}
-        imgUrl="https://cdn-icons-png.flaticon.com/512/2922/2922510.png"
-      />
+          <div className={`font-bold ${darkMode ? "text-white" : "text-black"}`}>
+            {activeMenuItem
+              ? `${activeMenuItem.icon} ${activeMenuItem.name}`
+              : activeSection}
+          </div>
+        </div>
 
-      <div className="flex-1">{renderMainContent()}</div>
-    </main>
-  </div>
+        {/* Layout */}
+        <div className="flex md:flex-row w-full md:h-full md:min-h-0">
+          <Sidebar
+            menuItems={menuItems}
+            title="Menu"
+            activeSection={activeSection}
+            onSelect={setActiveSection}
+            secondaryMenu={menuItemsSecondry}
+            darkMode={darkMode}
+            mobileOpen={mobileMenuOpen}
+            onMobileClose={() => setMobileMenuOpen(false)}
+          />
 
-  {activeSection === "Play Online" && (
-    <>
-      <OnlineChatWidget darkMode={darkMode} />
-      <FloatingVideoButton socket={socket} myUserId={myUserId} darkMode={darkMode} />
-    </>
-  )}
-</MainLayout>
+          <main className="flex-1 p-3 sm:p-6 md:p-12 flex flex-col gap-6 md:gap-8 md:min-h-0 md:overflow-y-auto">
+            <Header
+              title={
+                activeMenuItem
+                  ? `${activeMenuItem.name} ${activeMenuItem.icon}`
+                  : activeSection
+              }
+              subtitle="Welcome back! You are doing great."
+              points={points}
+              imgUrl="https://cdn-icons-png.flaticon.com/512/2922/2922510.png"
+            />
 
+            <div className="flex-1">{renderMainContent()}</div>
+          </main>
+        </div>
+      </div>
 
+      {/* ✅ Only show these on Play Online */}
+      {activeSection === "Play Online" && (
+        <>
+          <OnlineChatWidget darkMode={darkMode} />
+          <FloatingCallButton darkMode={darkMode} />
+        </>
+      )}
+    </MainLayout>
   );
 }

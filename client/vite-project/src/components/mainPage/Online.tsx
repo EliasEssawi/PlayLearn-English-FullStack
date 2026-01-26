@@ -1,10 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import io, { Socket } from "socket.io-client";
+import type { Socket } from "socket.io-client";
+import { useCall } from "../call/CallProvider";
 
 type OnlineProps = { darkMode: boolean };
-
-//client .env: VITE_SOCKET_URL=http://localhost:5001
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:5001";
 
 type Player = { name: string; socketId: string; rate: number };
 
@@ -22,10 +20,7 @@ function clampRate(x: any): number {
   if (!Number.isFinite(n)) return 1;
   return Math.min(5, Math.max(1, Math.floor(n)));
 }
-/**
- * Read the active profile from localStorage (saved during profile selection).
- * Returns safe fallback if missing or corrupted.
- */
+
 function readProfileFromLS(): { username: string; rate: number } {
   const raw = localStorage.getItem("activeProfile");
   if (!raw) return { username: "Player", rate: 1 };
@@ -39,7 +34,12 @@ function readProfileFromLS(): { username: string; rate: number } {
       "Player";
 
     const rate =
-      p?.rate ?? p?.email?.rate ?? p?.level ?? p?.email?.level ?? p?.email?.progress?.level ?? 1;
+      p?.rate ??
+      p?.email?.rate ??
+      p?.level ??
+      p?.email?.level ??
+      p?.email?.progress?.level ??
+      1;
 
     return { username: name, rate: clampRate(rate) };
   } catch {
@@ -47,7 +47,6 @@ function readProfileFromLS(): { username: string; rate: number } {
   }
 }
 
-/** remove duplicate players by socketId */
 function dedupePlayers(list: any): Player[] {
   const arr: Player[] = Array.isArray(list) ? list : [];
   const map = new Map<string, Player>();
@@ -66,9 +65,10 @@ function dedupePlayers(list: any): Player[] {
 }
 
 export default function Online({ darkMode }: OnlineProps) {
-  const socketRef = useRef<Socket | null>(null);
+  // ✅ Use the ONE shared socket from CallProvider
+  const { socket, incomingFrom, showIncomingBar, onOpenFromBar, onDeclineFromBar } = useCall();
 
-  const [connected, setConnected] = useState(false);
+  const [connected, setConnected] = useState<boolean>(socket.connected);
 
   // profile
   const [username, setUsername] = useState("Player");
@@ -89,45 +89,39 @@ export default function Online({ darkMode }: OnlineProps) {
 
   // scoring/locking
   const [scores, setScores] = useState<Record<string, number>>({});
-  const [mySocketId, setMySocketId] = useState<string>("");
+  const [mySocketId, setMySocketId] = useState<string>(socket.id || "");
   const [locked, setLocked] = useState(false);
 
-  //load profile on mount + when localStorage changes (login/profile switch)
+  // load profile on mount
   useEffect(() => {
-    const apply = () => {
-      const p = readProfileFromLS();
-      setUsername(p.username);
-      setRate(p.rate);
-    };
-
-    apply();
+    const p = readProfileFromLS();
+    setUsername(p.username);
+    setRate(p.rate);
 
     const onStorage = (e: StorageEvent) => {
-      if (e.key === "activeProfile") apply();
+      if (e.key === "activeProfile") {
+        const np = readProfileFromLS();
+        setUsername(np.username);
+        setRate(np.rate);
+      }
     };
     window.addEventListener("storage", onStorage);
-
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  // connect once (safe with StrictMode)
+  // ✅ Attach ONLY Online listeners. DO NOT disconnect socket here.
   useEffect(() => {
-    if (socketRef.current) return; // prevent double-connect in dev/StrictMode
+    // in case already connected
+    setConnected(socket.connected);
+    if (socket.id) setMySocketId(socket.id);
 
-    const socket = io(SOCKET_URL, {
-      transports: ["polling", "websocket"],
-      withCredentials: false,
-    });
-
-    socketRef.current = socket;
-
-    socket.on("connect", () => {
+    const onConnect = () => {
       setConnected(true);
       if (socket.id) setMySocketId(socket.id);
       setStatus("Connected. Ready to find a match.");
-    });
+    };
 
-    socket.on("disconnect", () => {
+    const onDisconnect = () => {
       setConnected(false);
       setStatus("Disconnected.");
       setRoomId("");
@@ -136,12 +130,11 @@ export default function Online({ darkMode }: OnlineProps) {
       setEndsAt(0);
       setScores({});
       setLocked(false);
-    });
+    };
 
-    // ---- match events ----
-    socket.on("match_waiting", (p: any) => setStatus(String(p?.message || "Waiting...")));
+    const onMatchWaiting = (p: any) => setStatus(String(p?.message || "Waiting..."));
 
-    socket.on("match_found", (p: any) => {
+    const onMatchFound = (p: any) => {
       setRoomId(String(p?.roomId || ""));
       setPlayers(dedupePlayers(p?.players));
       setStatus(`Match found! Rate=${Number(p?.rate) || rate}`);
@@ -151,9 +144,9 @@ export default function Online({ darkMode }: OnlineProps) {
       setQuestion(null);
       setEndsAt(0);
       setLocked(false);
-    });
+    };
 
-    socket.on("match_error", (p: any) => {
+    const onMatchError = (p: any) => {
       const msg = String(p?.message || "Match error.");
       setStatus(msg);
       setNotify(msg);
@@ -163,10 +156,9 @@ export default function Online({ darkMode }: OnlineProps) {
       setEndsAt(0);
       setScores({});
       setLocked(false);
-    });
+    };
 
-    // ---- game events ----
-    socket.on("round_start", (p: any) => {
+    const onRoundStart = (p: any) => {
       setRound(Number(p?.round || 0));
       setTotalRounds(Number(p?.totalRounds || 10));
       setQuestion(p?.question || null);
@@ -174,38 +166,33 @@ export default function Online({ darkMode }: OnlineProps) {
       setLocked(false);
       setNotify("");
       if (Array.isArray(p?.players)) setPlayers(dedupePlayers(p.players));
-    });
+    };
 
-    socket.on("game_state", (p: any) => {
+    const onGameState = (p: any) => {
       if (p?.scores) setScores(p.scores);
       if (p?.endsAt) setEndsAt(Number(p.endsAt));
       if (Array.isArray(p?.players)) setPlayers(dedupePlayers(p.players));
-    });
+    };
 
-    socket.on("notify", (p: any) => setNotify(String(p?.text || "")));
+    const onNotify = (p: any) => setNotify(String(p?.text || ""));
 
-    socket.on("locked", () => {
+    const onLocked = () => {
       setLocked(true);
       setTimeout(() => setLocked(false), 5000);
-    });
+    };
 
-    socket.on("answer_rejected", (p: any) => {
+    const onAnswerRejected = (p: any) => {
       const r = String(p?.reason || "");
       if (r === "locked") setNotify("⏳ You are locked for 5 seconds.");
       if (r === "already_answered") setNotify("✅ You already answered this round.");
-    });
-    // Round ends (remove question)
+    };
 
-    socket.on("round_end", () => {
+    const onRoundEnd = () => {
       setQuestion(null);
       setEndsAt(0);
-    });
-  /**
-     * Game over:
-     * server sends winner info or draw
-     * and we reset match state after showing notification
-     */
-    socket.on("game_over", (p: any) => {
+    };
+
+    const onGameOver = (p: any) => {
       const winner = p?.winner?.name ? `🏆 Winner: ${p.winner.name}` : "🤝 Draw!";
       setNotify(winner);
       setStatus("Game finished.");
@@ -214,16 +201,42 @@ export default function Online({ darkMode }: OnlineProps) {
       setQuestion(null);
       setEndsAt(0);
       setLocked(false);
-    });
+    };
+
+    socket.on("connect", onConnect);
+    socket.on("disconnect", onDisconnect);
+
+    socket.on("match_waiting", onMatchWaiting);
+    socket.on("match_found", onMatchFound);
+    socket.on("match_error", onMatchError);
+
+    socket.on("round_start", onRoundStart);
+    socket.on("game_state", onGameState);
+    socket.on("notify", onNotify);
+    socket.on("locked", onLocked);
+    socket.on("answer_rejected", onAnswerRejected);
+    socket.on("round_end", onRoundEnd);
+    socket.on("game_over", onGameOver);
 
     return () => {
-      // cleanup
-      socket.removeAllListeners();
-      socket.disconnect();
-      socketRef.current = null;
+      // ✅ remove ONLY Online listeners
+      socket.off("connect", onConnect);
+      socket.off("disconnect", onDisconnect);
+
+      socket.off("match_waiting", onMatchWaiting);
+      socket.off("match_found", onMatchFound);
+      socket.off("match_error", onMatchError);
+
+      socket.off("round_start", onRoundStart);
+      socket.off("game_state", onGameState);
+      socket.off("notify", onNotify);
+      socket.off("locked", onLocked);
+      socket.off("answer_rejected", onAnswerRejected);
+      socket.off("round_end", onRoundEnd);
+      socket.off("game_over", onGameOver);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [socket]);
 
   // countdown timer
   useEffect(() => {
@@ -239,9 +252,8 @@ export default function Online({ darkMode }: OnlineProps) {
   }, [endsAt]);
 
   const join = () => {
-    if (!socketRef.current || !connected) return;
+    if (!connected) return;
 
-    // re-read profile right before joining (guaranteed correct)
     const p = readProfileFromLS();
     setUsername(p.username);
     setRate(p.rate);
@@ -255,17 +267,13 @@ export default function Online({ darkMode }: OnlineProps) {
     setScores({});
     setLocked(false);
 
-    socketRef.current.emit("join_game", { name: p.username, rate: p.rate });
+    socket.emit("join_game", { name: p.username, rate: p.rate });
   };
-  /**
-   * Send answer:
-   * - only if in a room and there is an active question
-   * - lock prevents spamming when penalized
-   */
+
   const answer = (opt: string) => {
-    if (!socketRef.current || !roomId || !question) return;
+    if (!roomId || !question) return;
     if (locked) return;
-    socketRef.current.emit("answer", { roomId, questionId: question._id, option: opt });
+    socket.emit("answer", { roomId, questionId: question._id, option: opt });
   };
 
   const bg = darkMode ? "#020617" : "#ffffff";
@@ -275,17 +283,42 @@ export default function Online({ darkMode }: OnlineProps) {
 
   const myScore = scores[mySocketId] ?? 0;
 
-  // opponent is "any other socketId"
   const opponent = useMemo(() => {
     return players.find((p) => p.socketId && p.socketId !== mySocketId);
   }, [players, mySocketId]);
 
   const oppScore = opponent ? (scores[opponent.socketId] ?? 0) : 0;
   const hasOpponent = !!opponent?.socketId;
-  const opponentLabel = hasOpponent ? `${opponent!.name}` : "Waiting opponent...";
 
   return (
     <div className="max-w-3xl mx-auto space-y-4">
+      {/* Incoming call bar (from CallProvider) */}
+      {showIncomingBar && incomingFrom && (
+        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9999] w-[92vw] max-w-[720px]">
+          <div className="rounded-xl border border-white/10 bg-neutral-900 text-white shadow-lg px-4 py-3 flex items-center justify-between gap-3">
+            <div className="text-sm">
+              📲 Incoming call from <b className="select-all">{incomingFrom}</b>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={onDeclineFromBar}
+                className="px-3 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-sm font-semibold"
+              >
+                Decline
+              </button>
+
+              <button
+                onClick={onOpenFromBar}
+                className="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-sm font-semibold"
+              >
+                Open
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header / Matchmaking */}
       <div style={{ border, background: bg, borderRadius: 16, padding: 14 }}>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
@@ -293,11 +326,9 @@ export default function Online({ darkMode }: OnlineProps) {
             <div style={{ color: textColor, fontWeight: 900, fontSize: 22 }}>Online 1v1</div>
             <div style={{ color: sub, fontSize: 13 }}>
               You: <b>{username}</b> • Rate: <b>{rate}</b> • {connected ? "✅ Connected" : "❌ Offline"}
-            </div>            {/* Human-readable status message */}
-
+            </div>
             <div style={{ color: sub, fontSize: 13, marginTop: 4 }}>{status}</div>
           </div>
-          {/* Start matchmaking button */}
 
           <button
             onClick={join}
@@ -316,7 +347,6 @@ export default function Online({ darkMode }: OnlineProps) {
             {roomId ? "In Match" : "Find Match"}
           </button>
         </div>
-        {/* Server notifications, lock messages, winner messages, etc. */}
 
         {notify && (
           <div
@@ -342,14 +372,9 @@ export default function Online({ darkMode }: OnlineProps) {
             {endsAt ? <span style={{ color: sub, fontWeight: 700 }}>• Time: {secondsLeft}s</span> : null}
           </div>
 
-          {/*FIXED HEADER LINE */}
           <div style={{ color: textColor, fontWeight: 900 }}>
-  {username}{" "}
-  <span style={{ color: sub, fontWeight: 700 }}>
-    vs {opponent?.name ?? "Waiting opponent..."}
-  </span>
-
-            {/* keep scores shown too (so it doesn't disappear) */}
+            {username}{" "}
+            <span style={{ color: sub, fontWeight: 700 }}>vs {opponent?.name ?? "Waiting opponent..."}</span>
             <span style={{ color: sub, fontWeight: 700, marginLeft: 10 }}>
               • Score {myScore}:{oppScore}
             </span>
@@ -387,13 +412,11 @@ export default function Online({ darkMode }: OnlineProps) {
                 </button>
               ))}
             </div>
-            {/* Waiting for opponent message */}
+
             {!hasOpponent && (
-              <div style={{ marginTop: 10, color: sub, fontWeight: 700 }}>
-                ⏳ Waiting for another player to join...
-              </div>
+              <div style={{ marginTop: 10, color: sub, fontWeight: 700 }}>⏳ Waiting for another player to join...</div>
             )}
-            {/* Locked message after wrong answer */}
+
             {locked && (
               <div style={{ marginTop: 10, color: sub, fontWeight: 700 }}>
                 ⏳ You answered wrong — wait 5 seconds, opponent can try.

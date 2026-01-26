@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import io, { Socket } from "socket.io-client";
-// Props for the chat widget (controls theme only)
+
 type OnlineChatWidgetProps = {
   darkMode: boolean;
 };
@@ -12,18 +12,24 @@ type ChatMessage = { text: string; date: string; user?: User };
 type RoomFullPayload = { message?: string };
 
 export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
-  const [open, setOpen] = useState(false);  // UI state
+  const [open, setOpen] = useState(false);
   const [connected, setConnected] = useState(false);
 
   const [users, setUsers] = useState<User[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [message, setMessage] = useState("");
 
-  // server full message (global limit)
   const [serverFullMsg, setServerFullMsg] = useState<string>("");
+
+  // ✅ unread badge
+  const [unread, setUnread] = useState(0);
 
   const socketRef = useRef<Socket | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+
+  // ✅ avoid stale "open" inside socket callback
+  const openRef = useRef(open);
+
   // Resolve username from localStorage
   const username = useMemo(() => {
     const raw = localStorage.getItem("activeProfile");
@@ -37,25 +43,27 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
     return "Player";
   }, []);
 
+  // keep ref updated + clear unread when opening
+  useEffect(() => {
+    openRef.current = open;
+    if (open) setUnread(0);
+  }, [open]);
+
   // auto-scroll when open + new messages
   useEffect(() => {
     if (!open) return;
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [open, messages]);
 
-  // connect only when the widget is opened (saves resources)
+  // ✅ Connect ONCE on mount (so unread works even when closed)
   useEffect(() => {
-    if (!open) return;
-
-    // reset UI state when opening
     setServerFullMsg("");
     setUsers([]);
     setConnected(false);
 
     const socket = io(SOCKET_URL, {
-      transports: ["polling","websocket"],
+      transports: ["polling", "websocket"],
       withCredentials: false,
-      // IMPORTANT: don't let socket.io auto-reconnect forever if server is "full"
       reconnection: true,
       reconnectionAttempts: 3,
       reconnectionDelay: 800,
@@ -72,22 +80,12 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
     const onDisconnect = () => setConnected(false);
 
     const onUsers = (u: User[]) => setUsers(Array.isArray(u) ? u : []);
-    const onConnectedUser = (u: User) =>    // Handle new connected user (avoid duplicates)
-
-    setUsers((prev) => {
-      if (!u?.id) return prev;
-      return prev.some((x) => x.id === u.id) ? prev : [...prev, u];
-    });
-    // Handle disconnected user
-    const onDisconnectedUser = (id: string) =>
-      setUsers((prev) => prev.filter((x) => x.id !== id));
 
     const onRoomFull = (payload: RoomFullPayload) => {
       const msg = payload?.message || "Server is full. Try again later.";
       setServerFullMsg(msg);
       setConnected(false);
 
-      // close socket cleanly (server already disconnects, but we handle UI)
       try {
         socket.removeAllListeners();
         socket.disconnect();
@@ -97,15 +95,15 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
 
     const onMessage = (m: ChatMessage) => {
       setMessages((prev) => [...prev, m]);
+
+      // ✅ if widget is closed -> count unread
+      if (!openRef.current) setUnread((u) => u + 1);
     };
 
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
-
     socket.on("users", onUsers);
-    // This event name matches your controller (server-full / max users)
     socket.on("room_full", onRoomFull);
-
     socket.on("message", onMessage);
 
     return () => {
@@ -117,17 +115,16 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
       setConnected(false);
       setUsers([]);
     };
-  }, [open, username]);
-  // Send chat message
+  }, [username]);
 
   const send = (e?: React.FormEvent) => {
     e?.preventDefault();
     const text = message.trim();
     if (!text || !connected || !socketRef.current) return;
-
     socketRef.current.emit("send", text);
     setMessage("");
   };
+
   // Theme-dependent colors
   const bg = darkMode ? "#0b1220" : "#ffffff";
   const border = darkMode ? "1px solid #334155" : "1px solid #e2e8f0";
@@ -139,32 +136,58 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
     ? "0 10px 30px rgba(0,0,0,0.35)"
     : "0 10px 30px rgba(15,23,42,0.18)";
 
-  return (  // RENDER
+  return (
     <>
-      {/* Floating Circle Button */}
-     <button
-  onClick={() => setOpen((v) => !v)}
-  title="Online Chat"
-  style={{
-    position: "fixed",
-    right: 22 + 60 + 12, //left of video
-    bottom: 22,
-    width: 60,
-    height: 60,
-    borderRadius: 999,
-    border: "none",
-    background: bubbleBg,
-    color: darkMode ? "#f8fafc" : "#0f172a",
-    fontWeight: 800,
-    cursor: "pointer",
-    boxShadow: bubbleShadow,
-    zIndex: 999990,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  }}
->
-        💬
+      {/* Floating Circle Button + unread badge */}
+      <button
+        onClick={() => setOpen((v) => !v)}
+        title="Online Chat"
+        style={{
+          position: "fixed",
+          right: 22 + 60 + 12, // left of video
+          bottom: 22,
+          width: 60,
+          height: 60,
+          borderRadius: 999,
+          border: "none",
+          background: bubbleBg,
+          color: darkMode ? "#f8fafc" : "#0f172a",
+          fontWeight: 800,
+          cursor: "pointer",
+          boxShadow: bubbleShadow,
+          zIndex: 999990,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <span style={{ position: "relative" }}>
+          💬
+          {unread > 0 && (
+            <span
+              style={{
+                position: "absolute",
+                top: -10,
+                right: -10,
+                minWidth: 18,
+                height: 18,
+                padding: "0 6px",
+                borderRadius: 999,
+                background: "#ef4444",
+                color: "white",
+                fontSize: 12,
+                fontWeight: 800,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                lineHeight: "18px",
+                boxShadow: "0 6px 18px rgba(0,0,0,0.25)",
+              }}
+            >
+              {unread > 99 ? "99+" : unread}
+            </span>
+          )}
+        </span>
       </button>
 
       {/* Popup Window */}
@@ -231,7 +254,7 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
 
           {/* Body */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 120px", flex: 1, minHeight: 0 }}>
-            {/* Messages (scroll) */}
+            {/* Messages */}
             <div
               style={{
                 padding: 12,
@@ -290,7 +313,7 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
               <div ref={bottomRef} />
             </div>
 
-            {/* Users (scroll) */}
+            {/* Users */}
             <div style={{ padding: 12, overflowY: "auto", minHeight: 0 }}>
               <div style={{ color: sub, fontSize: 12, fontWeight: 800, marginBottom: 10 }}>
                 Users ({users.length})
@@ -320,13 +343,7 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
             <input
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder={
-                serverFullMsg
-                  ? "Server full…"
-                  : connected
-                  ? "Type a message…"
-                  : "Connecting…"
-              }
+              placeholder={serverFullMsg ? "Server full…" : connected ? "Type a message…" : "Connecting…"}
               disabled={!connected || !!serverFullMsg}
               style={{
                 flex: 1,
