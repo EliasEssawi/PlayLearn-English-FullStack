@@ -49,6 +49,7 @@ app.use(
         "http://localhost:5173",
         "http://localhost:3005",
         "https://webproject-coral.vercel.app",
+        "https://webproject2-xcjx.onrender.com",
       ]);
 
       const isVercelPreview = /^https:\/\/webproject-.*\.vercel\.app$/.test(origin);
@@ -151,6 +152,7 @@ const io = new SocketIOServer(server, {
         "http://localhost:5173",
         "http://localhost:3005",
         "https://webproject-coral.vercel.app",
+        "https://webproject2-xcjx.onrender.com",
       ]);
 
       const isVercelPreview = /^https:\/\/webproject-.*\.vercel\.app$/.test(origin);
