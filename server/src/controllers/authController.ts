@@ -217,7 +217,7 @@ export const authMiddleware = (req: AuthRequest, res: Response, next: NextFuncti
 /**
  * SEND RESET PASSWORD CODE (EMAIL)
  */
- export const sendResetPassCode = async (req: Request, res: Response) => {
+export const sendResetPassCode = async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
 
@@ -234,35 +234,22 @@ export const authMiddleware = (req: AuthRequest, res: Response, next: NextFuncti
 
     await User.updateOne(
       { email },
-      {
-        resetCode: hashedCode,
-        resetCodeExpiresAt: new Date(Date.now() + 3 * 60 * 1000),
-      }
+      { resetCode: hashedCode, resetCodeExpiresAt: new Date(Date.now() + 3 * 60 * 1000) }
     );
 
     const mail = await sendPasswordResetEmail(email, code);
     console.log("RESET MAIL RESULT:", mail);
+    if (!mail.ok) console.error("Reset Code Failed To Send.", mail.error);
 
-    //failed to send email
-    if (!mail.ok) {
-      return res.status(500).json({
-        success: false,
-        message: "Reset Code Failed To Send. " + mail.error,
-      });
-    }
-
-    //  ONLY return success if email was actually sent
     return res.status(200).json({
       success: true,
       message: "Verification code sent to email",
     });
-
   } catch (err: any) {
     const message = err instanceof Error ? err.message : String(err);
     return res.status(500).json({ success: false, message });
   }
 };
-
 
 /**
  * VERIFY RESET CODE

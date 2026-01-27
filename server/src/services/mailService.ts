@@ -1,85 +1,91 @@
-import nodemailer from "nodemailer";
-import dns from "node:dns";
+import { Resend } from "resend";
+// Initialize Resend client using API key from environment variables
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+// Ensure a required environment variable exists
 
 function requireEnv(name: string): string {
   const v = process.env[name];
   if (!v) throw new Error(`Missing env var: ${name}`);
   return v;
 }
+// Wrap a promise with a timeout to avoid hanging requests
 
-// Helps in some hosting environments (IPv6 issues → timeouts)
-dns.setDefaultResultOrder("ipv4first");
+function withTimeout<T>(promise: Promise<T>, ms = 8000): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`Resend request timed out after ${ms}ms`)), ms)
+    ),
+  ]);
+}
 
-const FROM = requireEnv("MAIL_FROM");              // "PlayLearn Service <playlearnservice@gmail.com>"
+
+const FROM = requireEnv("MAIL_FROM");
 const APP_URL = requireEnv("APP_URL");
 
-const GMAIL_USER = requireEnv("GMAIL_USER");       // playlearnservice@gmail.com
-const GMAIL_APP_PASSWORD = requireEnv("GMAIL_APP_PASSWORD");
-
 type SendResult = { ok: true; id?: string } | { ok: false; error: string };
+// Send welcome email to a newly registered user
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
-  auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD },
-  requireTLS: true,
-  tls: { servername: "smtp.gmail.com" },
-  connectionTimeout: 20000,
-greetingTimeout: 20000,
-socketTimeout: 25000,
-});
-
-// Optional but VERY useful: see in Render logs if SMTP is reachable
-transporter.verify()
-  .then(() => console.log("✅ Gmail SMTP ready"))
-  .catch((e) => console.error("❌ Gmail SMTP verify failed:", e?.message ?? e));
-
-async function sendMail(to: string, subject: string, html: string): Promise<SendResult> {
+export async function sendWelcomeEmail(to: string, fullName?: string): Promise<SendResult> {
   try {
-    const info = await transporter.sendMail({ from: FROM, to, subject, html });
-    return { ok: true, id: info.messageId };
+    const subject = "Welcome to our app!";
+    const html = `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6">
+        <h2>Welcome${fullName ? `, ${fullName}` : ""} 👋</h2>
+        <p>Your account is ready.</p>
+        <p><a href="${APP_URL}" target="_blank" rel="noreferrer">Open the app</a></p>
+      </div>
+    `;
+    // Send email with timeout protection
+
+    const result = await withTimeout(
+      resend.emails.send({ from: FROM, to, subject, html }),
+      8000
+    );
+
+    // Resend typically returns { data, error }
+    const { data, error } = result as any;
+
+    if (error) return { ok: false, error: `${error.name ?? "error"}: ${error.message ?? String(error)}` };
+
+    const id = data?.id;
+    return id ? { ok: true, id } : { ok: true };
   } catch (err: any) {
-    // Log full error on server so you can debug
-    console.error("❌ sendMail failed:", {
-      message: err?.message,
-      code: err?.code,
-      response: err?.response,
-      command: err?.command,
-    });
-    return { ok: false, error: err?.message ?? "Failed to send email" };
+    return { ok: false, error: err?.message ?? "Failed to send welcome email" };
   }
 }
+// Send password reset email containing a secure reset link
 
-// ✅ SAME NAME
-export async function sendWelcomeEmail(to: string, fullName?: string): Promise<SendResult> {
-  const subject = "Welcome to our app!";
-  const html = `
-    <div style="font-family: Arial, sans-serif; line-height: 1.6">
-      <h2>Welcome${fullName ? `, ${fullName}` : ""} 👋</h2>
-      <p>Your account is ready.</p>
-      <p><a href="${APP_URL}" target="_blank" rel="noreferrer">Open the app</a></p>
-    </div>
-  `;
-  return sendMail(to, subject, html);
-}
 
-// ✅ SAME NAME + SAME PARAMS
-// IMPORTANT: your frontend uses CODE flow.
-// So we email the "resetToken" as the code.
-// (no function rename, no signature change)
 export async function sendPasswordResetEmail(to: string, resetToken: string): Promise<SendResult> {
-  const subject = "Reset your password";
-  const html = `
-    <div style="font-family: Arial, sans-serif; line-height: 1.6">
-      <h2>Password reset code</h2>
-      <p>Use this code to reset your password:</p>
-      <div style="font-size: 28px; font-weight: bold; letter-spacing: 6px; margin: 12px 0;">
-        ${String(resetToken)}
+  try {
+    const resetLink = `${APP_URL}/reset-password?token=${encodeURIComponent(resetToken)}`;
+
+    const subject = "Reset your password";
+    const html = `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6">
+        <h2>Password reset request</h2>
+        <p>Click this link to reset your password:</p>
+        <p><a href="${resetLink}" target="_blank" rel="noreferrer">${resetLink}</a></p>
+        <p>If you didn’t request this, please contact us.</p>
       </div>
-      <p>If you didn’t request this, ignore this email.</p>
-    </div>
-  `;
-  return sendMail(to, subject, html);
-  
+    `;
+    // Send email with timeout protection
+
+    const result = await withTimeout(
+      resend.emails.send({ from: FROM, to, subject, html }),
+      8000
+    );
+
+    const { data, error } = result as any;
+
+    if (error) return { ok: false, error: `${error.name ?? "error"}: ${error.message ?? String(error)}` };
+    // Extract email ID if available
+
+    const id = data?.id;
+    return id ? { ok: true, id } : { ok: true };
+  } catch (err: any) {
+    return { ok: false, error: err?.message ?? "Failed to send reset email" };
+  }
 }
