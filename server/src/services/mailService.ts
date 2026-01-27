@@ -25,9 +25,9 @@ const transporter = nodemailer.createTransport({
   auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD },
   requireTLS: true,
   tls: { servername: "smtp.gmail.com" },
-  connectionTimeout: 8000,
-  greetingTimeout: 8000,
-  socketTimeout: 10000,
+  connectionTimeout: 20000,
+greetingTimeout: 20000,
+socketTimeout: 25000,
 });
 
 // Optional but VERY useful: see in Render logs if SMTP is reachable
