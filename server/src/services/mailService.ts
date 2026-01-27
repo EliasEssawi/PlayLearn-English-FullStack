@@ -22,7 +22,7 @@ function withTimeout<T>(promise: Promise<T>, ms = 8000): Promise<T> {
 
 
 const FROM = requireEnv("MAIL_FROM");
-const APP_URL = requireEnv("APP_URL");
+const APP_URL = requireEnv("CLIENT_URL");
 
 type SendResult = { ok: true; id?: string } | { ok: false; error: string };
 // Send welcome email to a newly registered user
