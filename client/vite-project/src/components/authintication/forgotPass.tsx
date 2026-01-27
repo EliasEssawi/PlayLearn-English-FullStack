@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import LeftPanel from "./LeftPanel";
 import RightPanel from "./RightPanel";
 import Input from "./Input";
-import Button from "./Button";
+import SafeButton from "../authintication/safebutton";
 import Actions from "./Actions";
 import Card from "./Card";
 import Layout from "./Layout";
@@ -17,32 +17,27 @@ import {
 } from "../../Types/Login";
 
 export default function ForgotPassword() {
-  const [message, setMessage] = useState<string>("");
-  const [email, setEmail] = useState<string>("");
-  const [code, setCode] = useState<string>("");
+  const [message, setMessage] = useState("");
+  const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
 
   const [step, setStep] = useState<"email" | "code" | "newPass">("email");
 
-  const [newPassword, setNewPassword] = useState<string>("");
-  const [conNewPassword, setConNewPassword] = useState<string>("");
+  const [newPassword, setNewPassword] = useState("");
+  const [conNewPassword, setConNewPassword] = useState("");
 
   const [loading, setLoading] = useState(false);
 
-  // Step 1: Send code
-  const sendCode = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const sendCodeRequest = async () => {
     setMessage("");
     setLoading(true);
 
-    const payload: sendVerificationCodeRequest = {
-      email: email.trim().toLowerCase(),
-    };
+    const payload: sendVerificationCodeRequest = { email: normalizedEmail };
 
     try {
-      const res = await api.post<LoginResponse>(
-        "/api/public/sendResetPassCode",
-        payload
-      );
+      const res = await api.post<LoginResponse>("/api/public/sendResetPassCode", payload);
       setMessage(res.data.message || "Code sent!");
       setStep("code");
     } catch (err) {
@@ -54,14 +49,24 @@ export default function ForgotPassword() {
     }
   };
 
-  // Step 2: Verify code
+  // Step 1
+  const sendCode = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!normalizedEmail) {
+      setMessage("Please enter an email.");
+      return;
+    }
+    await sendCodeRequest();
+  };
+
+  // Step 2
   const verifyCode = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setMessage("");
     setLoading(true);
 
     const payload: VerifyCodeRequest = {
-      email: email.trim().toLowerCase(),
+      email: normalizedEmail,
       code: code.trim(),
     };
 
@@ -78,7 +83,7 @@ export default function ForgotPassword() {
     }
   };
 
-  // Step 3: Change password
+  // Step 3
   const changePass = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setMessage("");
@@ -91,7 +96,7 @@ export default function ForgotPassword() {
     setLoading(true);
 
     const payload: ChangePassRequest = {
-      email: email.trim().toLowerCase(),
+      email: normalizedEmail,
       code: code.trim(),
       newPassword,
     };
@@ -109,8 +114,6 @@ export default function ForgotPassword() {
     } catch (err) {
       const error = err as AxiosError<{ message?: string }>;
       setMessage(error.response?.data?.message || "Change password failed.");
-      setConNewPassword("");
-      setNewPassword("");
     } finally {
       setLoading(false);
     }
@@ -134,7 +137,11 @@ export default function ForgotPassword() {
                 name="emailInput"
                 onChange={(e) => setEmail(e.target.value)}
               />
-              <Button children={loading ? "Sending..." : "Send code"} />
+              <SafeButton
+                type="submit"
+                disabled={loading}
+                children={loading ? "Sending..." : "Send code"}
+              />
             </form>
           )}
 
@@ -148,21 +155,24 @@ export default function ForgotPassword() {
                   name="codeInput"
                   onChange={(e) => setCode(e.target.value)}
                 />
-                <Button
+                <SafeButton
+                  type="submit"
+                  disabled={loading}
                   btnProp="border-2 border-black rounded-lg bg-emerald-500 text-black hover:bg-emerald-600"
                 >
                   {loading ? "Verifying..." : "Verify code"}
-                </Button>
+                </SafeButton>
               </form>
 
               <div className="flex gap-3 mt-4">
-                <form onSubmit={sendCode}>
-                  <Button
-                    btnProp="border-2 border-black flex-1 bg-gray-300 text-gray-700 hover:bg-gray-400"
-                  >
-                    {loading ? "Sending..." : "Resend code"}
-                  </Button>
-                </form>
+                <SafeButton
+                  type="button"
+                  disabled={loading}
+                  onClick={sendCodeRequest as any} // if your Button types don't include onClick
+                  btnProp="border-2 border-black flex-1 bg-gray-300 text-gray-700 hover:bg-gray-400"
+                >
+                  {loading ? "Sending..." : "Resend code"}
+                </SafeButton>
               </div>
             </div>
           )}
@@ -185,7 +195,7 @@ export default function ForgotPassword() {
                 type="password"
                 onChange={(e) => setConNewPassword(e.target.value)}
               />
-              <Button children={loading ? "Saving..." : "Change password"} />
+              <SafeButton type="submit" disabled={loading} children={loading ? "Saving..." : "Change password"} />
             </form>
           )}
 
