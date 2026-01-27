@@ -21,25 +21,36 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       }}
     >
       {/* Top application header */}
-      <header style={{
-        background: "#86e07f",
-        padding: "0.75rem 1.5rem",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center"
-      }}>
-        {/* Application title */}
-        <h1 style={{ color: "white", margin: 0 }}>PlayLearn</h1>
+     <header
+  style={{
+    background: darkMode ? "#020617" : "#86e07f",
+    padding: "0.75rem 1.5rem",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderBottom: darkMode ? "1px solid #1e293b" : "1px solid #e2e8f0",
+    transition: "all 0.3s",
+  }}
+>
+  {/* Application title */}
+  <h1
+    style={{
+      color: darkMode ? "#f8fafc" : "#ffffff",
+      margin: 0,
+      transition: "color 0.3s",
+    }}
+  >
+    PlayLearn
+  </h1>
 
-        {/* Header action buttons */}
-        <div style={{ display: "flex", gap: "12px" }}>
-          <BackButton />
-          <LogoutButton />
+  {/* Header action buttons */}
+  <div style={{ display: "flex", gap: "12px" }}>
+    <BackButton />
+    <LogoutButton />
+    <DarkModeToggle />
+  </div>
+</header>
 
-          <DarkModeToggle />
-
-        </div>
-      </header>
 
       {/* Main page content */}
       <main style={{ padding: "2rem" }}>{children}</main>

@@ -74,26 +74,23 @@ const StarterPage: React.FC = () => {
           What You Can Do
         </h3>
 
-        <div className="grid">
-          {features.map((f, idx) => (
-            <div
-              key={idx}
-              className="card card-pad card-hover"
-              style={{
-                background: "#ffffff",
-                border: "1px solid #e2e8f0",
-              }}
-            >
-              <img src={f.icon} className="feature-icon" alt={f.title} />
-              <div style={{ color: "#86e07f", fontWeight: 600 }}>
-                {f.title}
-              </div>
-              <div style={{ color: "#6b7280" }}>
-                {f.desc}
-              </div>
-            </div>
-          ))}
-        </div>
+       <div className="grid">
+  {features.map((f, idx) => (
+    <div
+      key={idx}
+      className={`card card-pad card-hover ${f.title === "Online Game" ? "online-center" : ""}`}
+      style={{
+        background: "#ffffff",
+        border: "1px solid #e2e8f0",
+      }}
+    >
+      <img src={f.icon} className="feature-icon" alt={f.title} />
+      <div style={{ color: "#86e07f", fontWeight: 600 }}>{f.title}</div>
+      <div style={{ color: "#6b7280" }}>{f.desc}</div>
+    </div>
+  ))}
+</div>
+
       </section>
 
       {/* FOOTER */}

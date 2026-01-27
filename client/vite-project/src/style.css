@@ -134,6 +134,17 @@ body.dark .hero-sub {
 @media (min-width: 1024px) {
   .grid { grid-template-columns: repeat(3, 1fr); }
 }
+/* Desktop: center the Online Game card in the last row (3 columns grid) */
+.online-center {
+  grid-column: 2 / 3; /* middle column */
+}
+
+/* Mobile/Tablet: don't force center, keep normal flow */
+@media (max-width: 900px) {
+  .online-center {
+    grid-column: auto;
+  }
+}
 
 .card {
   background: #fff;

@@ -207,7 +207,7 @@ const ParentPage: React.FC = () => {
   return (
     <MainLayout> 
       
-// {/* Parent dashboard layout */}{/* Children selection */} {/* Profile actions */}{/* Change PIN modal */}{/* Report history modal */}
+ {/* Parent dashboard layout */}{/* Children selection */} {/* Profile actions */}{/* Change PIN modal */}{/* Report history modal */}
       <div style={{ maxWidth: "850px", margin: "0 auto", padding: "40px 20px" }}>
         
         <header style={{ marginBottom: "50px", textAlign: "left" }}>
