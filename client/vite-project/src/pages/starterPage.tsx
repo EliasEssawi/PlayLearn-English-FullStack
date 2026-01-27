@@ -1,18 +1,11 @@
 import React from "react";
 import { useTheme } from "../components/context/ThemeContext";
+import DarkModeToggle from "../components/authintication/DarkModeToggle";
 
 type Page = "login" | "register";
 
 const StarterPage: React.FC = () => {
-  // Works whether your context provides toggleDarkMode OR setDarkMode
-  const theme = useTheme() as any;
-  const darkMode: boolean = !!theme.darkMode;
-
-  const toggle =
-    theme.toggleDarkMode ||
-    (typeof theme.setDarkMode === "function"
-      ? () => theme.setDarkMode((v: boolean) => !v)
-      : undefined);
+  const { darkMode } = useTheme();
 
   const goToPage = (page: Page): void => {
     if (page === "login") window.location.href = "/login";
@@ -29,131 +22,167 @@ const StarterPage: React.FC = () => {
     { icon: "https://cdn-icons-png.flaticon.com/512/1048/1048934.png", title: "Online Game", desc: "Play, Chat & Video call friends!" },
   ];
 
-  // Theme colors
-  const bg = darkMode ? "#020617" : "#f8fafc";
-  const text = darkMode ? "#ffffff" : "#0f172a";
-  const muted = darkMode ? "#e5e7eb" : "#6b7280";
+  // theme colors (kept consistent with your register palette)
+  const pageBg = darkMode ? "#020617" : "#f8fafc";
+  const pageText = darkMode ? "#f8fafc" : "#0f172a";
+
+  const greenBar = "#86e07f";
+  const border = darkMode ? "1px solid #4ade80" : "1px solid #dbeafe"; // soft border in light mode
   const cardBg = darkMode ? "#0b1220" : "#ffffff";
-  const border = darkMode ? "1px solid #4ade80" : "1px solid #e2e8f0";
+  const muted = darkMode ? "#e5e7eb" : "#475569";
+
+  // Buttons:
+  // - In light mode: BOTH are white so Register is visible (as you asked)
+  // - Register: green border + green text
+  // - Login: gray border + dark text
+  const registerBtnStyle: React.CSSProperties = {
+    background: "#ffffff",
+    color: "#0f172a",
+    border: "1px solid rgba(15,23,42,0.18)",
+    padding: "0.85rem 1.2rem",
+    borderRadius: 12,
+    fontWeight: 900,
+    cursor: "pointer",
+    minWidth: 210,
+  };
+
+  const loginBtnStyle: React.CSSProperties = {
+    background: "#ffffff",
+    color: "#0f172a",
+    border: "1px solid rgba(15,23,42,0.18)",
+    padding: "0.85rem 1.2rem",
+    borderRadius: 12,
+    fontWeight: 900,
+    cursor: "pointer",
+    minWidth: 210,
+  };
+  const frameStyle: React.CSSProperties = {
+  backgroundColor: darkMode ? "#020617" : "#ffffff",
+  border: darkMode
+    ? "1px solid #020617" // dark frame
+    : "2px solid #86e07f", // green frame in light mode
+  borderRadius: 22,
+  padding: "22px",
+  boxShadow: darkMode
+    ? "0 0 0 rgba(0,0,0,0)"
+    : "0 12px 30px rgba(15,23,42,0.08)",
+};
+
+  // in dark mode, white buttons look too bright → make them dark-friendly but keep borders
+  if (darkMode) {
+    registerBtnStyle.background = "#020617";
+    registerBtnStyle.color = "#f8fafc";
+    registerBtnStyle.border = "1px solid #334155";
+
+    loginBtnStyle.background = "#020617";
+    loginBtnStyle.color = "#f8fafc";
+    loginBtnStyle.border = "1px solid #334155";
+  }
 
   return (
-    <div className="min-h-screen w-full font-[Poppins]" style={{ background: bg, color: text }}>
-      {/* HEADER (title + darkmode only) */}
-      <header style={{ background: darkMode ? "#0b1220" : "#86e07f", borderBottom: border }}>
+    <div style={{ minHeight: "100vh", background: pageBg, color: pageText }}>
+      {/* ✅ GREEN TOP BAR (only dark toggle) */}
+      <div
+        style={{
+          background: greenBar,
+          borderBottom: darkMode ? "1px solid #4ade80" : "1px solid rgba(15,23,42,0.08)",
+        }}
+      >
         <div
-          className="container header-row"
-          style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
+          style={{
+            maxWidth: 1100,
+            margin: "0 auto",
+            padding: "14px 18px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
         >
-          <h1 className="header-title" style={{ color: "#ffffff" }}>
+          <div style={{ fontWeight: 900, color: "#ffffff", fontSize: 20 }}>
             PlayLearn English
-          </h1>
+          </div>
 
-          {/* ✅ Same style idea as your floating button: dark vs light colors */}
-          <button
-            type="button"
-            onClick={toggle}
-            disabled={!toggle}
-            title="Toggle Dark Mode"
-            style={{
-              padding: "10px 14px",
-              borderRadius: 999,
-              border: darkMode ? "1px solid #4ade80" : "1px solid #ffffff",
-              background: darkMode ? "#1e293b" : "#ffffff",
-              color: darkMode ? "#f8fafc" : "#0f172a",
-              fontWeight: 900,
-              cursor: toggle ? "pointer" : "not-allowed",
-              boxShadow: darkMode
-                ? "0 10px 30px rgba(0,0,0,0.35)"
-                : "0 10px 30px rgba(15,23,42,0.18)",
-              opacity: toggle ? 1 : 0.7,
-            }}
-          >
-            {darkMode ? "🌙 Dark" : "☀️ Light"}
-          </button>
+          {/* ✅ exact same button component used in AuthLayout/Register */}
+          <DarkModeToggle />
         </div>
-      </header>
+      </div>
 
-      {/* HERO */}
-      <section className="section hero">
-        <h2 style={{ color: darkMode ? "#4ade80" : "#3fa16a" }}>Learn English the Fun Way!</h2>
+      {/* CONTENT */}
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "22px 18px" }}>
+        {/* HERO BOX with border */}
+          <div style={frameStyle}>
+        <div
+          style={{
+            background: greenBar,
+            borderRadius: 18,
+            padding: "26px 22px",
+            textAlign: "center",
+            border,
+            boxShadow: darkMode ? "none" : "0 10px 30px rgba(15,23,42,0.08)",
+          }}
+        >
+          <h2 style={{ color: "#0f172a", fontSize: "1.6rem", fontWeight: 900, margin: 0 }}>
+            Learn English the Fun Way!
+          </h2>
 
-        <p style={{ color: muted, maxWidth: 650, margin: "0.5rem auto 0" }}>
-          Games, vocabulary, stories, speaking practice, and an AI friend — built for kids.
-        </p>
+          <p style={{ color: "#0f172a", opacity: 0.9, maxWidth: 680, margin: "10px auto 0", fontWeight: 600 }}>
+            Games, vocabulary, stories, speaking practice, translating, AI friend & chat online.
+          </p>
 
-        <p style={{ marginTop: "0.9rem", fontWeight: 800 }}>
-          Please register or log in to start learning.
-        </p>
+          <p style={{ color: "#0f172a", marginTop: 14, fontWeight: 900 }}>
+            Please register or log in to start learning.
+          </p>
 
-        <div style={{ marginTop: "1.25rem", display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-          <button
-            type="button"
-            onClick={() => goToPage("register")}
-            style={{
-              background: "#3fa16a",
-              border: "1px solid #3fa16a",
-              color: "#ffffff",
-              padding: "0.85rem 1.2rem",
-              borderRadius: 12,
-              fontWeight: 900,
-              cursor: "pointer",
-              minWidth: 210,
-            }}
-          >
-            Create Free Account
-          </button>
+          <div style={{ marginTop: 16, display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+            <button type="button" onClick={() => goToPage("register")} style={registerBtnStyle}>
+              CREATE FREE ACCOUNT
+            </button>
 
-          <button
-            type="button"
-            onClick={() => goToPage("login")}
-            style={{
-              background: cardBg,
-              border,
-              color: text,
-              padding: "0.85rem 1.2rem",
-              borderRadius: 12,
-              fontWeight: 900,
-              cursor: "pointer",
-              minWidth: 210,
-            }}
-          >
-            Login
-          </button>
+            <button type="button" onClick={() => goToPage("login")} style={loginBtnStyle}>
+              LOGIN
+            </button>
+          </div>
         </div>
-      </section>
 
-      {/* FEATURES */}
-      <section className="section">
-        <h3 style={{ marginBottom: "1.5rem" }}>What You Can Do</h3>
+        {/* FEATURES */}
+        <div style={{ marginTop: 18 }}>
+          <h3 style={{ fontWeight: 900, marginBottom: 12 }}>What You Can Do</h3>
 
-        <div className="grid">
-          {features.map((f, idx) => (
-            <div
-              key={idx}
-              className="card card-pad"
-              style={{
-                background: cardBg,
-                border,
-                borderRadius: 16,
-                cursor: "default",
-              }}
-            >
-              <img src={f.icon} className="feature-icon" alt={f.title} />
-              <div style={{ fontWeight: 900, marginTop: 6 }}>{f.title}</div>
-              <div style={{ color: muted }}>{f.desc}</div>
+          <div
+            style={{
+              display: "grid",
+              gap: 14,
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            }}
+          >
+            {features.map((f, idx) => (
+              <div
+                key={idx}
+                style={{
+                  background: cardBg,
+                  border,
+                  borderRadius: 16,
+                  padding: 16,
+                  cursor: "default",
+                }}
+              >
+                <img src={f.icon} alt={f.title} style={{ width: 42, height: 42 }} />
+                <div style={{ fontWeight: 900, marginTop: 10 }}>{f.title}</div>
+                <div style={{ color: muted, marginTop: 4, fontWeight: 600 }}>{f.desc}</div>
 
-              <div style={{ marginTop: 10, fontSize: 14, color: muted }}>
-                Available after login
+                <div style={{ marginTop: 10, fontSize: 14, color: muted, fontWeight: 700 }}>
+                  Available after login
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </section>
 
-      {/* FOOTER */}
-      <footer style={{ textAlign: "center", padding: "1rem", color: muted, borderTop: border }}>
-        © 2025 PlayLearn English — Learn &amp; Play!
-      </footer>
+        <div style={{ textAlign: "center", marginTop: 18, color: darkMode ? "#e5e7eb" : "#94a3b8", fontWeight: 700 }}>
+          © 2025 PlayLearn English — Learn &amp; Play!
+        </div>
+      </div>
+      </div>
     </div>
   );
 };
