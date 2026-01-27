@@ -24,8 +24,8 @@ function BackButton({ children = "Go Back", btnProp }: Props) {
         className={btnProp ?? "nav-btn"}
         onClick={handleBack}
         style={{
-          backgroundColor: "#dc2626", // 🔴 אדום
-          color: "#ffffff",           // טקסט לבן
+          backgroundColor: "#dc2626", 
+          color: "#ffffff",          
           border: "none",
         }}
       >

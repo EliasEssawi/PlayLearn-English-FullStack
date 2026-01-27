@@ -102,7 +102,7 @@ const Register: React.FC = () => {
       setMessage("Passwords do not match.");
       return;
     }
-
+    /* Password strength validation */
     const passwordRegex = /^(?=.*[A-Z]).{8,}$/;
     if (!passwordRegex.test(userData.password)) {
       setMessage(
@@ -110,12 +110,12 @@ const Register: React.FC = () => {
       );
       return;
     }
-
+    /* PIN match validation */
     if (userData.pin !== userData.confirmPin) {
       setMessage("PINs do not match.");
       return;
     }
-
+    /* Date of birth validation */
     const selectedDate = new Date(userData.dateOfBirth);
     const today = new Date();
 
@@ -138,7 +138,7 @@ const Register: React.FC = () => {
       return;
     }
 
-    const payload: RegisterRequest = {
+    const payload: RegisterRequest = {//    /* Build request payload */
       name: userData.name.trim(),
       email: userData.email.trim().toLowerCase(),
       password: userData.password,

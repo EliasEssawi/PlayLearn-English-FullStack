@@ -26,11 +26,16 @@ const AddProfile: React.FC = () => {
     confirmPin: "",
     rate: 1,
   };
-
+ /*
+    Form state
+  */
   const [profileData, setProfileData] = useState(initialData);
   const [message, setMessage] = useState("");
   const [msgStat, setMsgStat] = useState<"error" | "success">("error");
-
+  /*
+    Generic change handler for form inputs
+    Enforces a maximum of 4 digits for PIN fields
+  */
   const handleChange = (
     name: keyof AddProfileData,
     value: string | number
@@ -45,6 +50,9 @@ const AddProfile: React.FC = () => {
     setProfileData((prev) => ({ ...prev, [name]: value }));
   };
 
+  /*
+    Submit handler with validation and API request
+  */
   const handleSubmit = async () => {
     setMessage("");
 
@@ -53,20 +61,23 @@ const AddProfile: React.FC = () => {
       setMessage("PIN must be exactly 4 digits.");
       return;
     }
+    /* PIN match validation */
 
     if (profileData.pin !== profileData.confirmPin) {
       setMsgStat("error");
       setMessage("PINs do not match.");
       return;
     }
-
+    /* Level range validation */
     if (profileData.rate < 1 || profileData.rate > 5) {
       setMsgStat("error");
       setMessage("Level must be between 1 and 5.");
       return;
     }
 
-    try {
+    try {/*
+        Send request to create a new child profile
+      */
       await api.post(`/api/profiles`, {
         profileName: profileData.profileName.trim(),
         pin: profileData.pin,
@@ -76,7 +87,9 @@ const AddProfile: React.FC = () => {
       setMsgStat("success");
       setMessage("Profile added successfully! Redirecting...");
       setProfileData(initialData);
-
+  /*
+        Return to previous page after a short delay
+      */
       setTimeout(() => {
         window.history.back();
       }, 2000);

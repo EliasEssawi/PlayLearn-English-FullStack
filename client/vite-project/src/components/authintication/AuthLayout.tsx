@@ -3,10 +3,18 @@ import React from "react";
 import { useTheme } from "../context/ThemeContext";
 import DarkModeToggle from "../authintication/DarkModeToggle";
 
+/*
+  Props definition for the AuthLayout component
+  The layout wraps authentication-related pages (Login, Register, etc.)
+*/
 type Props = {
   children: React.ReactNode;
 };
-
+/*
+  AuthLayout component
+  Provides a centered full-screen layout with dynamic
+  light / dark mode background and text colors
+*/
 export default function AuthLayout({ children }: Props) {
   const { darkMode } = useTheme();
 
@@ -23,7 +31,7 @@ export default function AuthLayout({ children }: Props) {
         position: "relative",
       }}
     >
-      {/* 🌙 Dark Mode Toggle */}
+      {/*  Dark Mode Toggle */}
       <div style={{ position: "absolute", top: 20, right: 20 }}>
         <DarkModeToggle />
       </div>
