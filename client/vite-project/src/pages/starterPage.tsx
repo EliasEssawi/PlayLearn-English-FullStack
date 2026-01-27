@@ -1,11 +1,12 @@
 import React from "react";
-import { useTheme } from "../context/ThemeContext";
 
 type Page = "login" | "register";
 
-const StarterPage: React.FC = () => {
-  const { darkMode, toggleDarkMode } = useTheme();
+type Props = {
+  darkMode: boolean;
+};
 
+const StarterPage: React.FC<Props> = ({ darkMode }) => {
   const goToPage = (page: Page): void => {
     if (page === "login") window.location.href = "/login";
     if (page === "register") window.location.href = "/register";
@@ -21,7 +22,7 @@ const StarterPage: React.FC = () => {
     { icon: "https://cdn-icons-png.flaticon.com/512/1048/1048934.png", title: "Online Game", desc: "Play, Chat & Video call friends!" },
   ];
 
-  // Theme colors
+  /* 🎨 THEME */
   const bg = darkMode ? "#0b1220" : "#f8fafc";
   const text = darkMode ? "#e5e7eb" : "#0f172a";
   const muted = darkMode ? "#9ca3af" : "#6b7280";
@@ -32,56 +33,38 @@ const StarterPage: React.FC = () => {
 
   return (
     <div className="min-h-screen w-full font-[Poppins]" style={{ background: bg, color: text }}>
-      {/* HEADER (ONLY DARK MODE) */}
+      {/* HEADER — ONLY TITLE */}
       <header style={{ background: headerBg, borderBottom: border }}>
-        <div className="container header-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div className="container header-row">
           <h1 className="header-title" style={{ color: "#ffffff" }}>
             PlayLearn English
           </h1>
-
-          {/* Dark mode only */}
-          <button
-            type="button"
-            onClick={toggleDarkMode}
-            style={{
-              background: darkMode ? "#0b1220" : "#ffffff",
-              color: darkMode ? "#e5e7eb" : "#0f172a",
-              border: darkMode ? "1px solid #243244" : "1px solid #e2e8f0",
-              padding: "0.55rem 0.9rem",
-              borderRadius: "999px",
-              fontWeight: 700,
-              cursor: "pointer",
-            }}
-            aria-label="Toggle dark mode"
-            title="Toggle dark mode"
-          >
-            {darkMode ? "☾ Dark" : "☀ Light"}
-          </button>
         </div>
       </header>
 
       {/* HERO */}
       <section className="section hero">
-        <h2 style={{ color: darkMode ? "#a7f3d0" : green }}>Learn English the Fun Way!</h2>
+        <h2 style={{ color: darkMode ? "#a7f3d0" : green }}>
+          Learn English the Fun Way!
+        </h2>
 
-        <p style={{ color: muted, maxWidth: "650px", margin: "0.5rem auto 0" }}>
+        <p style={{ color: muted, maxWidth: 650, margin: "0.5rem auto 0" }}>
           Games, vocabulary, stories, speaking practice, and an AI friend — built for kids.
         </p>
 
-        <p style={{ color: text, marginTop: "0.9rem", fontWeight: 700 }}>
-          To start, please create an account or log in.
+        <p style={{ marginTop: "0.9rem", fontWeight: 700 }}>
+          Please register or log in to start learning.
         </p>
 
-        <div style={{ marginTop: "1.25rem", display: "flex", gap: "0.75rem", justifyContent: "center", flexWrap: "wrap" }}>
+        <div style={{ marginTop: "1.25rem", display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
           <button
-            type="button"
             onClick={() => goToPage("register")}
             style={{
               background: green,
+              color: "#fff",
               border: `1px solid ${green}`,
-              color: "#ffffff",
-              padding: "0.8rem 1.1rem",
-              borderRadius: "12px",
+              padding: "0.8rem 1.2rem",
+              borderRadius: 12,
               fontWeight: 800,
               cursor: "pointer",
               minWidth: 200,
@@ -91,14 +74,13 @@ const StarterPage: React.FC = () => {
           </button>
 
           <button
-            type="button"
             onClick={() => goToPage("login")}
             style={{
               background: darkMode ? "#0b1220" : "#ffffff",
-              border,
               color: text,
-              padding: "0.8rem 1.1rem",
-              borderRadius: "12px",
+              border,
+              padding: "0.8rem 1.2rem",
+              borderRadius: 12,
               fontWeight: 800,
               cursor: "pointer",
               minWidth: 200,
@@ -107,36 +89,29 @@ const StarterPage: React.FC = () => {
             Login
           </button>
         </div>
-
-        <div style={{ marginTop: "0.75rem", color: muted, fontSize: "0.95rem" }}>
-          You can see what the app includes below.
-        </div>
       </section>
 
       {/* FEATURES */}
       <section className="section">
-        <h3 style={{ color: text, marginBottom: "1.25rem" }}>What You Can Do</h3>
+        <h3 style={{ marginBottom: "1.5rem" }}>What You Can Do</h3>
 
         <div className="grid">
-          {features.map((f, idx) => (
+          {features.map((f, i) => (
             <div
-              key={idx}
+              key={i}
               className="card card-pad"
               style={{
                 background: cardBg,
                 border,
-                borderRadius: "16px",
+                borderRadius: 16,
                 cursor: "default",
-                boxShadow: darkMode ? "none" : "0 1px 0 rgba(15, 23, 42, 0.03)",
               }}
             >
               <img src={f.icon} className="feature-icon" alt={f.title} />
-              <div style={{ color: darkMode ? "#c7f9d4" : "#0f172a", fontWeight: 800, marginTop: "0.25rem" }}>
-                {f.title}
-              </div>
-              <div style={{ color: muted, marginTop: "0.25rem" }}>{f.desc}</div>
+              <div style={{ fontWeight: 800 }}>{f.title}</div>
+              <div style={{ color: muted }}>{f.desc}</div>
 
-              <div style={{ marginTop: "0.8rem", color: darkMode ? "#64748b" : "#94a3b8", fontSize: "0.9rem" }}>
+              <div style={{ marginTop: 10, fontSize: 14, color: muted }}>
                 Available after login
               </div>
             </div>
@@ -153,7 +128,7 @@ const StarterPage: React.FC = () => {
           borderTop: border,
         }}
       >
-        © 2025 PlayLearn English — Learn &amp; Play!
+        © 2025 PlayLearn English — Learn & Play!
       </footer>
     </div>
   );
