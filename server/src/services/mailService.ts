@@ -20,16 +20,14 @@ type SendResult = { ok: true; id?: string } | { ok: false; error: string };
 
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
+  port: 587,
+  secure: false,
   auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD },
-
-  // prevent hanging requests
+  requireTLS: true,
+  tls: { servername: "smtp.gmail.com" },
   connectionTimeout: 8000,
   greetingTimeout: 8000,
   socketTimeout: 10000,
-
-  tls: { servername: "smtp.gmail.com" },
 });
 
 // Optional but VERY useful: see in Render logs if SMTP is reachable
