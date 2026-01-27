@@ -11,14 +11,17 @@ const FROM = requireEnv("MAIL_FROM");
 
 const GMAIL_USER = requireEnv("GMAIL_USER");
 const GMAIL_APP_PASSWORD = requireEnv("GMAIL_APP_PASSWORD");
-
 const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: GMAIL_USER,
-    pass: GMAIL_APP_PASSWORD, // App Password (NOT your normal Gmail password)
-  },
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
+  auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD },
+  connectionTimeout: 8000,
+  greetingTimeout: 8000,
+  socketTimeout: 10000,
 });
+
+
 
 type SendResult = { ok: true; id?: string } | { ok: false; error: string };
 
