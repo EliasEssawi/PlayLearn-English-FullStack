@@ -60,15 +60,13 @@ export async function sendWelcomeEmail(to: string, fullName?: string): Promise<S
 
 export async function sendPasswordResetEmail(to: string, resetToken: string): Promise<SendResult> {
   try {
-    const resetLink = `${APP_URL}/reset-password?token=${encodeURIComponent(resetToken)}`;
-
     const subject = "Reset your password";
     const html = `
       <div style="font-family: Arial, sans-serif; line-height: 1.6">
         <h2>Password reset request</h2>
-        <p>Click this link to reset your password:</p>
-        <p><a href="${resetLink}" target="_blank" rel="noreferrer">${resetLink}</a></p>
-        <p>If you didn’t request this, please contact us.</p>
+        <p>your Reset code password:</p>
+        <p>${resetToken}</p>
+        <p>Write this to change you password, notice! If you didn’t request this, please contact us.</p>
       </div>
     `;
     // Send email with timeout protection
