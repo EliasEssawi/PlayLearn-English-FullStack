@@ -11,6 +11,7 @@ import LoginActions from "./Actions";
 import { LoginRequest, LoginResponse } from "../../Types/Login";
 import axios, { AxiosError } from "axios";
 import api from "../../api/axios";
+import AuthLayout from "./AuthLayout";
 
 
 
@@ -78,7 +79,8 @@ export default function Login() {
   };
 
   return (
-    <LoginLayout>
+    <AuthLayout>
+
       <LoginCard>
         <LoginLeftPanel>
           <LoginHeader />
@@ -133,6 +135,6 @@ export default function Login() {
 
         <LoginRightPanel />
       </LoginCard>
-    </LoginLayout>
+    </AuthLayout>
   );
 }

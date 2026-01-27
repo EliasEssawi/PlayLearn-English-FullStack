@@ -263,7 +263,6 @@ body.dark .hero-sub {
 
 .auth-left {
   flex: 1;
-  background: #fff;
   padding: 2rem;
   display: flex;
   align-items: center;
@@ -838,8 +837,87 @@ body.dark .hero-sub {
   transform: translateY(-2px);
   filter: brightness(1.08);
 }
+/* =========================
+   AUTH – DARK MODE
+   ========================= */
+
+.auth.dark {
+  background-color: #020617;
+}
+
+/* Card */
+.auth.dark .auth-card {
+  background-color: #000;
+  color: #f8fafc;
+}
+
+/* Labels */
+.auth.dark .auth-label,
+.auth.dark .auth-subtitle {
+  color: #ffffff;
+}
+
+/* Title */
+.auth.dark .auth-title {
+  color: #4ade80;
+}
+
+/* Inputs */
+.auth.dark .auth-input {
+  background-color: #020617;
+  color: #f8fafc;
+  border: 1px solid #4ade80;
+}
+
+/* Placeholder */
+.auth.dark .auth-input::placeholder {
+  color: #e5e7eb;
+}
 
 
 
 
+/* =========================
+   AUTH – LIGHT MODE (DEFAULT)
+   ========================= */
 
+.auth {
+  background-color: #f8fafc;
+}
+
+/* Card */
+.auth .auth-card {
+  background-color: #ffffff;
+  color: #0f172a;
+}
+
+/* Labels */
+.auth .auth-label,
+.auth .auth-subtitle {
+  color: #0f172a;
+}
+
+/* Title */
+.auth .auth-title {
+  color: #16a34a;
+}
+
+/* Inputs */
+.auth .auth-input {
+  background-color: #ffffff;
+  color: #0f172a;              /* 🔴 חשוב */
+  border: 1px solid #86e07f;
+}
+
+/* Placeholder */
+.auth .auth-input::placeholder {
+  color: #64748b;              /* 🔴 חשוב */
+}
+.auth .auth-input[type="date"] {
+  color-scheme: light;
+}
+
+.auth.dark .auth-input[type="date"] {
+  color-scheme: dark;
+  color: #ffffff;
+}

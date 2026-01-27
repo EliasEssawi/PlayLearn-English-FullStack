@@ -1,4 +1,5 @@
 import React from "react";
+import { useTheme } from "../context/ThemeContext";
 
 type Props = {
   title?: string;
@@ -7,16 +8,22 @@ type Props = {
 };
 
 export default function LoginRightPanel({
-  // Default heading shown on the right panel (can be overridden by props)
   title = "Welcome Back 👋",
-  // Default helper text describing what the user can do after logging in
   description = "Continue your learning journey and track your progress across talking, reading, listening and vocabulary.",
-  // Footer text (usually copyright / app name)
   footer = "© 2025 Your App",
 }: Props) {
+  const { darkMode } = useTheme();
+
   return (
     // Right side of the auth card (welcome/info panel)
-    <div className="auth-right">
+    <div
+      className="auth-right"
+      style={{
+        backgroundColor: darkMode ? "#000000" : "#4aa27a",
+        color: "#ffffff",
+        transition: "background-color 0.3s ease",
+      }}
+    >
       {/* Main title / greeting */}
       <h1 className="welcome-title">{title}</h1>
 

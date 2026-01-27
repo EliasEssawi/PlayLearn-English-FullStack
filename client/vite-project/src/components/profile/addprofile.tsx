@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import axios, { AxiosError } from "axios";
 
-import Layout from "../authintication/Layout";
-import Card from "../authintication/Card";
+import AuthLayout from "../authintication/AuthLayout";
+import LoginCard from "../authintication/Card";
 import Input from "../authintication/Input";
 import Button from "../authintication/Button";
 import LoginRightPanel from "../authintication/RightPanel";
@@ -11,15 +11,14 @@ import BackButton from "../authintication/BackButton";
 
 // TYPES
 // Form data structure for adding a child profile
-
 type AddProfileData = {
   profileName: string;
   pin: string;
   confirmPin: string;
   rate: number;
 };
-// ADD PROFILE COMPONENT
 
+// ADD PROFILE COMPONENT
 const AddProfile: React.FC = () => {
   const initialData: AddProfileData = {
     profileName: "",
@@ -30,7 +29,7 @@ const AddProfile: React.FC = () => {
 
   const [profileData, setProfileData] = useState(initialData);
   const [message, setMessage] = useState("");
-  const [msgStat, setMsgStat] = useState("error")
+  const [msgStat, setMsgStat] = useState<"error" | "success">("error");
 
   const handleChange = (
     name: keyof AddProfileData,
@@ -76,23 +75,21 @@ const AddProfile: React.FC = () => {
 
       setMsgStat("success");
       setMessage("Profile added successfully! Redirecting...");
-
       setProfileData(initialData);
 
       setTimeout(() => {
-        window.history.back(); // navigate("/parent-dashboard")
-      }, 2000); 
-      // Handle backend error
-
+        window.history.back();
+      }, 2000);
     } catch (err) {
       const error = err as AxiosError<{ message?: string }>;
+      setMsgStat("error");
       setMessage(error.response?.data?.message || "Failed to add profile.");
     }
   };
 
   return (
-    <Layout>
-      <Card>
+    <AuthLayout>
+      <LoginCard>
         {/* LEFT SIDE */}
         <div className="auth-left">
           <div className="add-profile-left">
@@ -157,12 +154,18 @@ const AddProfile: React.FC = () => {
                 required
               />
 
-              {message && msgStat==="error" && <div className="error">{message}</div>}
-              {message && msgStat==="success" && <div className="success">{message}</div>}
+              {message && msgStat === "error" && (
+                <div className="error">{message}</div>
+              )}
+              {message && msgStat === "success" && (
+                <div className="success">{message}</div>
+              )}
 
               <div className="add-profile-actions flex justify-between">
                 <Button>ADD PROFILE</Button>
-                <BackButton btnProp="bg-red-500 hover:bg-red-600 text-white px-5 py-3.5 rounded-xl">Cancel</BackButton>
+                <BackButton btnProp="bg-red-500 hover:bg-red-600 text-white px-5 py-3.5 rounded-xl">
+                  Cancel
+                </BackButton>
               </div>
             </form>
           </div>
@@ -174,8 +177,8 @@ const AddProfile: React.FC = () => {
           description="Add a profile for your child and start learning together."
           footer="© 2025 Your App"
         />
-      </Card>
-    </Layout>
+      </LoginCard>
+    </AuthLayout>
   );
 };
 

@@ -6,188 +6,197 @@ import Button from "./Button";
 import Actions from "./Actions";
 import Card from "./Card";
 import Layout from "./Layout";
-import axios, { AxiosError } from "axios";
-import {sendVerificationCodeRequest, LoginResponse, VerifyCodeRequest, ChangePassRequest} from "../../Types/Login";
-
-// Base URL for public authentication-related API endpoints
-const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
-
+import api from "../../api/axios";
+import type { AxiosError } from "axios";
+import {
+  sendVerificationCodeRequest,
+  LoginResponse,
+  VerifyCodeRequest,
+  ChangePassRequest,
+} from "../../Types/Login";
 
 export default function ForgotPassword() {
-    // Local state for form data, messages, and flow control
-    const [message, setMessage] = useState<string>("");
-    const [email, setEmail] = useState<string>("");
-    const [code, setCode] = useState<string>("");
+  const [message, setMessage] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [code, setCode] = useState<string>("");
 
-    // Controls which step of the reset-password flow is displayed
-    const [step, setStep] = useState<"email" | "code" | "newPass">("email");
+  const [step, setStep] = useState<"email" | "code" | "newPass">("email");
 
-    const [newPassword, setNewPassword] = useState<string>("");
-    const [conNewPassword, setConNewPassword] = useState<string>("");
+  const [newPassword, setNewPassword] = useState<string>("");
+  const [conNewPassword, setConNewPassword] = useState<string>("");
 
-    // Step 1: Send verification code to user's email
-    const sendCode = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
-        e.preventDefault();
-        setMessage("");
+  const [loading, setLoading] = useState(false);
 
-        const payload: sendVerificationCodeRequest = {
-            email: email.trim().toLowerCase()
-        };
+  const sendCode = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
+    e.preventDefault();
+    setMessage("");
+    setLoading(true);
 
-        try {
-            // Request server to send reset code via email
-            const res = await axios.post<LoginResponse>(`${API_BASE}/public/sendResetPassCode`, payload);
-            setMessage(res.data.message || "code successfully sended !");
-            setStep("code"); // Move to code verification step
-        } catch (err) {
-            const error = err as AxiosError<{ message?: string }>;
-            setMessage(error.response?.data?.message || "sending code has failed.");
-            setStep("email");
-        }
+    const payload: sendVerificationCodeRequest = {
+      email: email.trim().toLowerCase(),
     };
 
-    // Step 2: Verify the code entered by the user
-    const verifyCode = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
-        e.preventDefault();
-        setMessage("");
+    try {
+      const res = await api.post<LoginResponse>("/api/public/sendResetPassCode", payload);
+      setMessage(res.data.message || "code successfully sent!");
+      setStep("code");
+    } catch (err) {
+      const error = err as AxiosError<{ message?: string }>;
+      setMessage(error.response?.data?.message || "sending code has failed.");
+      setStep("email");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        const payload: VerifyCodeRequest = {
-            email: email.trim().toLowerCase(),
-            code: code
-        };
+  const verifyCode = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
+    e.preventDefault();
+    setMessage("");
+    setLoading(true);
 
-        try {
-            // Request server to verify reset code
-            const res = await axios.post<LoginResponse>(`${API_BASE}/public/verifyPassCode`, payload);
-            setMessage(res.data.message || "code Verified !");
-            setStep("newPass"); // Move to password change step
-        } catch (err) {
-            const error = err as AxiosError<{ message?: string }>;
-            setMessage(error.response?.data?.message || "failed to verify code.");
-            setStep("code");
-        }
+    const payload: VerifyCodeRequest = {
+      email: email.trim().toLowerCase(),
+      code: code.trim(),
     };
 
-    // Step 3: Change password after successful code verification
-    const changePass = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
-        e.preventDefault();
-        setMessage("");
+    try {
+      const res = await api.post<LoginResponse>("/api/public/verifyPassCode", payload);
+      setMessage(res.data.message || "code Verified!");
+      setStep("newPass");
+    } catch (err) {
+      const error = err as AxiosError<{ message?: string }>;
+      setMessage(error.response?.data?.message || "failed to verify code.");
+      setStep("code");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        const payload: ChangePassRequest = {
-            email: email.trim().toLowerCase(),
-            code: code,
-            newPassword,
-        };
+  const changePass = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
+    e.preventDefault();
+    setMessage("");
 
-        try {
-            // Request server to update user's password
-            const res = await axios.post<LoginResponse>(`${API_BASE}/public/changePassword`, payload);
-            setMessage(res.data.message || " Password changed successfully !");
-            setStep("newPass");
-
-            // Reset local state after successful password change 
-            setEmail("");
-            setCode("");
-            setConNewPassword("");
-            setNewPassword("");
-            // Redirect user back to login page
-            window.location.href = "./login";
-        } catch (err) {
-            const error = err as AxiosError<{ message?: string }>;
-            setMessage(error.response?.data?.message || "change password faild.");
-            setConNewPassword("");
-            setNewPassword("");
-        }
-    };
-
-    // Navigate back to login page
-    const goBack = () =>
-    {
-        setStep("email")
-        window.location.href = "./login"
+    if (newPassword !== conNewPassword) {
+      setMessage("Passwords do not match.");
+      return;
     }
 
+    setLoading(true);
 
-    return(
-        <Layout>
-            <Card>
-                <LeftPanel>
-                    {/* Step 1: Enter email */}
-                    {step === "email" && (
-                        <form onSubmit={sendCode}>
-                            <Input 
-                                label="Enter your email" 
-                                placeholder="you@example.com" 
-                                value={email}
-                                name="emailInput" 
-                                onChange={(e) => setEmail(e.target.value)}>
-                            </Input>
-                            <Button children="Send code"></Button>
-                        </form>
-                    )}
+    const payload: ChangePassRequest = {
+      email: email.trim().toLowerCase(),
+      code: code.trim(),
+      newPassword,
+    };
 
-                    {/* Step 2: Enter verification code */}
-                    {step === "code" && (
-                        <div className="space-y-4">
-                            <form onSubmit={verifyCode}>
-                                <Input
-                                    label="Enter Code"
-                                    placeholder=""
-                                    value={code}
-                                    name="codeInput"
-                                    onChange={(e) => setCode(e.target.value)}
-                                />
-                                <Button btnProp="border-2 border-black rounded-lg bg-emerald-500 text-black hover:bg-emerald-600">Verify code</Button>
-                            </form>
+    try {
+      const res = await api.post<LoginResponse>("/api/public/changePassword", payload);
+      setMessage(res.data.message || "Password changed successfully!");
+      setStep("newPass");
 
-                            {/* Resend code */}
-                            <div className="flex gap-3 mt-4">
-                                <form onSubmit={sendCode}>
-                                    <Button btnProp="border-2 border-black flex-1 bg-gray-300 text-gray-700 hover:bg-gray-400">Resend code</Button>
-                                </form>
-                            </div>
-                        </div>
-                    )}
+      setEmail("");
+      setCode("");
+      setConNewPassword("");
+      setNewPassword("");
 
-                    {/* Step 3: Enter new password */}
-                     {step === "newPass" && (
-                        <form onSubmit={changePass}>
-                            <Input 
-                                label="Enter new Password" 
-                                placeholder="••••••••" 
-                                value={newPassword}
-                                name="newPassInput"
-                                type="password"
-                                onChange={(e) => setNewPassword(e.target.value)}>
-                            </Input>
-                            <Input 
-                                label="Confirm new Password" 
-                                placeholder="••••••••" 
-                                value={conNewPassword}
-                                name="conNewPassInput" 
-                                type="password"
-                                onChange={(e) => setConNewPassword(e.target.value)}>
-                            </Input>
-                            <Button children="Change password"></Button>
-                        </form>
-                    )}
+      window.location.href = "./login";
+    } catch (err) {
+      const error = err as AxiosError<{ message?: string }>;
+      setMessage(error.response?.data?.message || "change password failed.");
+      setConNewPassword("");
+      setNewPassword("");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-                    {/* Feedback message (success or error) */}
-                   {message && (
-                        <div className={message.toLowerCase().includes("failed")||message.toLowerCase().includes("invalid") ? "error" : "success"}>
-                            {message}
-                        </div>
-                    )}
+  const goBack = () => {
+    setStep("email");
+    window.location.href = "./login";
+  };
 
-                    {/* Back navigation */}
-                    <Actions
-                        text="Back"
-                        actionFunction={goBack}
-                    />
-                </LeftPanel>
+  return (
+    <Layout>
+      <Card>
+        <LeftPanel>
+          {step === "email" && (
+            <form onSubmit={sendCode}>
+              <Input
+                label="Enter your email"
+                placeholder="you@example.com"
+                value={email}
+                name="emailInput"
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <Button children={loading ? "Sending..." : "Send code"} />
+            </form>
+          )}
 
-                <RightPanel title="" description={`Forgot Your password ?  Enter your email and we will send you a code via email.`}/>
-            </Card>
-        </Layout>
-    )
+          {step === "code" && (
+            <div className="space-y-4">
+              <form onSubmit={verifyCode}>
+                <Input
+                  label="Enter Code"
+                  placeholder=""
+                  value={code}
+                  name="codeInput"
+                  onChange={(e) => setCode(e.target.value)}
+                />
+                <Button btnProp="border-2 border-black rounded-lg bg-emerald-500 text-black hover:bg-emerald-600">
+                  {loading ? "Verifying..." : "Verify code"}
+                </Button>
+              </form>
+
+              <div className="flex gap-3 mt-4">
+                <form onSubmit={sendCode}>
+                  <Button btnProp="border-2 border-black flex-1 bg-gray-300 text-gray-700 hover:bg-gray-400">
+                    {loading ? "Sending..." : "Resend code"}
+                  </Button>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {step === "newPass" && (
+            <form onSubmit={changePass}>
+              <Input
+                label="Enter new Password"
+                placeholder="••••••••"
+                value={newPassword}
+                name="newPassInput"
+                type="password"
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+              <Input
+                label="Confirm new Password"
+                placeholder="••••••••"
+                value={conNewPassword}
+                name="conNewPassInput"
+                type="password"
+                onChange={(e) => setConNewPassword(e.target.value)}
+              />
+              <Button children={loading ? "Saving..." : "Change password"} />
+            </form>
+          )}
+
+          {message && (
+            <div
+              className={
+                message.toLowerCase().includes("failed") ||
+                message.toLowerCase().includes("invalid")
+                  ? "error"
+                  : "success"
+              }
+            >
+              {message}
+            </div>
+          )}
+
+          <Actions text="Back" actionFunction={goBack} />
+        </LeftPanel>
+
+        <RightPanel title="" description="Forgot Your password ?  Enter your email and we will send you a code via email." />
+      </Card>
+    </Layout>
+  );
 }
