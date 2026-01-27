@@ -1,8 +1,11 @@
 import React from "react";
+import { useTheme } from "../context/ThemeContext";
 
 type Page = "login" | "register";
 
 const StarterPage: React.FC = () => {
+  const { darkMode, toggleDarkMode } = useTheme();
+
   const goToPage = (page: Page): void => {
     if (page === "login") window.location.href = "/login";
     if (page === "register") window.location.href = "/register";
@@ -18,134 +21,122 @@ const StarterPage: React.FC = () => {
     { icon: "https://cdn-icons-png.flaticon.com/512/1048/1048934.png", title: "Online Game", desc: "Play, Chat & Video call friends!" },
   ];
 
+  // Theme colors
+  const bg = darkMode ? "#0b1220" : "#f8fafc";
+  const text = darkMode ? "#e5e7eb" : "#0f172a";
+  const muted = darkMode ? "#9ca3af" : "#6b7280";
+  const cardBg = darkMode ? "#0f172a" : "#ffffff";
+  const border = darkMode ? "1px solid #243244" : "1px solid #e2e8f0";
+  const headerBg = darkMode ? "#0f1b2d" : "#86e07f";
+  const green = "#3fa16a";
+
   return (
-    <div className="min-h-screen w-full font-[Poppins]" style={{ background: "#f8fafc", color: "#0f172a" }}>
-      {/* HEADER */}
-      <header style={{ background: "#86e07f", borderBottom: "1px solid #e2e8f0" }}>
-        <div className="container header-row">
+    <div className="min-h-screen w-full font-[Poppins]" style={{ background: bg, color: text }}>
+      {/* HEADER (ONLY DARK MODE) */}
+      <header style={{ background: headerBg, borderBottom: border }}>
+        <div className="container header-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <h1 className="header-title" style={{ color: "#ffffff" }}>
             PlayLearn English
           </h1>
 
-          <nav className="nav">
-            <button
-              type="button"
-              onClick={() => goToPage("login")}
-              className="nav-btn"
-              style={{ background: "#ffffff", color: "#0f172a", border: "1px solid #e2e8f0" }}
-            >
-              Login
-            </button>
-
-            <button
-              type="button"
-              onClick={() => goToPage("register")}
-              className="nav-btn"
-              style={{ background: "#0f172a", color: "#ffffff", border: "1px solid #0f172a" }}
-            >
-              Create Account
-            </button>
-          </nav>
+          {/* Dark mode only */}
+          <button
+            type="button"
+            onClick={toggleDarkMode}
+            style={{
+              background: darkMode ? "#0b1220" : "#ffffff",
+              color: darkMode ? "#e5e7eb" : "#0f172a",
+              border: darkMode ? "1px solid #243244" : "1px solid #e2e8f0",
+              padding: "0.55rem 0.9rem",
+              borderRadius: "999px",
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+            aria-label="Toggle dark mode"
+            title="Toggle dark mode"
+          >
+            {darkMode ? "☾ Dark" : "☀ Light"}
+          </button>
         </div>
       </header>
 
       {/* HERO */}
       <section className="section hero">
-        <h2 style={{ color: "#3fa16a" }}>Learn English the Fun Way!</h2>
+        <h2 style={{ color: darkMode ? "#a7f3d0" : green }}>Learn English the Fun Way!</h2>
 
-        <p style={{ color: "#6b7280", maxWidth: "650px", margin: "0.5rem auto 0" }}>
+        <p style={{ color: muted, maxWidth: "650px", margin: "0.5rem auto 0" }}>
           Games, vocabulary, stories, speaking practice, and an AI friend — built for kids.
         </p>
 
-        {/* Make the gate obvious */}
-        <p style={{ color: "#0f172a", marginTop: "0.75rem", fontWeight: 600 }}>
-          Sign up or log in to start learning.
+        <p style={{ color: text, marginTop: "0.9rem", fontWeight: 700 }}>
+          To start, please create an account or log in.
         </p>
 
         <div style={{ marginTop: "1.25rem", display: "flex", gap: "0.75rem", justifyContent: "center", flexWrap: "wrap" }}>
           <button
-            className="btn btn-primary"
             type="button"
             onClick={() => goToPage("register")}
-            style={{ background: "#3fa16a", border: "1px solid #3fa16a", color: "#ffffff" }}
+            style={{
+              background: green,
+              border: `1px solid ${green}`,
+              color: "#ffffff",
+              padding: "0.8rem 1.1rem",
+              borderRadius: "12px",
+              fontWeight: 800,
+              cursor: "pointer",
+              minWidth: 200,
+            }}
           >
             Create Free Account
           </button>
 
           <button
-            className="btn"
             type="button"
             onClick={() => goToPage("login")}
-            style={{ background: "#ffffff", border: "1px solid #e2e8f0", color: "#0f172a" }}
+            style={{
+              background: darkMode ? "#0b1220" : "#ffffff",
+              border,
+              color: text,
+              padding: "0.8rem 1.1rem",
+              borderRadius: "12px",
+              fontWeight: 800,
+              cursor: "pointer",
+              minWidth: 200,
+            }}
           >
-            I Already Have an Account
+            Login
           </button>
         </div>
 
-        <div style={{ marginTop: "0.75rem", color: "#6b7280", fontSize: "0.95rem" }}>
-          Preview below — features unlock after login
+        <div style={{ marginTop: "0.75rem", color: muted, fontSize: "0.95rem" }}>
+          You can see what the app includes below.
         </div>
       </section>
 
       {/* FEATURES */}
       <section className="section">
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
-          <h3 style={{ color: "#0f172a", marginBottom: "0.25rem" }}>What You Can Do</h3>
+        <h3 style={{ color: text, marginBottom: "1.25rem" }}>What You Can Do</h3>
 
-          {/* small helper badge */}
-          <div
-            style={{
-              background: "#eef2ff",
-              color: "#3730a3",
-              border: "1px solid #e2e8f0",
-              padding: "0.35rem 0.6rem",
-              borderRadius: "999px",
-              fontSize: "0.9rem",
-              fontWeight: 600,
-            }}
-          >
-            Preview (not clickable)
-          </div>
-        </div>
-
-        <div className="grid" style={{ marginTop: "1.25rem" }}>
+        <div className="grid">
           {features.map((f, idx) => (
             <div
               key={idx}
               className="card card-pad"
               style={{
-                background: "#ffffff",
-                border: "1px solid #e2e8f0",
+                background: cardBg,
+                border,
                 borderRadius: "16px",
                 cursor: "default",
-                position: "relative",
-                boxShadow: "0 1px 0 rgba(15, 23, 42, 0.03)",
+                boxShadow: darkMode ? "none" : "0 1px 0 rgba(15, 23, 42, 0.03)",
               }}
             >
-              {/* Preview badge inside each card */}
-              <div
-                style={{
-                  position: "absolute",
-                  top: "12px",
-                  right: "12px",
-                  background: "#f1f5f9",
-                  border: "1px solid #e2e8f0",
-                  color: "#475569",
-                  padding: "0.2rem 0.5rem",
-                  borderRadius: "999px",
-                  fontSize: "0.8rem",
-                  fontWeight: 600,
-                }}
-              >
-                Preview
-              </div>
-
               <img src={f.icon} className="feature-icon" alt={f.title} />
+              <div style={{ color: darkMode ? "#c7f9d4" : "#0f172a", fontWeight: 800, marginTop: "0.25rem" }}>
+                {f.title}
+              </div>
+              <div style={{ color: muted, marginTop: "0.25rem" }}>{f.desc}</div>
 
-              <div style={{ color: "#0f172a", fontWeight: 700, marginTop: "0.25rem" }}>{f.title}</div>
-              <div style={{ color: "#6b7280", marginTop: "0.25rem" }}>{f.desc}</div>
-
-              <div style={{ marginTop: "0.8rem", color: "#94a3b8", fontSize: "0.9rem" }}>
+              <div style={{ marginTop: "0.8rem", color: darkMode ? "#64748b" : "#94a3b8", fontSize: "0.9rem" }}>
                 Available after login
               </div>
             </div>
@@ -158,8 +149,8 @@ const StarterPage: React.FC = () => {
         style={{
           textAlign: "center",
           padding: "1rem",
-          color: "#6b7280",
-          borderTop: "1px solid #e2e8f0",
+          color: muted,
+          borderTop: border,
         }}
       >
         © 2025 PlayLearn English — Learn &amp; Play!
