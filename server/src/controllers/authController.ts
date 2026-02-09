@@ -145,7 +145,7 @@ export const login = async (req: Request, res: Response) => {
     const token = jwt.sign(
       { userId: String(userData._id), email: userData.email },
       jwtSecret,
-      { expiresIn: "1h" }
+      { expiresIn: "10h" }
     );
 
     const cookieOptions = getCookieOptions(req);
