@@ -102,7 +102,7 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
 
       // if nothing left => go back
       if ((res.questions || []).length === 0) {
-        setShowExe(false);
+        setShowExe(true);
       }
     } catch (err) {
       console.error("Error fetching questions:", err);
@@ -201,60 +201,76 @@ export default function TopicsPage({ exercisesType, darkMode }: Props) {
         color: darkMode ? "#f8fafc" : "#0f172a",
       }}
     >
-      {!showExe && (
-        <div className="space-y-6">
-          <TopicCard title="Animals" emoji="🐾" levels={animalsLevels} unlockedLevel={progress[keyFor("animals")] ?? 1} onLevelClick={(id) => handleLevelClick("animals", id)} darkMode={darkMode} />
-          <TopicCard title="Weather" emoji="🌦" levels={weatherLevels} unlockedLevel={progress[keyFor("weather")] ?? 1} onLevelClick={(id) => handleLevelClick("weather", id)} darkMode={darkMode} />
-          <TopicCard title="Transportation" emoji="🚗" levels={transportationLevels} unlockedLevel={progress[keyFor("transportation")] ?? 1} onLevelClick={(id) => handleLevelClick("transportation", id)} darkMode={darkMode} />
-          <TopicCard title="Jobs" emoji="🧑‍🍳" levels={jobsLevels} unlockedLevel={progress[keyFor("jobs")] ?? 1} onLevelClick={(id) => handleLevelClick("jobs", id)} darkMode={darkMode} />
-          <TopicCard title="Furniture" emoji="🚪" levels={furnitureLevels} unlockedLevel={progress[keyFor("furniture")] ?? 1} onLevelClick={(id) => handleLevelClick("furniture", id)} darkMode={darkMode} />
-          <TopicCard title="Colors" emoji="🎨" levels={colorsLevels} unlockedLevel={progress[keyFor("colors")] ?? 1} onLevelClick={(id) => handleLevelClick("colors", id)} darkMode={darkMode} />
-        </div>
-      )}
-
+      
       {showExe && (
-        <div className="max-w-2xl mx-auto">
-          <button
-            onClick={() => setShowExe(false)}
-            className="mb-4 text-sm underline opacity-70 hover:opacity-100 transition-colors"
-            style={{ color: darkMode ? "#94a3b8" : "#475569" }}
-          >
-            Back to Topics
-          </button>
+  <div className="max-w-2xl mx-auto">
+    <button
+      onClick={() => setShowExe(false)}
+      className="mb-4 text-sm underline opacity-70 hover:opacity-100 transition-colors"
+      style={{ color: darkMode ? "#94a3b8" : "#475569" }}
+    >
+      Back to Topics
+    </button>
 
-        
-          {(exercisesType === "Translate" || exercisesType === "Fill the blank" || exercisesType === "Reading") && currentQuestion && (
-            <FillBlankGame
-              title={`Question ${currentIndex + 1} / ${questions.length}`}
-              question={currentQuestion.prompt}
-              correctAnswer={currentQuestion.answer}
-              options={currentQuestion.options}
-              darkMode={darkMode}
-              onContinue={handleAnswered}
-            />
-          )}
+    {questions.length === 0 && remaining === 0 && (
+      <div
+        className="text-center p-8 rounded-xl border mb-6"
+        style={{
+          backgroundColor: darkMode ? "#020617" : "#f1f5f9",
+          borderColor: darkMode ? "#334155" : "#cbd5e1",
+        }}
+      >
+        <h2 className="text-2xl font-bold mb-2">🎉 No exercises left!</h2>
+        <p className="opacity-70 mb-4">
+          You completed all exercises for this topic and level.
+        </p>
 
-          {exercisesType === "Listening" && currentQuestion && (
-            <ListeningGame
-              title={`Question ${currentIndex + 1} / ${questions.length}`}
-              textToRead={currentQuestion.prompt}
-              correctAnswer={currentQuestion.prompt}
-              options={currentQuestion.options}
-              darkMode={darkMode}
-              onContinue={handleAnswered}
-            />
-          )}
+        <button
+          onClick={() => setShowExe(false)}
+          className="px-4 py-2 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600"
+        >
+          Back to Topics
+        </button>
+      </div>
+    )}
 
-          {exercisesType === "Talking" && currentQuestion && (
-            <SpeakingGame
-              title={`Question ${currentIndex + 1} / ${questions.length}`}
-              answer={currentQuestion.prompt}
-              onContinue={handleAnswered}
-              darkMode={darkMode}
-            />
-          )}
-        </div>
+    {/* Render games only if we have questions */}
+    {questions.length > 0 &&
+      (exercisesType === "Translate" ||
+        exercisesType === "Fill the blank" ||
+        exercisesType === "Reading") &&
+      currentQuestion && (
+        <FillBlankGame
+          title={`Question ${currentIndex + 1} / ${questions.length}`}
+          question={currentQuestion.prompt}
+          correctAnswer={currentQuestion.answer}
+          options={currentQuestion.options}
+          darkMode={darkMode}
+          onContinue={handleAnswered}
+        />
       )}
+
+    {questions.length > 0 && exercisesType === "Listening" && currentQuestion && (
+      <ListeningGame
+        title={`Question ${currentIndex + 1} / ${questions.length}`}
+        textToRead={currentQuestion.prompt}
+        correctAnswer={currentQuestion.prompt}
+        options={currentQuestion.options}
+        darkMode={darkMode}
+        onContinue={handleAnswered}
+      />
+    )}
+
+    {questions.length > 0 && exercisesType === "Talking" && currentQuestion && (
+      <SpeakingGame
+        title={`Question ${currentIndex + 1} / ${questions.length}`}
+        answer={currentQuestion.prompt}
+        onContinue={handleAnswered}
+        darkMode={darkMode}
+      />
+    )}
+  </div>
+)}
     </div>
   );
 }
