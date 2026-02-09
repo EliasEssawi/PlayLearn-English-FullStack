@@ -145,7 +145,7 @@ export default function OnlineChatWidget({ darkMode }: OnlineChatWidgetProps) {
         style={{
           position: "fixed",
           right: 22 + 60 + 12, // left of video
-          bottom: 22,
+          bottom: 60,
           width: 60,
           height: 60,
           borderRadius: 999,
