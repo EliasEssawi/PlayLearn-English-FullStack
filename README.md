@@ -1,23 +1,3 @@
-This repository is shared for educational and learning purposes only.
-You are allowed to:
--View the code
--Study the architecture
--Learn from the implementation
--
-You are NOT allowed to:
--Deploy this project to Vercel, Render, or any hosting platform
--Use this project for commercial purposes
--Redistribute the project as your own work
--Copy the project and publish it as a product or service
--Any deployment, reproduction, or commercial use without permission from the authors is strictly prohibited.
--This application is NOT production ready and is NOT secure for public deployments.
--
-© Copyright
-© 2026 Elias Essawi & Team PlayLearn
-All rights reserved.
-This project and its source code are protected by copyright laws.
-Unauthorized copying, modification, distribution, or deployment of this software is prohibited without explicit written permission from the authors.
--
 ABOUT PROJECT:
 
 WEBPROJECT – Full-Stack Web Application
