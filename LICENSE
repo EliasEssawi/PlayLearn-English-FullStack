@@ -1,0 +1,72 @@
+Custom License (Based on CC BY-NC-ND 4.0)
+
+Copyright (c) 2026 Elias Essawi & Team PlayLearn
+
+This work is licensed under the Creative Commons Attribution–NonCommercial–NoDerivatives 4.0 International License, with additional restrictions described below.
+
+You may obtain a copy of the original license at:
+https://creativecommons.org/licenses/by-nc-nd/4.0/
+
+1. Permitted Use
+
+You are granted a limited, non-exclusive, non-transferable license to:
+
+View the source code
+Study the structure and implementation
+Use the project strictly for personal, educational, and non-commercial purposes
+2. Restrictions
+
+In addition to the CC BY-NC-ND 4.0 terms, the following restrictions apply:
+
+You may NOT:
+
+Deploy this project or any derivative to any hosting platform (including but not limited to Vercel, Render, cloud services, or public servers)
+Use this project for commercial purposes
+Modify, adapt, or create derivative works
+Redistribute, sublicense, or republish this project or any part of it
+Present this project as your own work
+Use this project in production environments
+
+Any use beyond what is explicitly permitted requires prior written permission from the authors.
+
+3. Data Usage and Responsibility Disclaimer
+
+This project may include data processing, machine learning models, or external datasets.
+
+The authors are not responsible for:
+
+Any misuse of the code, models, or data
+Any legal or regulatory violations by users
+Any damages resulting from use of this project
+
+Users are solely responsible for ensuring compliance with all applicable laws, including data protection and privacy regulations.
+
+4. No Warranty
+
+This project is provided "as is", without warranty of any kind, express or implied, including but not limited to:
+
+Accuracy
+Reliability
+Security
+Fitness for a particular purpose
+
+This software is not production-ready and must not be used in critical systems.
+
+5. Limitation of Liability
+
+In no event shall the authors be liable for any claim, damages, or other liability arising from:
+
+Use or misuse of the software
+Inability to use the software
+Any data-related consequences
+6. Cookie and Tracking Compliance
+
+Any deployment or usage involving cookies or tracking technologies must comply with applicable laws.
+
+The authors are not responsible for any such implementations by third parties.
+
+7. Copyright
+
+All rights reserved.
+
+Unauthorized use, reproduction, or distribution of this software is strictly prohibited.
